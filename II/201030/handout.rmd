@@ -18,7 +18,6 @@ header-includes:
   - \newcommand{\argmax}{\mathop{\rm arg~max}\limits}
   - \newcommand{\argmin}{\mathop{\rm arg~min}\limits}
   - \DeclareMathOperator*{\plim}{plim}
-bibliography: ref.bib
 ---
 
 ```{r setup, include = FALSE, echo = FALSE, purl = FALSE}
@@ -30,3 +29,18 @@ knitr::opts_chunk$set(
   cache = FALSE,
   fig.pos = "h")
 ```
+
+# Binary Model
+
+We have data $\{ (y_i, x_i) \}_i$ where $x_i$ is a vector of explanatory variables (random variables),
+and $y_i \in \{0, 1\}$ is a binary (dummy) variable.
+In the binary choice model, regression function is 
+\begin{equation*}
+  \mathbb{E}[y_i | x_i] = \mathbb{P}(y_i = 1 | x_i) = G(x_i \beta).
+\end{equation*}
+While $G(\cdot)$ is arbitrary function,
+there are following three major specifications in practice:
+
+- Linear probability model (LPM): $G(x_i \beta) = x_i \beta$
+- Probit model: $G(x_i \beta) = \Phi(x_i \beta)$ where $\Phi(\cdot)$ is the standard Gaussian cumulative function.
+- Logit model: $G(x_i \beta) = \frac{1}{1 + \exp(-x_i \beta)}$
