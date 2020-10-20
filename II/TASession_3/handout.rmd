@@ -53,8 +53,16 @@ data(deathpenalty)
 deathpenalty
 ```
 
-Since this datasets is aggregated with repect to `DeathPenalty`, `VictimRace` and `DefendantRace`,
-we disaggregate it.
+This dataset contains three dummy variables
+
+1. `DeathPenalty` is a dummy variable taking 1 if the judgement is death penalty.
+2. `VictimRace` is a dummy variable taking 1 if the race of the victim is white.
+3. `DefendantRace` is a dummy variable taking 1 if the race of the defendant is white.
+
+This dataset aggregates observations with repect to `DeathPenalty`, `VictimRace` and `DefendantRace`.
+The variable `Freq` represents the number of observations.
+Since it is inconvinient for us to use the original data for estimation,
+we disaggregate this dataset.
 For example, we make 37 rows whose elements are `DeathPenalty = 0`, `VictimRace = 1`, and `DefendantRace = 0` because 
 there are 37 obaservations, i.e., `Freq = 37`.
 
@@ -68,19 +76,109 @@ dt <- dt[rep(seq_len(nrow(dt)), dt[,"Freq"]), -4]
 In a binary model, a dependent (outcome) variable $y_i$ takes only two values, i.e., $y_i \in \{0, 1\}$.
 A binary variable is sometimes called a *dummy* variable.
 In this application, the outcome variable is `DeathPenalty` taking 1 if the judgement is death penalty.
-There are two explanatory variables.
-First, `VictimRace` is a dummy variable taking 1 if the race of the victim is white.
-Second, `DefendantRace` is a dummy variable taking 1 if the race of the defendant is white.
+We make three explanatory variables.
+
+1. `WB` is a dummy variable taking 1 if the race of the victim and the defendant is white and black, respectively.
+2. `BW` is a dummy variable taking 1 if the race of the victim and the defendant is black and white, respectively.
+3. `WW` is a dummy variable taking 1 if the race of both the victim and the defendant is black.
+
+```{r variable}
+dt$WB <- ifelse(dt$VictimRace == 1 & dt$DefendantRace == 0, 1, 0)
+dt$BW <- ifelse(dt$VictimRace == 0 & dt$DefendantRace == 1, 1, 0)
+dt$WW <- ifelse(dt$VictimRace == 1 & dt$DefendantRace == 1, 1, 0)
+```
 The regression function is 
-\begin{equation}
+\begin{equation*}
   \begin{split}
-    &\mathbb{E}[DeathP | Vrace, Drace] \\
-    =& \mathbb{P}[DeathP = 1 | Vrace, Drace]
-    = G(\beta_0 + \beta_1 Vrace + \beta_2 Drace).
+    &\mathbb{E}[DeathPenalty | WB, BW, WW] \\
+    =& \mathbb{P}[DeathPenalty = 1 | WB, BW, WW]
+    = G(\beta_0 + \beta_1 WB + \beta_2 BW + \beta3 WW).
   \end{split}
-\end{equation}
+\end{equation*}
 The function $G(\cdot)$ is arbitrary function. In practice, we often use following three specifications:
 
 - Linear probability model (LPM): $G(\mathbf{x}_i \beta) = \mathbf{x}_i \beta$.
 - Probit model: $G(\mathbf{x}_i \beta) = \Phi(\mathbf{x}_i \beta)$ where $\Phi(\cdot)$ is the standard Gaussian cumulative function.
 - Logit model: $G(\mathbf{x}_i \beta) = 1/(1 + \exp(-\mathbf{x}_i \beta))$.
+
+## Linear Probability Model
+
+The linear probability model is 
+\begin{equation*}
+  \mathbb{P}[DeathPenalty = 1 | WB, BW, WW]
+  = \beta_0 + \beta_1 WB + \beta_2 BW + \beta3 WW
+\end{equation*}
+This model can be estimated using the OLS method.
+In `R`, we can use the OLS method, running `lm()` function.
+
+```{R ols}
+model <- DeathPenalty ~ WB + BW + WW
+LPM <- lm(model, data = dt)
+```
+However, `lm()` function does not deal with heteroskedasticity problem.
+To resolve it, we need to claculate heteroskedasticity-robust standard errors using the White method.
+\begin{equation*}
+  \hat{V}(\hat{\beta}) =
+  \left( \frac{1}{n} \sum_i \mathbf{x}'_i \mathbf{x}_i  \right)^{-1}
+  \left( \frac{1}{n} \sum_i \hat{u}_i^2 \mathbf{x}'_i \mathbf{x}_i \right)
+  \left( \frac{1}{n} \sum_i \mathbf{x}'_i \mathbf{x}_i \right)^{-1}
+\end{equation*}
+
+```{r RobustSE}
+# heteroskedasticity-robust standard errors
+dt$"(Intercept)" <- 1
+X <- as.matrix(dt[,c("(Intercept)", "WB", "BW", "WW")])
+u <- diag(LPM$residuals^2)
+
+XX <- t(X) %*% X
+avgXX <- XX * nrow(X)^{-1}
+inv_avgXX <- solve(avgXX)
+
+uXX <- t(X) %*% u %*% X
+avguXX <- uXX * nrow(X)^{-1} 
+
+vcov_b <- (inv_avgXX %*% avguXX %*% inv_avgXX) * nrow(X)^{-1}
+rse_b <- sqrt(diag(vcov_b))
+
+# homoskedasticity-based standard errors
+se_b <- sqrt(diag(vcov(LPM)))
+
+print("The Variance of OLS"); vcov(LPM)
+print("The Robust variance of OLS"); vcov_b
+print("The Robust se using White method"); rse_b
+print("The Robust t-value using White method"); coef(LPM)/se_b
+```
+
+Using the package `lmtest` and `sandwich` is 
+the most easiest way to calculate heteroskedasticity-robust standard errors and $t$-statistics.
+
+```{r lmtest}
+library(lmtest) #use function `coeftest`
+library(sandwich) #use function `vcovHC`
+coeftest(LPM, vcov = vcovHC(LPM, type = "HC0"))[, "Std. Error"]
+coeftest(LPM, vcov = vcovHC(LPM, type = "HC0"))[, "t value"]
+```
+
+Finally, we obtain follwing results of linear probability model.
+We will discuss interpretation of results and goodness-of-fit of LPM later.
+
+```{r LPM_result, results = "asis"}
+# t-stats
+t_b <- coef(LPM)/se_b 
+rt_b <- coef(LPM)/rse_b
+# p-value Pr( > |t|)
+p_b <- pt(abs(t_b), df = nrow(X)-ncol(X), lower = FALSE)*2
+rp_b <- pt(abs(rt_b), df = nrow(X)-ncol(X), lower = FALSE)*2
+
+library(stargazer)
+stargazer(
+  LPM, LPM,
+  se = list(se_b, rse_b), t = list(t_b, rt_b), p = list(p_b, rp_b),
+  t.auto = FALSE, p.auto = FALSE,
+  report = "vcstp", keep.stat = c("n"),
+  add.lines = list(
+    c("Standard errors", "Homoskedasticity-based", "Heteroskedasticity-robust")),
+  title = "Results of Linear Probability Model",
+  type = "latex", header = FALSE, font.size = "small"
+)
+```

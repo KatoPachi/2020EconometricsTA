@@ -159,11 +159,30 @@ judgement of defendants in cases of multiple murders in Florida between
 ## 8            1          1             1   53
 \end{verbatim}
 
-Since this datasets is aggregated with repect to \texttt{DeathPenalty},
-\texttt{VictimRace} and \texttt{DefendantRace}, we disaggregate it. For
-example, we make 37 rows whose elements are \texttt{DeathPenalty\ =\ 0},
-\texttt{VictimRace\ =\ 1}, and \texttt{DefendantRace\ =\ 0} because
-there are 37 obaservations, i.e., \texttt{Freq\ =\ 37}.
+This dataset contains three dummy variables
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \texttt{DeathPenalty} is a dummy variable taking 1 if the judgement is
+  death penalty.
+\item
+  \texttt{VictimRace} is a dummy variable taking 1 if the race of the
+  victim is white.
+\item
+  \texttt{DefendantRace} is a dummy variable taking 1 if the race of the
+  defendant is white.
+\end{enumerate}
+
+This dataset aggregates observations with repect to
+\texttt{DeathPenalty}, \texttt{VictimRace} and \texttt{DefendantRace}.
+The variable \texttt{Freq} represents the number of observations. Since
+it is inconvinient for us to use the original data for estimation, we
+disaggregate this dataset. For example, we make 37 rows whose elements
+are \texttt{DeathPenalty\ =\ 0}, \texttt{VictimRace\ =\ 1}, and
+\texttt{DefendantRace\ =\ 0} because there are 37 obaservations, i.e.,
+\texttt{Freq\ =\ 37}.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -176,17 +195,37 @@ there are 37 obaservations, i.e., \texttt{Freq\ =\ 37}.
 variable \(y_i\) takes only two values, i.e., \(y_i \in \{0, 1\}\). A
 binary variable is sometimes called a \emph{dummy} variable. In this
 application, the outcome variable is \texttt{DeathPenalty} taking 1 if
-the judgement is death penalty. There are two explanatory variables.
-First, \texttt{VictimRace} is a dummy variable taking 1 if the race of
-the victim is white. Second, \texttt{DefendantRace} is a dummy variable
-taking 1 if the race of the defendant is white. The regression function
-is \begin{equation}
+the judgement is death penalty. We make three explanatory variables.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \texttt{WB} is a dummy variable taking 1 if the race of the victim and
+  the defendant is white and black, respectively.
+\item
+  \texttt{BW} is a dummy variable taking 1 if the race of the victim and
+  the defendant is black and white, respectively.
+\item
+  \texttt{WW} is a dummy variable taking 1 if the race of both the
+  victim and the defendant is black.
+\end{enumerate}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dt}\OperatorTok{$}\NormalTok{WB \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(dt}\OperatorTok{$}\NormalTok{VictimRace }\OperatorTok{==}\StringTok{ }\DecValTok{1} \OperatorTok{\&}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{DefendantRace }\OperatorTok{==}\StringTok{ }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{dt}\OperatorTok{$}\NormalTok{BW \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(dt}\OperatorTok{$}\NormalTok{VictimRace }\OperatorTok{==}\StringTok{ }\DecValTok{0} \OperatorTok{\&}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{DefendantRace }\OperatorTok{==}\StringTok{ }\DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{dt}\OperatorTok{$}\NormalTok{WW \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(dt}\OperatorTok{$}\NormalTok{VictimRace }\OperatorTok{==}\StringTok{ }\DecValTok{1} \OperatorTok{\&}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{DefendantRace }\OperatorTok{==}\StringTok{ }\DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+The regression function is \begin{equation*}
   \begin{split}
-    &\mathbb{E}[DeathP | Vrace, Drace] \\
-    =& \mathbb{P}[DeathP = 1 | Vrace, Drace]
-    = G(\beta_0 + \beta_1 Vrace + \beta_2 Drace).
+    &\mathbb{E}[DeathPenalty | WB, BW, WW] \\
+    =& \mathbb{P}[DeathPenalty = 1 | WB, BW, WW]
+    = G(\beta_0 + \beta_1 WB + \beta_2 BW + \beta3 WW).
   \end{split}
-\end{equation} The function \(G(\cdot)\) is arbitrary function. In
+\end{equation*} The function \(G(\cdot)\) is arbitrary function. In
 practice, we often use following three specifications:
 
 \begin{itemize}
@@ -201,5 +240,209 @@ practice, we often use following three specifications:
   Logit model:
   \(G(\mathbf{x}_i \beta) = 1/(1 + \exp(-\mathbf{x}_i \beta))\).
 \end{itemize}
+
+\hypertarget{linear-probability-model}{%
+\subsection{Linear Probability Model}\label{linear-probability-model}}
+
+The linear probability model is \begin{equation*}
+  \mathbb{P}[DeathPenalty = 1 | WB, BW, WW]
+  = \beta_0 + \beta_1 WB + \beta_2 BW + \beta3 WW
+\end{equation*} This model can be estimated using the OLS method. In
+\texttt{R}, we can use the OLS method, running \texttt{lm()} function.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{DeathPenalty }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{WB }\OperatorTok{+}\StringTok{ }\NormalTok{BW }\OperatorTok{+}\StringTok{ }\NormalTok{WW}
+\NormalTok{LPM \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt)}
+\end{Highlighting}
+\end{Shaded}
+
+However, \texttt{lm()} function does not deal with heteroskedasticity
+problem. To resolve it, we need to claculate heteroskedasticity-robust
+standard errors using the White method. \begin{equation*}
+  \hat{V}(\hat{\beta}) =
+  \left( \frac{1}{n} \sum_i \mathbf{x}'_i \mathbf{x}_i  \right)^{-1}
+  \left( \frac{1}{n} \sum_i \hat{u}_i^2 \mathbf{x}'_i \mathbf{x}_i \right)
+  \left( \frac{1}{n} \sum_i \mathbf{x}'_i \mathbf{x}_i \right)^{-1}
+\end{equation*}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# heteroskedasticity{-}robust standard errors}
+\NormalTok{dt}\OperatorTok{$}\StringTok{"(Intercept)"}\NormalTok{ \textless{}{-}}\StringTok{ }\DecValTok{1}
+\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"(Intercept)"}\NormalTok{, }\StringTok{"WB"}\NormalTok{, }\StringTok{"BW"}\NormalTok{, }\StringTok{"WW"}\NormalTok{)])}
+\NormalTok{u \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(LPM}\OperatorTok{$}\NormalTok{residuals}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)}
+
+\NormalTok{XX \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
+\NormalTok{avgXX \textless{}{-}}\StringTok{ }\NormalTok{XX }\OperatorTok{*}\StringTok{ }\KeywordTok{nrow}\NormalTok{(X)}\OperatorTok{\^{}}\NormalTok{\{}\OperatorTok{{-}}\DecValTok{1}\NormalTok{\}}
+\NormalTok{inv\_avgXX \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(avgXX)}
+
+\NormalTok{uXX \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{u }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
+\NormalTok{avguXX \textless{}{-}}\StringTok{ }\NormalTok{uXX }\OperatorTok{*}\StringTok{ }\KeywordTok{nrow}\NormalTok{(X)}\OperatorTok{\^{}}\NormalTok{\{}\OperatorTok{{-}}\DecValTok{1}\NormalTok{\} }
+
+\NormalTok{vcov\_b \textless{}{-}}\StringTok{ }\NormalTok{(inv\_avgXX }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{avguXX }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{inv\_avgXX) }\OperatorTok{*}\StringTok{ }\KeywordTok{nrow}\NormalTok{(X)}\OperatorTok{\^{}}\NormalTok{\{}\OperatorTok{{-}}\DecValTok{1}\NormalTok{\}}
+\NormalTok{rse\_b \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(vcov\_b))}
+
+\CommentTok{\# homoskedasticity{-}based standard errors}
+\NormalTok{se\_b \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{vcov}\NormalTok{(LPM)))}
+
+\KeywordTok{print}\NormalTok{(}\StringTok{"The Variance of OLS"}\NormalTok{); }\KeywordTok{vcov}\NormalTok{(LPM)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The Variance of OLS"
+\end{verbatim}
+
+\begin{verbatim}
+##               (Intercept)            WB            BW            WW
+## (Intercept)  0.0006194791 -0.0006194791 -0.0006194791 -0.0006194791
+## WB          -0.0006194791  0.0024650104  0.0006194791  0.0006194791
+## BW          -0.0006194791  0.0006194791  0.0061560732  0.0006194791
+## WW          -0.0006194791  0.0006194791  0.0006194791  0.0008091697
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"The Robust variance of OLS"}\NormalTok{); vcov\_b}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The Robust variance of OLS"
+\end{verbatim}
+
+\begin{verbatim}
+##              (Intercept)           WB           BW            WW
+## (Intercept)  0.000190137 -0.000190137 -0.000190137 -0.0001901370
+## WB          -0.000190137  0.003870331  0.000190137  0.0001901370
+## BW          -0.000190137  0.000190137  0.000190137  0.0001901370
+## WW          -0.000190137  0.000190137  0.000190137  0.0004055766
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"The Robust se using White method"}\NormalTok{); rse\_b}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The Robust se using White method"
+\end{verbatim}
+
+\begin{verbatim}
+## (Intercept)          WB          BW          WW 
+##  0.01378902  0.06221198  0.01378902  0.02013893
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"The Robust t{-}value using White method"}\NormalTok{); }\KeywordTok{coef}\NormalTok{(LPM)}\OperatorTok{/}\NormalTok{se\_b}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The Robust t-value using White method"
+\end{verbatim}
+
+\begin{verbatim}
+## (Intercept)          WB          BW          WW 
+##   1.1238559   4.0523507  -0.3565103   3.0063494
+\end{verbatim}
+
+Using the package \texttt{lmtest} and \texttt{sandwich} is the most
+easiest way to calculate heteroskedasticity-robust standard errors and
+\(t\)-statistics.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(lmtest) }\CommentTok{\#use function \textasciigrave{}coeftest\textasciigrave{}}
+\KeywordTok{library}\NormalTok{(sandwich) }\CommentTok{\#use function \textasciigrave{}vcovHC\textasciigrave{}}
+\KeywordTok{coeftest}\NormalTok{(LPM, }\DataTypeTok{vcov =} \KeywordTok{vcovHC}\NormalTok{(LPM, }\DataTypeTok{type =} \StringTok{"HC0"}\NormalTok{))[, }\StringTok{"Std. Error"}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## (Intercept)          WB          BW          WW 
+##  0.01378902  0.06221198  0.01378902  0.02013893
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{coeftest}\NormalTok{(LPM, }\DataTypeTok{vcov =} \KeywordTok{vcovHC}\NormalTok{(LPM, }\DataTypeTok{type =} \StringTok{"HC0"}\NormalTok{))[, }\StringTok{"t value"}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## (Intercept)          WB          BW          WW 
+##    2.028573    3.234017   -2.028573    4.246418
+\end{verbatim}
+
+Finally, we obtain follwing results of linear probability model. We will
+discuss interpretation of results and goodness-of-fit of LPM later.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# t{-}stats}
+\NormalTok{t\_b \textless{}{-}}\StringTok{ }\KeywordTok{coef}\NormalTok{(LPM)}\OperatorTok{/}\NormalTok{se\_b }
+\NormalTok{rt\_b \textless{}{-}}\StringTok{ }\KeywordTok{coef}\NormalTok{(LPM)}\OperatorTok{/}\NormalTok{rse\_b}
+\CommentTok{\# p{-}value Pr( \textgreater{} |t|)}
+\NormalTok{p\_b \textless{}{-}}\StringTok{ }\KeywordTok{pt}\NormalTok{(}\KeywordTok{abs}\NormalTok{(t\_b), }\DataTypeTok{df =} \KeywordTok{nrow}\NormalTok{(X)}\OperatorTok{{-}}\KeywordTok{ncol}\NormalTok{(X), }\DataTypeTok{lower =} \OtherTok{FALSE}\NormalTok{)}\OperatorTok{*}\DecValTok{2}
+\NormalTok{rp\_b \textless{}{-}}\StringTok{ }\KeywordTok{pt}\NormalTok{(}\KeywordTok{abs}\NormalTok{(rt\_b), }\DataTypeTok{df =} \KeywordTok{nrow}\NormalTok{(X)}\OperatorTok{{-}}\KeywordTok{ncol}\NormalTok{(X), }\DataTypeTok{lower =} \OtherTok{FALSE}\NormalTok{)}\OperatorTok{*}\DecValTok{2}
+
+\KeywordTok{library}\NormalTok{(stargazer)}
+\KeywordTok{stargazer}\NormalTok{(}
+\NormalTok{  LPM, LPM,}
+  \DataTypeTok{se =} \KeywordTok{list}\NormalTok{(se\_b, rse\_b), }\DataTypeTok{t =} \KeywordTok{list}\NormalTok{(t\_b, rt\_b), }\DataTypeTok{p =} \KeywordTok{list}\NormalTok{(p\_b, rp\_b),}
+  \DataTypeTok{t.auto =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{p.auto =} \OtherTok{FALSE}\NormalTok{,}
+  \DataTypeTok{report =} \StringTok{"vcstp"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+  \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Standard errors"}\NormalTok{, }\StringTok{"Homoskedasticity{-}based"}\NormalTok{, }\StringTok{"Heteroskedasticity{-}robust"}\NormalTok{)),}
+  \DataTypeTok{title =} \StringTok{"Results of Linear Probability Model"}\NormalTok{,}
+  \DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{font.size =} \StringTok{"small"}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[!htbp] \centering 
+  \caption{Results of Linear Probability Model} 
+  \label{} 
+\small 
+\begin{tabular}{@{\extracolsep{5pt}}lcc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{2}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-3} 
+\\[-1.8ex] & \multicolumn{2}{c}{DeathPenalty} \\ 
+\\[-1.8ex] & (1) & (2)\\ 
+\hline \\[-1.8ex] 
+ WB & 0.201 & 0.201 \\ 
+  & (0.050) & (0.062) \\ 
+  & t = 4.052 & t = 3.234 \\ 
+  & p = 0.0001 & p = 0.002 \\ 
+  & & \\ 
+ BW & $-$0.028 & $-$0.028 \\ 
+  & (0.078) & (0.014) \\ 
+  & t = $-$0.357 & t = $-$2.029 \\ 
+  & p = 0.722 & p = 0.043 \\ 
+  & & \\ 
+ WW & 0.086 & 0.086 \\ 
+  & (0.028) & (0.020) \\ 
+  & t = 3.006 & t = 4.246 \\ 
+  & p = 0.003 & p = 0.00003 \\ 
+  & & \\ 
+ Constant & 0.028 & 0.028 \\ 
+  & (0.025) & (0.014) \\ 
+  & t = 1.124 & t = 2.029 \\ 
+  & p = 0.262 & p = 0.043 \\ 
+  & & \\ 
+\hline \\[-1.8ex] 
+Standard errors & Homoskedasticity-based & Heteroskedasticity-robust \\ 
+Observations & 674 & 674 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{2}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table}
 
 \end{document}
