@@ -37,12 +37,52 @@
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
 \hypersetup{
-  pdftitle={Econometrics II TA Session \#4},
+  pdftitle={Econometrics II TA Session \#3},
   pdfauthor={Hiroki Kato},
   hidelinks,
   pdfcreator={LaTeX via pandoc}}
 \urlstyle{same} % disable monospaced font for URLs
 \usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
 \usepackage{graphicx}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
@@ -73,33 +113,93 @@
   \usepackage{selnolig}  % disable illegal ligatures
 \fi
 
-\title{Econometrics II TA Session \#4}
+\title{Econometrics II TA Session \#3}
 \author{Hiroki Kato}
 \date{}
 
 \begin{document}
 \maketitle
 
-\hypertarget{binary-model}{%
-\section{Binary Model}\label{binary-model}}
+\hypertarget{empirical-application-of-binary-model-racial-discrimination-in-court}{%
+\section{Empirical Application of Binary Model: Racial Discrimination in
+Court}\label{empirical-application-of-binary-model-racial-discrimination-in-court}}
 
-We have data \(\{ (y_i, x_i) \}_i\) where \(x_i\) is a vector of
-explanatory variables (random variables), and \(y_i \in \{0, 1\}\) is a
-binary (dummy) variable. In the binary choice model, regression function
-is \begin{equation*}
-  \mathbb{E}[y_i | x_i] = \mathbb{P}(y_i = 1 | x_i) = G(x_i \beta).
-\end{equation*} While \(G(\cdot)\) is arbitrary function, there are
-following three major specifications in practice:
+\textbf{Brief Background}. Recently, in the U.S., anti-racism activities
+called ``Black Lives Matter'' are getting hot. These activities stems
+from the death of George Floyd, who was killed by a white police officer
+on May 25, 2020. The empirical application of binary model investigates
+whether the judgement of death penalty is based on race of defendant and
+race of victim.
+
+\noindent \textbf{Data}. The package \texttt{catdata} contains many
+built-in dataets which include categorical variables. We use the
+built-in dataset \texttt{deathpenalty} which is about the death-penalty
+judgement of defendants in cases of multiple murders in Florida between
+1976 and 1987.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# If there is no package called \textquotesingle{}catdata\textquotesingle{}, run \textquotesingle{}install.packages("catdata")\textquotesingle{}}
+\CommentTok{\# After that run following codes}
+\KeywordTok{library}\NormalTok{(catdata)}
+\KeywordTok{data}\NormalTok{(deathpenalty)}
+\NormalTok{deathpenalty}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   DeathPenalty VictimRace DefendantRace Freq
+## 1            0          0             0  139
+## 2            1          0             0    4
+## 3            0          1             0   37
+## 4            1          1             0   11
+## 5            0          0             1   16
+## 6            1          0             1    0
+## 7            0          1             1  414
+## 8            1          1             1   53
+\end{verbatim}
+
+Since this datasets is aggregated with repect to \texttt{DeathPenalty},
+\texttt{VictimRace} and \texttt{DefendantRace}, we disaggregate it. For
+example, we make 37 rows whose elements are \texttt{DeathPenalty\ =\ 0},
+\texttt{VictimRace\ =\ 1}, and \texttt{DefendantRace\ =\ 0} because
+there are 37 obaservations, i.e., \texttt{Freq\ =\ 37}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{deathpenalty}
+\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{dt[}\KeywordTok{rep}\NormalTok{(}\KeywordTok{seq\_len}\NormalTok{(}\KeywordTok{nrow}\NormalTok{(dt)), dt[,}\StringTok{"Freq"}\NormalTok{]), }\DecValTok{{-}4}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\noindent \textbf{Model}. In a binary model, a dependent (outcome)
+variable \(y_i\) takes only two values, i.e., \(y_i \in \{0, 1\}\). A
+binary variable is sometimes called a \emph{dummy} variable. In this
+application, the outcome variable is \texttt{DeathPenalty} taking 1 if
+the judgement is death penalty. There are two explanatory variables.
+First, \texttt{VictimRace} is a dummy variable taking 1 if the race of
+the victim is white. Second, \texttt{DefendantRace} is a dummy variable
+taking 1 if the race of the defendant is white. The regression function
+is \begin{equation}
+  \begin{split}
+    &\mathbb{E}[DeathP | Vrace, Drace] \\
+    =& \mathbb{P}[DeathP = 1 | Vrace, Drace]
+    = G(\beta_0 + \beta_1 Vrace + \beta_2 Drace).
+  \end{split}
+\end{equation} The function \(G(\cdot)\) is arbitrary function. In
+practice, we often use following three specifications:
 
 \begin{itemize}
 \tightlist
 \item
-  Linear probability model (LPM): \(G(x_i \beta) = x_i \beta\)
+  Linear probability model (LPM):
+  \(G(\mathbf{x}_i \beta) = \mathbf{x}_i \beta\).
 \item
-  Probit model: \(G(x_i \beta) = \Phi(x_i \beta)\) where \(\Phi(\cdot)\)
-  is the standard Gaussian cumulative function.
+  Probit model: \(G(\mathbf{x}_i \beta) = \Phi(\mathbf{x}_i \beta)\)
+  where \(\Phi(\cdot)\) is the standard Gaussian cumulative function.
 \item
-  Logit model: \(G(x_i \beta) = \frac{1}{1 + \exp(-x_i \beta)}\)
+  Logit model:
+  \(G(\mathbf{x}_i \beta) = 1/(1 + \exp(-\mathbf{x}_i \beta))\).
 \end{itemize}
 
 \end{document}
