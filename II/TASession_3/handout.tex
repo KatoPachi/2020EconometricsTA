@@ -139,24 +139,22 @@ judgement of defendants in cases of multiple murders in Florida between
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# If there is no package called \textquotesingle{}catdata\textquotesingle{}, run \textquotesingle{}install.packages("catdata")\textquotesingle{}}
-\CommentTok{\# After that run following codes}
-\KeywordTok{library}\NormalTok{(catdata)}
-\KeywordTok{data}\NormalTok{(deathpenalty)}
-\NormalTok{deathpenalty}
+\NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}
+  \DataTypeTok{file =} \StringTok{"./data/titanic.csv"}\NormalTok{, }
+  \DataTypeTok{header =} \OtherTok{TRUE}\NormalTok{,  }\DataTypeTok{sep =} \StringTok{","}\NormalTok{, }\DataTypeTok{row.names =} \OtherTok{NULL}\NormalTok{,  }\DataTypeTok{stringsAsFactors =} \OtherTok{FALSE}\NormalTok{)}
+\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"survived"}\NormalTok{, }\StringTok{"age"}\NormalTok{, }\StringTok{"fare"}\NormalTok{, }\StringTok{"sex"}\NormalTok{)]}
+\KeywordTok{head}\NormalTok{(dt)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-##   DeathPenalty VictimRace DefendantRace Freq
-## 1            0          0             0  139
-## 2            1          0             0    4
-## 3            0          1             0   37
-## 4            1          1             0   11
-## 5            0          0             1   16
-## 6            1          0             1    0
-## 7            0          1             1  414
-## 8            1          1             1   53
+##   survived   age     fare    sex
+## 1        1 29.00 211.3375 female
+## 2        1  0.92 151.5500   male
+## 3        0  2.00 151.5500 female
+## 4        0 30.00 151.5500   male
+## 5        0 25.00 151.5500 female
+## 6        1 48.00  26.5500   male
 \end{verbatim}
 
 This dataset contains three dummy variables
@@ -186,8 +184,8 @@ are \texttt{DeathPenalty\ =\ 0}, \texttt{VictimRace\ =\ 1}, and
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{deathpenalty}
-\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{dt[}\KeywordTok{rep}\NormalTok{(}\KeywordTok{seq\_len}\NormalTok{(}\KeywordTok{nrow}\NormalTok{(dt)), dt[,}\StringTok{"Freq"}\NormalTok{]), }\DecValTok{{-}4}\NormalTok{]}
+\NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{subset}\NormalTok{(dt, }\OperatorTok{!}\KeywordTok{is.na}\NormalTok{(survived)}\OperatorTok{\&!}\KeywordTok{is.na}\NormalTok{(age)}\OperatorTok{\&!}\KeywordTok{is.na}\NormalTok{(fare)}\OperatorTok{\&!}\KeywordTok{is.na}\NormalTok{(sex))}
+\NormalTok{dt}\OperatorTok{$}\NormalTok{female \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(dt}\OperatorTok{$}\NormalTok{sex }\OperatorTok{==}\StringTok{ "female"}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -210,14 +208,6 @@ the judgement is death penalty. We make three explanatory variables.
   \texttt{WW} is a dummy variable taking 1 if the race of both the
   victim and the defendant is black.
 \end{enumerate}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{dt}\OperatorTok{$}\NormalTok{WB \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(dt}\OperatorTok{$}\NormalTok{VictimRace }\OperatorTok{==}\StringTok{ }\DecValTok{1} \OperatorTok{\&}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{DefendantRace }\OperatorTok{==}\StringTok{ }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
-\NormalTok{dt}\OperatorTok{$}\NormalTok{BW \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(dt}\OperatorTok{$}\NormalTok{VictimRace }\OperatorTok{==}\StringTok{ }\DecValTok{0} \OperatorTok{\&}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{DefendantRace }\OperatorTok{==}\StringTok{ }\DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
-\NormalTok{dt}\OperatorTok{$}\NormalTok{WW \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(dt}\OperatorTok{$}\NormalTok{VictimRace }\OperatorTok{==}\StringTok{ }\DecValTok{1} \OperatorTok{\&}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{DefendantRace }\OperatorTok{==}\StringTok{ }\DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
 
 The regression function is \begin{equation*}
   \begin{split}
@@ -252,7 +242,7 @@ The linear probability model is \begin{equation*}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{DeathPenalty }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{WB }\OperatorTok{+}\StringTok{ }\NormalTok{BW }\OperatorTok{+}\StringTok{ }\NormalTok{WW}
+\NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{survived }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{female }\OperatorTok{+}\StringTok{ }\NormalTok{age }\OperatorTok{+}\StringTok{ }\NormalTok{fare}
 \NormalTok{LPM \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt)}
 \end{Highlighting}
 \end{Shaded}
@@ -270,7 +260,7 @@ standard errors using the White method. \begin{equation*}
 \begin{Highlighting}[]
 \CommentTok{\# heteroskedasticity{-}robust standard errors}
 \NormalTok{dt}\OperatorTok{$}\StringTok{"(Intercept)"}\NormalTok{ \textless{}{-}}\StringTok{ }\DecValTok{1}
-\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"(Intercept)"}\NormalTok{, }\StringTok{"WB"}\NormalTok{, }\StringTok{"BW"}\NormalTok{, }\StringTok{"WW"}\NormalTok{)])}
+\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"(Intercept)"}\NormalTok{, }\StringTok{"female"}\NormalTok{, }\StringTok{"age"}\NormalTok{, }\StringTok{"fare"}\NormalTok{)])}
 \NormalTok{u \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(LPM}\OperatorTok{$}\NormalTok{residuals}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)}
 
 \NormalTok{XX \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
@@ -295,11 +285,11 @@ standard errors using the White method. \begin{equation*}
 \end{verbatim}
 
 \begin{verbatim}
-##               (Intercept)            WB            BW            WW
-## (Intercept)  0.0006194791 -0.0006194791 -0.0006194791 -0.0006194791
-## WB          -0.0006194791  0.0024650104  0.0006194791  0.0006194791
-## BW          -0.0006194791  0.0006194791  0.0061560732  0.0006194791
-## WW          -0.0006194791  0.0006194791  0.0006194791  0.0008091697
+##               (Intercept)        female           age          fare
+## (Intercept)  9.754357e-04 -2.891381e-04 -2.333963e-05 -3.329763e-07
+## female      -2.891381e-04  7.136865e-04  2.373259e-06 -1.272800e-06
+## age         -2.333963e-05  2.373259e-06  8.026024e-07 -4.090649e-08
+## fare        -3.329763e-07 -1.272800e-06 -4.090649e-08  5.524412e-08
 \end{verbatim}
 
 \begin{Shaded}
@@ -313,11 +303,11 @@ standard errors using the White method. \begin{equation*}
 \end{verbatim}
 
 \begin{verbatim}
-##              (Intercept)           WB           BW            WW
-## (Intercept)  0.000190137 -0.000190137 -0.000190137 -0.0001901370
-## WB          -0.000190137  0.003870331  0.000190137  0.0001901370
-## BW          -0.000190137  0.000190137  0.000190137  0.0001901370
-## WW          -0.000190137  0.000190137  0.000190137  0.0004055766
+##               (Intercept)        female           age          fare
+## (Intercept)  1.133289e-03 -2.798532e-04 -2.789675e-05  2.813843e-07
+## female      -2.798532e-04  7.903766e-04  3.169092e-06 -2.401923e-06
+## age         -2.789675e-05  3.169092e-06  8.857523e-07 -3.650375e-08
+## fare         2.813843e-07 -2.401923e-06 -3.650375e-08  4.071639e-08
 \end{verbatim}
 
 \begin{Shaded}
@@ -331,13 +321,13 @@ standard errors using the White method. \begin{equation*}
 \end{verbatim}
 
 \begin{verbatim}
-## (Intercept)          WB          BW          WW 
-##  0.01378902  0.06221198  0.01378902  0.02013893
+##  (Intercept)       female          age         fare 
+## 0.0336643606 0.0281136372 0.0009411442 0.0002017830
 \end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\KeywordTok{print}\NormalTok{(}\StringTok{"The Robust t{-}value using White method"}\NormalTok{); }\KeywordTok{coef}\NormalTok{(LPM)}\OperatorTok{/}\NormalTok{se\_b}
+\KeywordTok{print}\NormalTok{(}\StringTok{"The Robust t{-}value using White method"}\NormalTok{); }\KeywordTok{coef}\NormalTok{(LPM)}\OperatorTok{/}\NormalTok{rse\_b}
 \end{Highlighting}
 \end{Shaded}
 
@@ -346,8 +336,8 @@ standard errors using the White method. \begin{equation*}
 \end{verbatim}
 
 \begin{verbatim}
-## (Intercept)          WB          BW          WW 
-##   1.1238559   4.0523507  -0.3565103   3.0063494
+## (Intercept)      female         age        fare 
+##    6.482874   18.229508   -1.884168    7.162302
 \end{verbatim}
 
 Using the package \texttt{lmtest} and \texttt{sandwich} is the most
@@ -363,8 +353,8 @@ easiest way to calculate heteroskedasticity-robust standard errors and
 \end{Shaded}
 
 \begin{verbatim}
-## (Intercept)          WB          BW          WW 
-##  0.01378902  0.06221198  0.01378902  0.02013893
+##  (Intercept)       female          age         fare 
+## 0.0336643606 0.0281136372 0.0009411442 0.0002017830
 \end{verbatim}
 
 \begin{Shaded}
@@ -374,8 +364,8 @@ easiest way to calculate heteroskedasticity-robust standard errors and
 \end{Shaded}
 
 \begin{verbatim}
-## (Intercept)          WB          BW          WW 
-##    2.028573    3.234017   -2.028573    4.246418
+## (Intercept)      female         age        fare 
+##    6.482874   18.229508   -1.884168    7.162302
 \end{verbatim}
 
 Finally, we obtain follwing results of linear probability model. We will
@@ -399,7 +389,8 @@ discuss interpretation of results and goodness-of-fit of LPM later.
   \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
     \KeywordTok{c}\NormalTok{(}\StringTok{"Standard errors"}\NormalTok{, }\StringTok{"Homoskedasticity{-}based"}\NormalTok{, }\StringTok{"Heteroskedasticity{-}robust"}\NormalTok{)),}
   \DataTypeTok{title =} \StringTok{"Results of Linear Probability Model"}\NormalTok{,}
-  \DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{font.size =} \StringTok{"small"}
+  \DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{font.size =} \StringTok{"small"}\NormalTok{,}
+  \DataTypeTok{omit.table.layout =} \StringTok{"n"}
 \NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
@@ -413,35 +404,34 @@ discuss interpretation of results and goodness-of-fit of LPM later.
 \hline \\[-1.8ex] 
  & \multicolumn{2}{c}{\textit{Dependent variable:}} \\ 
 \cline{2-3} 
-\\[-1.8ex] & \multicolumn{2}{c}{DeathPenalty} \\ 
+\\[-1.8ex] & \multicolumn{2}{c}{survived} \\ 
 \\[-1.8ex] & (1) & (2)\\ 
 \hline \\[-1.8ex] 
- WB & 0.201 & 0.201 \\ 
-  & (0.050) & (0.062) \\ 
-  & t = 4.052 & t = 3.234 \\ 
-  & p = 0.0001 & p = 0.002 \\ 
+ female & 0.512 & 0.512 \\ 
+  & (0.027) & (0.028) \\ 
+  & t = 19.184 & t = 18.230 \\ 
+  & p = 0.000 & p = 0.000 \\ 
   & & \\ 
- BW & $-$0.028 & $-$0.028 \\ 
-  & (0.078) & (0.014) \\ 
-  & t = $-$0.357 & t = $-$2.029 \\ 
-  & p = 0.722 & p = 0.043 \\ 
+ age & $-$0.002 & $-$0.002 \\ 
+  & (0.001) & (0.001) \\ 
+  & t = $-$1.979 & t = $-$1.884 \\ 
+  & p = 0.049 & p = 0.060 \\ 
   & & \\ 
- WW & 0.086 & 0.086 \\ 
-  & (0.028) & (0.020) \\ 
-  & t = 3.006 & t = 4.246 \\ 
-  & p = 0.003 & p = 0.00003 \\ 
+ fare & 0.001 & 0.001 \\ 
+  & (0.0002) & (0.0002) \\ 
+  & t = 6.149 & t = 7.162 \\ 
+  & p = 0.000 & p = 0.000 \\ 
   & & \\ 
- Constant & 0.028 & 0.028 \\ 
-  & (0.025) & (0.014) \\ 
-  & t = 1.124 & t = 2.029 \\ 
-  & p = 0.262 & p = 0.043 \\ 
+ Constant & 0.218 & 0.218 \\ 
+  & (0.031) & (0.034) \\ 
+  & t = 6.988 & t = 6.483 \\ 
+  & p = 0.000 & p = 0.000 \\ 
   & & \\ 
 \hline \\[-1.8ex] 
 Standard errors & Homoskedasticity-based & Heteroskedasticity-robust \\ 
-Observations & 674 & 674 \\ 
+Observations & 1,045 & 1,045 \\ 
 \hline 
 \hline \\[-1.8ex] 
-\textit{Note:}  & \multicolumn{2}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
 \end{tabular} 
 \end{table}
 

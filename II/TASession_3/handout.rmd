@@ -28,6 +28,7 @@ knitr::opts_chunk$set(
   echo = TRUE, 
   cache = FALSE,
   fig.pos = "h")
+knitr::opts_knit$set(root.dir = "C:/Users/katoo/Desktop/2020EconometricsTA/R")
 ```
 
 # Empirical Application of Binary Model: Racial Discrimination in Court
@@ -46,11 +47,11 @@ We use the built-in dataset `deathpenalty` which is about the death-penalty judg
 in cases of multiple murders in Florida between 1976 and 1987.
 
 ```{r data}
-# If there is no package called 'catdata', run 'install.packages("catdata")'
-# After that run following codes
-library(catdata)
-data(deathpenalty)
-deathpenalty
+dt <- read.csv(
+  file = "./data/titanic.csv", 
+  header = TRUE,  sep = ",", row.names = NULL,  stringsAsFactors = FALSE)
+dt <- dt[,c("survived", "age", "fare", "sex")]
+head(dt)
 ```
 
 This dataset contains three dummy variables
@@ -66,9 +67,9 @@ we disaggregate this dataset.
 For example, we make 37 rows whose elements are `DeathPenalty = 0`, `VictimRace = 1`, and `DefendantRace = 0` because 
 there are 37 obaservations, i.e., `Freq = 37`.
 
-```{r shape_data}
-dt <- deathpenalty
-dt <- dt[rep(seq_len(nrow(dt)), dt[,"Freq"]), -4]
+```{r preprocess}
+dt <- subset(dt, !is.na(survived)&!is.na(age)&!is.na(fare)&!is.na(sex))
+dt$female <- ifelse(dt$sex == "female", 1, 0)
 ```
 
 \noindent
@@ -82,11 +83,6 @@ We make three explanatory variables.
 2. `BW` is a dummy variable taking 1 if the race of the victim and the defendant is black and white, respectively.
 3. `WW` is a dummy variable taking 1 if the race of both the victim and the defendant is black.
 
-```{r variable}
-dt$WB <- ifelse(dt$VictimRace == 1 & dt$DefendantRace == 0, 1, 0)
-dt$BW <- ifelse(dt$VictimRace == 0 & dt$DefendantRace == 1, 1, 0)
-dt$WW <- ifelse(dt$VictimRace == 1 & dt$DefendantRace == 1, 1, 0)
-```
 The regression function is 
 \begin{equation*}
   \begin{split}
@@ -112,7 +108,7 @@ This model can be estimated using the OLS method.
 In `R`, we can use the OLS method, running `lm()` function.
 
 ```{R ols}
-model <- DeathPenalty ~ WB + BW + WW
+model <- survived ~ female + age + fare
 LPM <- lm(model, data = dt)
 ```
 However, `lm()` function does not deal with heteroskedasticity problem.
@@ -127,7 +123,7 @@ To resolve it, we need to claculate heteroskedasticity-robust standard errors us
 ```{r RobustSE}
 # heteroskedasticity-robust standard errors
 dt$"(Intercept)" <- 1
-X <- as.matrix(dt[,c("(Intercept)", "WB", "BW", "WW")])
+X <- as.matrix(dt[,c("(Intercept)", "female", "age", "fare")])
 u <- diag(LPM$residuals^2)
 
 XX <- t(X) %*% X
@@ -146,7 +142,7 @@ se_b <- sqrt(diag(vcov(LPM)))
 print("The Variance of OLS"); vcov(LPM)
 print("The Robust variance of OLS"); vcov_b
 print("The Robust se using White method"); rse_b
-print("The Robust t-value using White method"); coef(LPM)/se_b
+print("The Robust t-value using White method"); coef(LPM)/rse_b
 ```
 
 Using the package `lmtest` and `sandwich` is 
@@ -179,6 +175,7 @@ stargazer(
   add.lines = list(
     c("Standard errors", "Homoskedasticity-based", "Heteroskedasticity-robust")),
   title = "Results of Linear Probability Model",
-  type = "latex", header = FALSE, font.size = "small"
+  type = "latex", header = FALSE, font.size = "small",
+  omit.table.layout = "n"
 )
 ```
