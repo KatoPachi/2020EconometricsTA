@@ -31,64 +31,56 @@ knitr::opts_chunk$set(
 knitr::opts_knit$set(root.dir = "C:/Users/katoo/Desktop/2020EconometricsTA/R")
 ```
 
-# Empirical Application of Binary Model: Racial Discrimination in Court
+# Empirical Application of Binary Model: Titanic Survivors
 
 **Brief Background**.
-Recently, in the U.S., anti-racism activities called "Black Lives Matter" are getting hot.
-These activities stems from the death of George Floyd,
-who was killed by a white police officer on May 25, 2020.
-The empirical application of binary model investigates 
-whether the judgement of death penalty is based on race of defendant and race of victim.
+"Women and children first" is a behavioral norm,
+which women and children are saved first in a life-threatening situation.
+This code was made famous by the sinking of the Titanic in 1912.
+An empirical application investigates characteristics of survivors of Titanic
+to answer whether crews obeyed the code or not.
 
 \noindent
 **Data**.
-The package `catdata` contains many built-in dataets which include categorical variables.
-We use the built-in dataset `deathpenalty` which is about the death-penalty judgement of defendants 
-in cases of multiple murders in Florida between 1976 and 1987.
+We use an open data about Titanic survivors [^source].
+Although this dataset contains many variables,
+we use only four variables: `survived`, `age`, `fare`, and `sex`.
+We summarize descpritons of variables as follows:
+
+- `survived`: a binary variable taking 1 if a passenger survived.
+- `age`: a continuous variable representing passeger's age.
+- `fare`: a continuous variable representing how much passeger paid.
+- `sex`: a string variable representing passenger's sex.
+
+Using `sex`, we will make a binary variable, called `female`, taking 1 if passeger is female.
+Intead of `sex`, we use `female` variable in regression.
+
+[^source]: data source: <http://biostat.mc.vanderbilt.edu/DataSets>.
 
 ```{r data}
 dt <- read.csv(
   file = "./data/titanic.csv", 
   header = TRUE,  sep = ",", row.names = NULL,  stringsAsFactors = FALSE)
-dt <- dt[,c("survived", "age", "fare", "sex")]
-head(dt)
-```
 
-This dataset contains three dummy variables
-
-1. `DeathPenalty` is a dummy variable taking 1 if the judgement is death penalty.
-2. `VictimRace` is a dummy variable taking 1 if the race of the victim is white.
-3. `DefendantRace` is a dummy variable taking 1 if the race of the defendant is white.
-
-This dataset aggregates observations with repect to `DeathPenalty`, `VictimRace` and `DefendantRace`.
-The variable `Freq` represents the number of observations.
-Since it is inconvinient for us to use the original data for estimation,
-we disaggregate this dataset.
-For example, we make 37 rows whose elements are `DeathPenalty = 0`, `VictimRace = 1`, and `DefendantRace = 0` because 
-there are 37 obaservations, i.e., `Freq = 37`.
-
-```{r preprocess}
-dt <- subset(dt, !is.na(survived)&!is.na(age)&!is.na(fare)&!is.na(sex))
 dt$female <- ifelse(dt$sex == "female", 1, 0)
+dt <- subset(dt, !is.na(survived)&!is.na(age)&!is.na(fare)&!is.na(female))
+
+dt <- dt[,c("survived", "age", "fare", "female")]
+head(dt)
 ```
 
 \noindent
 **Model**.
 In a binary model, a dependent (outcome) variable $y_i$ takes only two values, i.e., $y_i \in \{0, 1\}$.
 A binary variable is sometimes called a *dummy* variable.
-In this application, the outcome variable is `DeathPenalty` taking 1 if the judgement is death penalty.
-We make three explanatory variables.
-
-1. `WB` is a dummy variable taking 1 if the race of the victim and the defendant is white and black, respectively.
-2. `BW` is a dummy variable taking 1 if the race of the victim and the defendant is black and white, respectively.
-3. `WW` is a dummy variable taking 1 if the race of both the victim and the defendant is black.
-
+In this application, the outcome variable is `survived`.
+Explanatory variables are `female`, `age`, and `fare`.
 The regression function is 
 \begin{equation*}
   \begin{split}
-    &\mathbb{E}[DeathPenalty | WB, BW, WW] \\
-    =& \mathbb{P}[DeathPenalty = 1 | WB, BW, WW]
-    = G(\beta_0 + \beta_1 WB + \beta_2 BW + \beta3 WW).
+    &\mathbb{E}[survived | female, age, fare] \\
+    =& \mathbb{P}[survived = 1 | female, age, fare]
+    = G(\beta_0 + \beta_1 female + \beta_2 age + \beta3 fare).
   \end{split}
 \end{equation*}
 The function $G(\cdot)$ is arbitrary function. In practice, we often use following three specifications:
@@ -99,10 +91,10 @@ The function $G(\cdot)$ is arbitrary function. In practice, we often use followi
 
 ## Linear Probability Model
 
-The linear probability model is 
+The linear probability model specifys that $G(a)$ is linear in $a$, that is, 
 \begin{equation*}
-  \mathbb{P}[DeathPenalty = 1 | WB, BW, WW]
-  = \beta_0 + \beta_1 WB + \beta_2 BW + \beta3 WW
+  \mathbb{P}[survived = 1 | female, age, fare]
+  = \beta_0 + \beta_1 female + \beta_2 age + \beta3 fare.
 \end{equation*}
 This model can be estimated using the OLS method.
 In `R`, we can use the OLS method, running `lm()` function.
