@@ -365,11 +365,12 @@ discuss interpretation of results and goodness-of-fit of LPM later.
   \DataTypeTok{title =} \StringTok{"Results of Linear Probability Model"}\NormalTok{,}
   \DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{font.size =} \StringTok{"small"}\NormalTok{,}
   \DataTypeTok{omit.table.layout =} \StringTok{"n"}
+  \DataTypeTok{table.placement =} \StringTok{"h"}
 \NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{table}[!htbp] \centering 
+\begin{table}[h] \centering 
   \caption{Results of Linear Probability Model} 
   \label{} 
 \small 
@@ -408,5 +409,36 @@ Observations & 1,045 & 1,045 \\
 \hline \\[-1.8ex] 
 \end{tabular} 
 \end{table}
+
+\hypertarget{probit-and-logit-model}{%
+\subsection{Probit and Logit Model}\label{probit-and-logit-model}}
+
+Unlike LPM, the probit and logit model must be estimated using the ML
+method. The probability of observing \(y_i\) is \begin{equation*}
+  p_{\beta}(y_i|\mathbf{x}_i)  
+  = \mathbb{P}(y_i = 1 | x_i)^{y_i} [1 - \mathbb{P}(y_i = 1 | x_i)]^{1-y_i}
+  = G(\mathbf{x}_i \beta)^{y_i} (1 - G(\mathbf{x}_i \beta))^{1-y_i}.
+\end{equation*} Taking logalithm yields \begin{equation*}
+  \log p_{\beta}(y_i|\mathbf{x}_i) = y_i G(\mathbf{x}_i \beta) + (1 - y_i)(1 - G(\mathbf{x}_i \beta)).
+\end{equation*} The log-likelihood is \begin{equation*}
+  M_n(\beta) = \sum_{i=1}^n \log p_{\beta}(y_i|\mathbf{x}_i).
+\end{equation*}
+
+The MLE \(\hat{\beta}\) holds that the score, which is the first-order
+derivatives with respect to \(\beta\), is equal to 0. That is
+\(\nabla_{\beta} M_n(\hat{\beta}) = 0\). For both logit and probit
+model, the Hessian matrix, \(\nabla^2_{\beta\beta'} M_n(\beta)\), is
+always negative definite. This implies that log-likelihood function
+based on both models is grobally concave, and ensures that the MLE
+maximizes the log-likelihood function. The first-order condition of the
+probit model is \begin{equation*}
+  \nabla_{\beta} M_n(\hat{\beta}) 
+  = \sum_{i = 1}^n \left( y_i - \Phi(\mathbf{x}_i \hat{\beta}) \right) 
+  \frac{\phi(\mathbf{x}_i \hat{\beta})}{\Phi(\mathbf{x}_i \hat{\beta})(1 - \phi(\mathbf{x}_i \hat{\beta}))} = 0.
+\end{equation*} The first-order condition of the logit model is
+\begin{equation*}
+  \nabla_{\beta} M_n(\hat{\beta}) 
+  = \sum_{i = 1}^n \left( y_i - G(\mathbf{x}_i \hat{\beta}) \right) \mathbf{x}'_i = 0.
+\end{equation*}
 
 \end{document}
