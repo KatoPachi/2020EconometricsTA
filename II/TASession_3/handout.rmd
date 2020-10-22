@@ -80,7 +80,7 @@ The regression function is
   \begin{split}
     &\mathbb{E}[survived | female, age, fare] \\
     =& \mathbb{P}[survived = 1 | female, age, fare]
-    = G(\beta_0 + \beta_1 female + \beta_2 age + \beta3 fare).
+    = G(\beta_0 + \beta_1 female + \beta_2 age + \beta_3 fare).
   \end{split}
 \end{equation*}
 The function $G(\cdot)$ is arbitrary function. In practice, we often use following three specifications:
@@ -94,13 +94,13 @@ The function $G(\cdot)$ is arbitrary function. In practice, we often use followi
 The linear probability model specifys that $G(a)$ is linear in $a$, that is, 
 \begin{equation*}
   \mathbb{P}[survived = 1 | female, age, fare]
-  = \beta_0 + \beta_1 female + \beta_2 age + \beta3 fare.
+  = \beta_0 + \beta_1 female + \beta_2 age + \beta_3 fare.
 \end{equation*}
 This model can be estimated using the OLS method.
 In `R`, we can use the OLS method, running `lm()` function.
 
 ```{R ols}
-model <- survived ~ female + age + fare
+model <- survived ~ factor(female) + age + fare
 LPM <- lm(model, data = dt)
 ```
 However, `lm()` function does not deal with heteroskedasticity problem.
@@ -127,6 +127,9 @@ avguXX <- uXX * nrow(X)^{-1}
 
 vcov_b <- (inv_avgXX %*% avguXX %*% inv_avgXX) * nrow(X)^{-1}
 rse_b <- sqrt(diag(vcov_b))
+
+label <- c("(Intercept)", "factor(female)1", "age", "fare")
+names(rse_b) <- label
 
 # homoskedasticity-based standard errors
 se_b <- sqrt(diag(vcov(LPM)))
@@ -164,6 +167,7 @@ stargazer(
   se = list(se_b, rse_b), t = list(t_b, rt_b), p = list(p_b, rp_b),
   t.auto = FALSE, p.auto = FALSE,
   report = "vcstp", keep.stat = c("n"),
+  covariate.labels = c("Female = 1"),
   add.lines = list(
     c("Standard errors", "Homoskedasticity-based", "Heteroskedasticity-robust")),
   title = "Results of Linear Probability Model", label = "LPM",
@@ -211,7 +215,7 @@ Since it is hard for us to solve this condition analytically,
 we obtain estimators using numerical procedure. 
 
 In `R`, the function `nlm()` provides the Newton-Raphson algorithm to minimize the function [^optim].
-To run this function, we need to define the log-likelihood function (`LogLik`) beforehand.
+To run this function, we need to define the log-likelihood function (`LnLik`) beforehand.
 Moreover, since we need to give initial values in augments, we use coefficients estimated by OLS.
 Alternatively, we often use `glm()` function.
 Using this function, we do not need to define the log-likelihood function and initial values.
@@ -246,7 +250,7 @@ LnLik <- function(b, model = c("probit", "logit")) {
 init <- c(0.218, 0.512, -0.002, 0.001)
 probit <- nlm(LnLik, init, model = "probit", hessian = TRUE)
 
-label <- c("(Intercept)", "female", "age", "fare")
+label <- c("(Intercept)", "factor(female)1", "age", "fare")
 names(probit$estimate) <- label
 colnames(probit$hessian) <- label; rownames(probit$hessian) <- label
 
@@ -255,7 +259,7 @@ vcov_probit <- solve(probit$hessian); se_probit <- sqrt(diag(vcov_probit))
 LL_probit <- -probit$minimum
 
 #glm function
-model <- survived ~ female + age + fare
+model <- survived ~ factor(female) + age + fare
 probit_glm <- glm(model, data = dt, family = binomial("probit"))
 
 #result
@@ -273,6 +277,7 @@ To compare result, we also use `glm()` function.
 #Newton-Raphson
 logit <- nlm(LnLik, init, model = "logit", hessian = TRUE)
 
+label <- c("(Intercept)", "factor(female)1", "age", "fare")
 names(logit$estimate) <- label
 colnames(logit$hessian) <- label; rownames(logit$hessian) <- label
 
@@ -311,11 +316,212 @@ stargazer(
   t = list(z_probit, z_logit), p = list(p_probit, p_logit),
   t.auto = FALSE, p.auto = FALSE,
   report = "vcstp", keep.stat = c("n"),
+  covariate.labels = c("Female = 1"),
   add.lines = list(
     c("Log-Likelihood", round(LL_probit, 3), round(LL_logit, 3))),
   title = "Results of Probit and Logit model",
   label = "probit_logit",
   type = "latex", header = FALSE, font.size = "small",
   table.placement = "h", omit.table.layout = "n"
+)
+```
+
+## Interpretaions
+
+In the linear probability model,
+interepretations of coefficients are straight-forward.
+The coefficient $\beta_1$ is the change in survival probability given a one-unit increase in continuous variable $x$.
+In the case of discrete variable, the coefficient $\beta_1$ is the difference in survival probability between two groups.
+However, when we use the probit or logit model,
+it is hard for us to interepret results
+because the partial effect is not constant across other covariates.
+As an illustration, the partial effect of continuous variable `age` is
+\begin{equation*}
+  \partial_{age} \mathbb{P}[survived = 1 | female, age, fare] =
+  \begin{cases}
+    \beta_2  &\text{if LPM}  \\
+    \phi(\mathbf{x}_i \beta) \beta_2  &\text{if Probit}  \\
+    \frac{\exp(-\mathbf{x}_i \beta)}{(1 + \exp(-\mathbf{x}_i \beta))^2} \beta_2 &\text{if Logit}
+  \end{cases}.
+\end{equation*} 
+The partial effect of dummy variable `female` is 
+\begin{equation*}
+  \begin{split}
+  &\mathbb{P}[survived = 1 | female = 1, age, fare] - \mathbb{P}[survived = 1 | female = 0, age, fare] \\
+  =& 
+  \begin{cases}
+    \beta_1 &\text{if LPM}  \\
+    \Phi(\beta_0 + \beta_1 + \beta_2 age + \beta_3 fare) - \Phi(\beta_0 + \beta_1 + \beta_2 age + \beta_3 fare)  &\text{if Probit}  \\
+    \Lambda(\beta_0 + \beta_1 + \beta_2 age + \beta_3 fare) - \Lambda(\beta_0 + \beta_1 + \beta_2 age + \beta_3 fare)  &\text{if Logit}
+  \end{cases}
+  \end{split},
+\end{equation*}
+where $\Lambda(a) = 1/(1 + \exp(-a))$. 
+
+The first solution is to compute the partial effect at interesting values of $\mathbf{x}_i$.
+We often use the sample average of covariates ("average" person) to plugin in the partial effect formula.
+This is sometimes called *marginal effect at means*.
+However, since it is unclear what the sample average of dummy variable represents,
+the marginal effect at means may be hard to explain.
+
+The second solution is to compute the average value of partial effect across the population, that is,
+\begin{equation*}
+  \partial_{x_{ij}} \mathbb{P}[y_i = 1 | \mathbf{x}_i] = \beta_j \mathbb{E}[g(\mathbf{x}_i \beta)],
+\end{equation*}
+or, in the case of discrete variable,
+\begin{equation*}
+  \mathbb{E}[ \mathbb{P}[y_i = 1 | x_{ij} = 1, \mathbf{x}_{i,-k}] - \mathbb{P}[y_i = 1 | x_{ij} = 0, \mathbf{x}_{i,-k}] ].
+\end{equation*}
+This is called *average marginal effect* (AME).
+When we use dummy variables as explanatory variables, we should use this solution.
+
+Standard errors of average marginal effect can be obtained by the Delta method.
+Let $h_{ij}(\hat{\beta})$ be marginal (partial) effect of the variable $x_j$ for unit $i$.
+Then, AME is $h_j(\hat{\beta}) = \mathbb{E}[h_{ij}(\hat{\beta})]$.
+The Delta method implies that 
+$h_j(\hat{\beta}) \overset{d}{\to} N(h_j(\beta), \nabla_{\beta} h_j(\hat{\beta}) V(\beta) (\nabla_{\beta} h_j(\hat{\beta}))')$,
+where $V$ is variance of $\hat{\beta}$, and 
+\begin{align*}
+  \nabla_{\beta} h_j(\hat{\beta}) =
+  \begin{pmatrix}
+    \frac{\partial h_j(\hat{\beta})}{\partial \beta_1} & \cdots & \frac{\partial h_j(\hat{\beta})}{\partial \beta_k}
+  \end{pmatrix}
+\end{align*}
+When you use the `nlm` function to obtaine MLE,
+we need to calculate standard errors manually.
+The `DeltaAME` function is a function returing average marginal effect and its standard errors.
+
+```{r AME}
+DeltaAME <- function(b, X, vcov, jbin = NULL, model = c("probit", "logit")) {
+  Xb <- numeric(nrow(X))
+  for (i in 1:length(b)) {
+     Xb <- Xb + b[i] * X[,i]
+  }
+
+  if (model == "probit") {
+    dens <- dnorm(Xb)
+    grad <- -Xb * dens
+  } else {
+    dens <- exp(-Xb)/(1 + exp(-Xb))^2
+    grad <- dens * (-1+2*exp(-Xb)/(1+exp(-Xb)))
+  }
+
+  ame <- mean(dens) * b
+  if (!is.null(jbin)) {
+    for (i in jbin) {
+      val1 <- X[,-i] %*% matrix(b[-i], ncol = 1) + b[i]
+      val0 <- X[,-i] %*% matrix(b[-i], ncol = 1)
+      if (model == "probit") {
+        amed <- mean(pnorm(val1) - pnorm(val0))
+      } else { 
+        amed <- mean((1/(1 + exp(-val1))) - (1/(1 + exp(-val0))))
+      }
+      ame[i] <- amed
+    }
+  }
+
+  e <- NULL
+  for (i in 1:length(b)) {
+    e <- c(e, rep(mean(X[,i] * grad), length(b)))
+  }
+
+  Jacob <- matrix(e, nrow = length(b), ncol = length(b))
+
+  for (i in 1:nrow(Jacob)) {
+    Jacob[i,] <- b[i] * Jacob[i,]
+  }
+  diag(Jacob) <- diag(Jacob) + rep(mean(dens), length(b))
+
+  if (!is.null(jbin)) {
+    for (i in jbin) {
+      val1 <- X[,-i] %*% matrix(b[-i], ncol = 1) + b[i]
+      val0 <- X[,-i] %*% matrix(b[-i], ncol = 1)
+      de <- NULL
+      if (model == "probit") {
+        for (j in 1:length(b)) {
+           if (j != i) {
+            dep <- X[,j] * (dnorm(val1) - dnorm(val0))
+            de <- c(de, mean(dep))
+           } else {
+            dep <- dnorm(val1)
+            de <- c(de, mean(dep))
+           }
+        }        
+      } else {
+        for (j in 1:length(b)) {
+           if (j != i) {
+            dep <- X[,j] * 
+              ((exp(-val1)/(1 + exp(-val1))^2) - (exp(-val0)/(1 + exp(-val0))^2))
+            de <- c(de, mean(dep))
+           } else {
+            dep <- exp(-val1)/(1 + exp(-val1))^2
+            de <- c(de, mean(dep))
+           }
+        } 
+      }
+      Jacob[i,] <- de
+    }
+  }
+
+  label <- names(b)
+  colnames(Jacob) <- label; rownames(Jacob) <- label
+
+  vcov_ame <- Jacob %*% vcov %*% t(Jacob)
+  se_ame <- sqrt(diag(vcov_ame))
+  z_ame <- ame/se_ame
+  p_ame <- pnorm(abs(z_ame), lower = FALSE)*2
+
+  return(list(AME = ame[-1], SE = se_ame[-1], zval = z_ame[-1], pval = p_ame[-1]))
+}
+
+X <- as.matrix(dt[,c("(Intercept)", "female", "age", "fare")])
+ame_probit <- DeltaAME(b_probit, X, vcov_probit, jbin = 2, model = "probit")
+ame_logit <- DeltaAME(b_logit, X, vcov_logit, jbin = 2, model = "logit")
+
+print("AME of probit estimates"); ame_probit$AME
+print("AME of logit estimates"); ame_logit$AME 
+print("SE of AME of probit estimates"); ame_probit$SE 
+print("SE of AME of logit estimates"); ame_logit$SE
+```
+
+When we use the `glm` function,
+we can use the function `margins` in the library `margins`
+to obtain the average marginal effect.
+
+```{r Margin}
+library(margins)
+summary(margins(probit_glm))
+summary(margins(logit_glm))
+```
+
+Table \ref{titanic} shows results of linear probability model,
+probit model, and logit model.
+In the probit and logit model, 
+coefficients report average marginal effects,
+$t$-statistics report $z$-statistics which follows the standard normal distribution.
+
+All specifications shows that 
+the survival probability of female is about 50\% point higher than of male, 
+which is statistically significant.
+Moreover, the survival probability is decreasing in age, 
+which implies children are more likely to survive.
+However, the size of coefficient is small.
+Overall, crews obeyed the code of "women and children first",
+but the survival probability of children is not largely different from of adult.
+
+```{r BinaryModelResult, results = "asis"}
+stargazer(
+  LPM, probit_glm, logit_glm,
+  coef = list(coef(LPM), ame_probit$AME, ame_logit$AME),
+  se = list(rse_b, ame_probit$SE, ame_logit$SE),
+  t = list(rt_b, ame_probit$zval, ame_logit$zval),
+  p = list(rp_b, ame_probit$pval, ame_logit$pval),
+  t.auto = FALSE, p.auto = FALSE,
+  omit = c("Constant"), covariate.labels = c("Female = 1"),
+  report = "vcstp", keep.stat = c("n"),
+  omit.table.layout = "n", table.placement = "t",
+  title = "Titanic Survivors: LPM, Probit (AME), and Logit (AME)",
+  label = "titanic",
+  type = "latex", header = FALSE
 )
 ```
