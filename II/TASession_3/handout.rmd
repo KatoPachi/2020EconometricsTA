@@ -147,7 +147,7 @@ coeftest(LPM, vcov = vcovHC(LPM, type = "HC0"))[, "Std. Error"]
 coeftest(LPM, vcov = vcovHC(LPM, type = "HC0"))[, "t value"]
 ```
 
-Finally, we obtain follwing results of linear probability model.
+Finally, we summarize results of linear probability model in table \ref{LPM}.
 We will discuss interpretation of results and goodness-of-fit of LPM later.
 
 ```{r LPM_result, results = "asis"}
@@ -166,10 +166,9 @@ stargazer(
   report = "vcstp", keep.stat = c("n"),
   add.lines = list(
     c("Standard errors", "Homoskedasticity-based", "Heteroskedasticity-robust")),
-  title = "Results of Linear Probability Model",
+  title = "Results of Linear Probability Model", label = "LPM",
   type = "latex", header = FALSE, font.size = "small",
-  omit.table.layout = "n"
-  table.placement = "h"
+  omit.table.layout = "n", table.placement = "h"
 )
 ```
 
@@ -184,7 +183,7 @@ The probability of observing $y_i$ is
 \end{equation*}
 Taking logalithm yields
 \begin{equation*}
-  \log p_{\beta}(y_i|\mathbf{x}_i) = y_i G(\mathbf{x}_i \beta) + (1 - y_i)(1 - G(\mathbf{x}_i \beta)).
+  \log p_{\beta}(y_i|\mathbf{x}_i) = y_i \log(G(\mathbf{x}_i \beta)) + (1 - y_i)\log(1 - G(\mathbf{x}_i \beta)).
 \end{equation*}
 The log-likelihood is 
 \begin{equation*}
@@ -211,3 +210,112 @@ The first-order condition of the logit model is
 Since it is hard for us to solve this condition analytically,
 we obtain estimators using numerical procedure. 
 
+In `R`, the function `nlm()` provides the Newton-Raphson algorithm to minimize the function [^optim].
+To run this function, we need to define the log-likelihood function (`LogLik`) beforehand.
+Moreover, since we need to give initial values in augments, we use coefficients estimated by OLS.
+Alternatively, we often use `glm()` function.
+Using this function, we do not need to define the log-likelihood function and initial values.
+Since estimates of `glm()` are approximate to estiamtes of `nlm()`,
+we can use this function fairly.
+In this application, we use `nlm` function to minimize the log-likelihood function.
+
+[^optim]: `optim()` function is an another way to minimize the function. Especially, the function `optim(method = "BFGS")` provides the Quasi-Newton algorithm which carries on the spirit of Newton method.
+
+```{r probit}
+Y <- dt$survived
+female <- dt$female; age <- dt$age; fare <- dt$fare
+
+# log-likelihood
+LnLik <- function(b, model = c("probit", "logit")) {
+
+  xb <- b[1]+ b[2]*female + b[3]*age + b[4]*fare
+
+  if (model == "probit") {
+    L <- pnorm(xb)
+  } else {
+    L <- 1/(1 + exp(-xb))
+  }
+
+  LL_i <- Y * log(L) + (1 - Y) * log(1 - L)
+  LL <- -sum(LL_i)
+
+  return(LL)
+}
+
+#Newton-Raphson
+init <- c(0.218, 0.512, -0.002, 0.001)
+probit <- nlm(LnLik, init, model = "probit", hessian = TRUE)
+
+label <- c("(Intercept)", "female", "age", "fare")
+names(probit$estimate) <- label
+colnames(probit$hessian) <- label; rownames(probit$hessian) <- label
+
+b_probit <- probit$estimate
+vcov_probit <- solve(probit$hessian); se_probit <- sqrt(diag(vcov_probit))
+LL_probit <- -probit$minimum
+
+#glm function
+model <- survived ~ female + age + fare
+probit_glm <- glm(model, data = dt, family = binomial("probit"))
+
+#result
+print("The MLE of probit model using nlm"); b_probit
+print("The Variance of probit model using nlm"); vcov_probit
+print("The se of probit model using nlm"); se_probit
+print("The coefficients of probit using glm"); coef(probit_glm)
+print("The se of probit using glm"); sqrt(diag(vcov(probit_glm)))
+```
+
+Using `LogLik`, we can also estimate logit model by Newton-Raphson algorithm.
+To compare result, we also use `glm()` function.
+
+```{r logit}
+#Newton-Raphson
+logit <- nlm(LnLik, init, model = "logit", hessian = TRUE)
+
+names(logit$estimate) <- label
+colnames(logit$hessian) <- label; rownames(logit$hessian) <- label
+
+b_logit <- logit$estimate
+vcov_logit <- solve(logit$hessian); se_logit <- sqrt(diag(vcov_logit))
+LL_logit <- -logit$minimum
+
+#glm function
+logit_glm <- glm(model, data = dt, family = binomial("logit"))
+
+#result
+print("The MLE of logit model"); b_logit
+print("The Variance of logit model"); vcov_logit
+print("The se of logit model"); se_logit
+print("The coefficients of logit using glm"); coef(logit_glm)
+print("The se of logit using glm"); sqrt(diag(vcov(logit_glm)))
+```
+
+As a result, table \ref{probit_logit} summarizes results of probit model and logit model.
+$t$-statistics represents $z$-value which follows the standard normal distribution.
+Standard errors are in parentheses.
+We will discuss interpretation of results and goodness-of-fit later.
+
+```{r summary_probit_logit, results = "asis"}
+# z-value
+z_probit <- b_probit/se_probit
+z_logit <- b_logit/se_logit
+
+# Pr(>|z|)
+p_probit <- pnorm(abs(z_probit), lower = FALSE)*2
+p_logit <- pnorm(abs(z_logit), lower = FALSE)*2
+
+stargazer(
+  probit_glm, logit_glm,
+  coef = list(b_probit, b_logit), se = list(se_probit, se_logit),
+  t = list(z_probit, z_logit), p = list(p_probit, p_logit),
+  t.auto = FALSE, p.auto = FALSE,
+  report = "vcstp", keep.stat = c("n"),
+  add.lines = list(
+    c("Log-Likelihood", round(LL_probit, 3), round(LL_logit, 3))),
+  title = "Results of Probit and Logit model",
+  label = "probit_logit",
+  type = "latex", header = FALSE, font.size = "small",
+  table.placement = "h", omit.table.layout = "n"
+)
+```
