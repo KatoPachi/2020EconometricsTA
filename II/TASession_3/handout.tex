@@ -184,7 +184,7 @@ application, the outcome variable is \texttt{survived}. Explanatory
 variables are \texttt{female}, \texttt{age}, and \texttt{fare}. The
 regression function is \begin{equation*}
   \begin{split}
-    &\mathbb{E}[survived | female, age, fare] \\
+    &E[survived | female, age, fare] \\
     =& \mathbb{P}[survived = 1 | female, age, fare]
     = G(\beta_0 + \beta_1 female + \beta_2 age + \beta_3 fare).
   \end{split}
@@ -446,6 +446,18 @@ probit model is \begin{equation*}
 \end{equation*} Since it is hard for us to solve this condition
 analytically, we obtain estimators using numerical procedure.
 
+The asymptotic distribution of \(\hat{\beta}\) is
+\(\hat{\beta} \overset{d}{\to} N(\beta, \Sigma_{\beta})\) where
+\begin{equation*}
+  \Sigma_{\beta} = - \left( \sum_i E[E[ \nabla^2_{\beta\beta'} \log p_{\beta}(y_i | \mathbf{x}_i) | \mathbf{x}_i ]] \right)^{-1}.
+\end{equation*} In practice, we replace
+\(E[E[ \nabla^2_{\beta\beta'} \log p_{\beta}(y_i | \mathbf{x}_i) | \mathbf{x}_i ]]\)
+by \begin{equation*}
+  \frac{1}{n} \sum_i \nabla^2_{\beta\beta'} \log p_{\hat{\beta}}(y_i | \mathbf{x}_i),
+\end{equation*} that is, \begin{equation*}
+  \hat{\Sigma}_{\beta} = \left( \sum_i \nabla^2_{\beta\beta'} (-\log p_{\hat{\beta}}(y_i | \mathbf{x}_i)) \right)^{-1}.
+\end{equation*}
+
 In \texttt{R}, the function \texttt{nlm()} provides the Newton-Raphson
 algorithm to minimize the function \footnote{\texttt{optim()} function
   is an another way to minimize the function. Especially, the function
@@ -457,7 +469,7 @@ we use coefficients estimated by OLS. Alternatively, we often use
 \texttt{glm()} function. Using this function, we do not need to define
 the log-likelihood function and initial values. Since estimates of
 \texttt{glm()} are approximate to estiamtes of \texttt{nlm()}, we can
-use this function fairly. In this application, we use \texttt{nlm}
+use this command safely. In this application, we use \texttt{nlm}
 function to minimize the log-likelihood function.
 
 \begin{Shaded}
@@ -785,9 +797,9 @@ marginal effect at means may be hard to explain.
 
 The second solution is to compute the average value of partial effect
 across the population, that is, \begin{equation*}
-  \partial_{x_{ij}} \mathbb{P}[y_i = 1 | \mathbf{x}_i] = \beta_j \mathbb{E}[g(\mathbf{x}_i \beta)],
+  \partial_{x_{ij}} \mathbb{P}[y_i = 1 | \mathbf{x}_i] = \beta_j E[g(\mathbf{x}_i \beta)],
 \end{equation*} or, in the case of discrete variable, \begin{equation*}
-  \mathbb{E}[ \mathbb{P}[y_i = 1 | x_{ij} = 1, \mathbf{x}_{i,-k}] - \mathbb{P}[y_i = 1 | x_{ij} = 0, \mathbf{x}_{i,-k}] ].
+  E[ \mathbb{P}[y_i = 1 | x_{ij} = 1, \mathbf{x}_{i,-k}] - \mathbb{P}[y_i = 1 | x_{ij} = 0, \mathbf{x}_{i,-k}] ].
 \end{equation*} This is called \emph{average marginal effect} (AME).
 When we use dummy variables as explanatory variables, we should use this
 solution.
@@ -795,10 +807,10 @@ solution.
 Standard errors of average marginal effect can be obtained by the Delta
 method. Let \(h_{ij}(\hat{\beta})\) be marginal (partial) effect of the
 variable \(x_j\) for unit \(i\). Then, AME is
-\(h_j(\hat{\beta}) = \mathbb{E}[h_{ij}(\hat{\beta})]\). The Delta method
-implies that
+\(h_j(\hat{\beta}) = E[h_{ij}(\hat{\beta})]\). The Delta method implies
+that
 \(h_j(\hat{\beta}) \overset{d}{\to} N(h_j(\beta), \nabla_{\beta} h_j(\hat{\beta}) V(\beta) (\nabla_{\beta} h_j(\hat{\beta}))')\),
-where \(V\) is variance of \(\hat{\beta}\), and \begin{align*}
+where \(V\) is variance of \(\beta\), and \begin{align*}
   \nabla_{\beta} h_j(\hat{\beta}) =
   \begin{pmatrix}
     \frac{\partial h_j(\hat{\beta})}{\partial \beta_1} & \cdots & \frac{\partial h_j(\hat{\beta})}{\partial \beta_k}
