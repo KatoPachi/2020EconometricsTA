@@ -1295,7 +1295,7 @@ model, earners in the top 25 percentile live in 4.2\% higher floor than
 others. In the ordered logit model, earners in the top 25 percentile
 live in 5.9\% higher floor than others. Note that, in this application,
 model fitness seems to be bad because the percent correctly predicted is
-low.
+low (16.7\%).
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1348,6 +1348,156 @@ Cutoff value at 3|4 &  & 0.97 & 1.574 \\
 Quantitative Effect of Top25 &  & 4.17 & 5.488 \\ 
 Percent correctly predicted &  & 0.167 & 0.167 \\ 
 Observations & 1,612 & 1,612 & 1,612 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+\hypertarget{empirical-application-of-multinomial-model-gender-discremination-in-job-position}{%
+\section{Empirical Application of Multinomial Model: Gender
+Discremination in Job
+Position}\label{empirical-application-of-multinomial-model-gender-discremination-in-job-position}}
+
+\textbf{Brief Background}. Recently, many developed countries move
+toward women's social advancement, for example, an increase of number of
+board member. In this application, we explore whether the U.S. bank
+hindered the entrance of female into the workhorse.
+
+\textbf{Data}. We use a built-in dataset called \texttt{BankWages} in
+the library \texttt{AER}. This dataset contains choice of three job
+position: \texttt{custodial}, \texttt{admin} and \texttt{manage}. The
+rank of position is
+\texttt{custodial\ \textless{}\ admin\ \textless{}\ manage}. Other
+variables are \texttt{education}, \texttt{gender}, and
+\texttt{minority}. We use former two variables as explanatory variables.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(AER)}
+\KeywordTok{data}\NormalTok{(BankWages)}
+\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{BankWages}
+\NormalTok{dt}\OperatorTok{$}\NormalTok{job \textless{}{-}}\StringTok{ }\KeywordTok{as.character}\NormalTok{(dt}\OperatorTok{$}\NormalTok{job)}
+\NormalTok{dt}\OperatorTok{$}\NormalTok{job \textless{}{-}}\StringTok{ }\KeywordTok{factor}\NormalTok{(dt}\OperatorTok{$}\NormalTok{job, }\DataTypeTok{levels =} \KeywordTok{c}\NormalTok{(}\StringTok{"admin"}\NormalTok{, }\StringTok{"custodial"}\NormalTok{, }\StringTok{"manage"}\NormalTok{))}
+\KeywordTok{head}\NormalTok{(BankWages, }\DecValTok{5}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      job education gender minority
+## 1 manage        15   male       no
+## 2  admin        16   male       no
+## 3  admin        12 female       no
+## 4  admin         8 female       no
+## 5  admin        15   male       no
+\end{verbatim}
+
+\textbf{Model}. The outcome variable \(y_i\) takes three values
+\(\{0, 1, 2\}\). Then, the multinomial logit model has the following
+response probabilities \begin{equation*}
+  P_{ij} = \mathbb{P}(y_i = j | \mathbf{x}_i) =
+  \begin{cases}
+    \frac{\exp(\mathbf{x}_i \beta_j)}{1 + \sum_{k=1}^2 \exp(\mathbf{x}_i \beta_k)} &\text{if}\quad j = 1, 2  \\
+    \frac{1}{1 + \sum_{k=1}^2 \exp(\mathbf{x}_i \beta_k)}  &\text{if}\quad j = 0
+  \end{cases}.
+\end{equation*} The log-likelihood function is \begin{equation*}
+  M_n(\beta_1, \beta_2) = \sum_{i=1}^n \sum_{j=0}^3 d_{ij} \log (P_{ij}),
+\end{equation*} where \(d_{ij}\) is a dummy variable taking 1 if
+\(y_i = j\).
+
+In \texttt{R}, some packages provide the multinomial logit model. In
+this application, we use the \texttt{multinom} function in the library
+\texttt{nnet}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(nnet)}
+\NormalTok{est\_mlogit \textless{}{-}}\StringTok{ }\KeywordTok{multinom}\NormalTok{(job }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{education }\OperatorTok{+}\StringTok{ }\NormalTok{gender, }\DataTypeTok{data =}\NormalTok{ dt)}
+
+\CommentTok{\# observations and percent correctly predicted}
+\NormalTok{pred \textless{}{-}}\StringTok{ }\NormalTok{est\_mlogit}\OperatorTok{$}\NormalTok{fitted.value}
+\NormalTok{pred \textless{}{-}}\StringTok{ }\KeywordTok{colnames}\NormalTok{(pred)[}\KeywordTok{apply}\NormalTok{(pred, }\DecValTok{1}\NormalTok{, which.max)]}
+\NormalTok{n \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(pred)}
+\NormalTok{pcp \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(pred }\OperatorTok{==}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{job)}\OperatorTok{/}\NormalTok{n, }\DecValTok{3}\NormalTok{)}
+
+\CommentTok{\# Log{-}likelihood and pseudo R{-}sq}
+\NormalTok{loglik1 \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(nnet}\OperatorTok{:::}\KeywordTok{logLik.multinom}\NormalTok{(est\_mlogit))}
+\NormalTok{est\_mlogit0 \textless{}{-}}\StringTok{ }\KeywordTok{multinom}\NormalTok{(job }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{1}\NormalTok{, }\DataTypeTok{data =}\NormalTok{ dt)}
+\NormalTok{loglik0 \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(nnet}\OperatorTok{:::}\KeywordTok{logLik.multinom}\NormalTok{(est\_mlogit0))}
+\NormalTok{pr2 \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\NormalTok{loglik1}\OperatorTok{/}\NormalTok{loglik0, }\DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{interpretations}{%
+\subsection{Interpretations}\label{interpretations}}
+
+Table \ref{job} summarizes the result of multinomial logit model. The
+coefficient represents the change of \(\log(P_{ij}/P_{i0})\) in
+corresponding covariate. For example, eduction decreases the log-odds
+between \texttt{custodial} and \texttt{admin},
+\(\log(P_{i, custodial}/P_{i, admin})\) by -0.562. This implies that
+those who received higher education are more likely to obtain the
+position \texttt{admin}. Highly-educated workers are also more likely to
+obtain the position \texttt{manage}. Moreover, a female dummy decrease
+the log-odds between \texttt{manage} and \texttt{admin} by -0.748, which
+implies that females are less likely to obtain higher position
+\texttt{manage}. From this result, we conclude that the U.S. bank
+disencouraged females to assign higher job position.
+
+Finally, we should check the model fitness. The predicted position is
+the outcome with the highest estimated probability. The multinomial
+logit model correctly predicts many cases (correction rate: 85.2\%).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{stargazer}\NormalTok{(}
+\NormalTok{  est\_mlogit,}
+  \DataTypeTok{covariate.labels =} \KeywordTok{c}\NormalTok{(}\StringTok{"Education"}\NormalTok{, }\StringTok{"Female = 1"}\NormalTok{),}
+  \DataTypeTok{report =} \StringTok{"vcstp"}\NormalTok{, }\DataTypeTok{omit.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"aic"}\NormalTok{),}
+  \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Observations"}\NormalTok{, n, }\StringTok{""}\NormalTok{),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Percent correctly predicted"}\NormalTok{, pcp, }\StringTok{""}\NormalTok{),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Log{-}likelihood"}\NormalTok{, }\KeywordTok{round}\NormalTok{(loglik1, }\DecValTok{3}\NormalTok{), }\StringTok{""}\NormalTok{),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Pseudo R{-}sq"}\NormalTok{, pr2, }\StringTok{""}\NormalTok{)}
+\NormalTok{  ),}
+  \DataTypeTok{omit.table.layout =} \StringTok{"n"}\NormalTok{, }\DataTypeTok{table.placement =} \StringTok{"t"}\NormalTok{,}
+  \DataTypeTok{title =} \StringTok{"Multinomial Logit Model of Job Position"}\NormalTok{,}
+  \DataTypeTok{label =} \StringTok{"job"}\NormalTok{,}
+  \DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}  
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[t] \centering 
+  \caption{Multinomial Logit Model of Job Position} 
+  \label{job} 
+\begin{tabular}{@{\extracolsep{5pt}}lcc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{2}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-3} 
+\\[-1.8ex] & custodial & manage \\ 
+\\[-1.8ex] & (1) & (2)\\ 
+\hline \\[-1.8ex] 
+ Education & $-$0.562 & 1.661 \\ 
+  & (0.098) & (0.247) \\ 
+  & t = $-$5.721 & t = 6.715 \\ 
+  & p = 0.000 & p = 0.000 \\ 
+  & & \\ 
+ Female = 1 & $-$10.976 & $-$0.748 \\ 
+  & (27.808) & (0.429) \\ 
+  & t = $-$0.395 & t = $-$1.743 \\ 
+  & p = 0.694 & p = 0.082 \\ 
+  & & \\ 
+ Constant & 5.030 & $-$26.730 \\ 
+  & (1.130) & (3.874) \\ 
+  & t = 4.450 & t = $-$6.899 \\ 
+  & p = 0.00001 & p = 0.000 \\ 
+  & & \\ 
+\hline \\[-1.8ex] 
+Observations & 474 &  \\ 
+Percent correctly predicted & 0.852 &  \\ 
+Log-likelihood & -144.928 &  \\ 
+Pseudo R-sq & 0.546 &  \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular} 

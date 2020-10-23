@@ -761,3 +761,96 @@ stargazer(
   type = "latex", header = FALSE
 )
 ```
+
+# Empirical Application of Multinomial Model: Gender Discremination in  Job Position 
+
+**Brief Background**. 
+Recently, many developed countries move toward women's social advancement,
+for example, an increase of number of board member.
+In this application, we explore whether the U.S. bank hindered the entrance of female into the workhorse.
+
+**Data**. 
+We use a built-in dataset called `BankWages` in the library `AER`.
+This dataset contains choice of three job position: `custodial`, `admin` and `manage`.
+The rank of position is `custodial < admin < manage`.
+Other variables are `education`, `gender`, and `minority`.
+We use former two variables as explanatory variables.
+
+```{r supermarket}
+library(AER)
+data(BankWages)
+dt <- BankWages
+dt$job <- as.character(dt$job)
+dt$job <- factor(dt$job, levels = c("admin", "custodial", "manage"))
+head(BankWages, 5)
+```
+
+**Model**.
+The outcome variable $y_i$ takes three values $\{0, 1, 2\}$.
+Then, the multinomial logit model has the following response probabilities 
+\begin{equation*}
+  P_{ij} = \mathbb{P}(y_i = j | \mathbf{x}_i) =
+  \begin{cases}
+    \frac{\exp(\mathbf{x}_i \beta_j)}{1 + \sum_{k=1}^2 \exp(\mathbf{x}_i \beta_k)} &\text{if}\quad j = 1, 2  \\
+    \frac{1}{1 + \sum_{k=1}^2 \exp(\mathbf{x}_i \beta_k)}  &\text{if}\quad j = 0
+  \end{cases}.
+\end{equation*}
+The log-likelihood function is 
+\begin{equation*}
+  M_n(\beta_1, \beta_2) = \sum_{i=1}^n \sum_{j=0}^3 d_{ij} \log (P_{ij}),
+\end{equation*}
+where $d_{ij}$ is a dummy variable taking 1 if $y_i = j$.
+
+In `R`, some packages provide the multinomial logit model.
+In this application, we use the `multinom` function in the library `nnet`.
+
+```{r multinomial, results = "hide"}
+library(nnet)
+est_mlogit <- multinom(job ~ education + gender, data = dt)
+
+# observations and percent correctly predicted
+pred <- est_mlogit$fitted.value
+pred <- colnames(pred)[apply(pred, 1, which.max)]
+n <- length(pred)
+pcp <- round(sum(pred == dt$job)/n, 3)
+
+# Log-likelihood and pseudo R-sq
+loglik1 <- as.numeric(nnet:::logLik.multinom(est_mlogit))
+est_mlogit0 <- multinom(job ~ 1, data = dt)
+loglik0 <- as.numeric(nnet:::logLik.multinom(est_mlogit0))
+pr2 <- round(1 - loglik1/loglik0, 3)
+```
+
+## Interpretations
+
+Table \ref{job} summarizes the result of multinomial logit model.
+The coefficient represents the change of $\log(P_{ij}/P_{i0})$ in corresponding covariate.
+For example, eduction decreases the log-odds between `custodial` and `admin`, 
+$\log(P_{i, custodial}/P_{i, admin})$ by -0.562.
+This implies that those who received higher education are more likely to obtain the position `admin`.
+Highly-educated workers are also more likely to obtain the position `manage`.
+Moreover, a female dummy decrease the log-odds between `manage` and `admin` by -0.748,
+which implies that females are less likely to obtain higher position `manage`.
+From this result, we conclude that the U.S. bank disencouraged females to assign higher job position.
+
+Finally, we should check the model fitness.
+The predicted position is the outcome with the highest estimated probability.
+The multinomial logit model correctly predicts many cases (correction rate: 85.2\%).
+
+```{r tab_multinomial, results = "asis"}
+stargazer(
+  est_mlogit,
+  covariate.labels = c("Education", "Female = 1"),
+  report = "vcstp", omit.stat = c("aic"),
+  add.lines = list(
+    c("Observations", n, ""),
+    c("Percent correctly predicted", pcp, ""),
+    c("Log-likelihood", round(loglik1, 3), ""),
+    c("Pseudo R-sq", pr2, "")
+  ),
+  omit.table.layout = "n", table.placement = "t",
+  title = "Multinomial Logit Model of Job Position",
+  label = "job",
+  type = "latex", header = FALSE  
+)
+```
