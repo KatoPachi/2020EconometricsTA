@@ -1118,4 +1118,239 @@ Observations & 1,045 & 1,045 & 1,045 \\
 \end{tabular} 
 \end{table}
 
+\hypertarget{empirical-application-of-ordered-probit-and-logit-model-housing-as-status-goods}{%
+\section{Empirical Application of Ordered Probit and Logit Model:
+Housing as Status
+Goods}\label{empirical-application-of-ordered-probit-and-logit-model-housing-as-status-goods}}
+
+\textbf{Breif Background}. Social image may affect consumption behavior.
+Specifically, a desire to signal high income or wealth may cause
+consumers to purchase status goods. In this application, we explore
+whether living in an upper floor serves as a status goods.
+
+\noindent \textbf{Data}. We use the housing data originally coming from
+the American Housing Survey conducted in 2013 \footnote{\url{https://www.census.gov/programs-surveys/ahs.html}.
+  This is a repeated cross-section survey. We use the data at one time.}.
+We use the following variable
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{Level}: ordered value of a story of respondent's living (1:Low
+  - 4:High)
+\item
+  \texttt{Levelnum}: variable we recode the response \texttt{Level} as
+  25, 50, 75, 100. This represents the extent of floor height.
+\item
+  \texttt{lnPrice}: logged price of housing (proxy for quality of house)
+\item
+  \texttt{Top25}: a dummy variable taking one if household income is in
+  the top 25 percentile in sample.
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{house \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\DataTypeTok{file =} \StringTok{"./data/housing.csv"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{TRUE}\NormalTok{,  }\DataTypeTok{sep =} \StringTok{","}\NormalTok{)}
+\NormalTok{house \textless{}{-}}\StringTok{ }\NormalTok{house[,}\KeywordTok{c}\NormalTok{(}\StringTok{"Level"}\NormalTok{, }\StringTok{"lnPrice"}\NormalTok{, }\StringTok{"Top25"}\NormalTok{)]}
+\NormalTok{house}\OperatorTok{$}\NormalTok{Levelnum \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}
+\NormalTok{  house}\OperatorTok{$}\NormalTok{Level }\OperatorTok{==}\StringTok{ }\DecValTok{1}\NormalTok{, }\DecValTok{25}\NormalTok{, }
+  \KeywordTok{ifelse}\NormalTok{(house}\OperatorTok{$}\NormalTok{Level }\OperatorTok{==}\StringTok{ }\DecValTok{2}\NormalTok{, }\DecValTok{50}\NormalTok{, }
+  \KeywordTok{ifelse}\NormalTok{(house}\OperatorTok{$}\NormalTok{Level }\OperatorTok{==}\StringTok{ }\DecValTok{3}\NormalTok{, }\DecValTok{75}\NormalTok{, }\DecValTok{100}\NormalTok{)))}
+\KeywordTok{head}\NormalTok{(house)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   Level  lnPrice Top25 Levelnum
+## 1     3 11.51294     0       75
+## 2     4 11.51294     1      100
+## 3     3 11.60824     0       75
+## 4     3 11.69526     0       75
+## 5     3 12.57764     0       75
+## 6     3 12.64433     0       75
+\end{verbatim}
+
+\noindent \textbf{Model}. The outcome variable is \texttt{Level} taking
+\(\{1, 2, 3, 4\}\). Consider the following regression equation of a
+latent variable: \begin{equation*}
+  y_i^* = \mathbf{x}_i \beta + u_i,
+\end{equation*} where \(\mathbf{x}_i = (lnPrice, Top25)\) and \(u_i\) is
+an error term. The relationship between the latent variable \(y_i^*\)
+and the observed outcome variable is \begin{equation*}
+  Level =
+  \begin{cases}
+    1 &\text{if}\quad -\infty < y_i^* \le a_1  \\
+    2 &\text{if}\quad a_1 < y_i^* \le a_2 \\
+    3 &\text{if}\quad a_2 < y_i^* \le a_3 \\
+    4 &\text{if}\quad a_3 < y_i^* < +\infty
+  \end{cases}.
+\end{equation*}
+
+Consider the probability of realization of \(y_i\), that is,
+\begin{equation*}
+  \begin{split}
+  \mathbb{P}(y_i = k | \mathbf{x}_i) 
+  &= \mathbb{P}(a_{k-1} - \mathbf{x}_i \beta < u_i \le a_k - \mathbf{x}_i \beta | \mathbf{x}_i)  \\
+  &= G(a_k - \mathbf{x}_i \beta) - G(a_{k-1} - \mathbf{x}_i \beta),
+  \end{split}
+\end{equation*} where \(a_{4} = +\infty\) and \(a_0 = -\infty\). Then,
+the likelihood function is defined by \begin{equation*}
+  p((y_i|\mathbf{x}_i), i = 1, \ldots, n; \beta, a_1, \ldots, a_3)
+  = \prod_{i=1}^n \prod_{k=1}^4 (G(a_k - \mathbf{x}_i \beta) - G(a_{k-1} - \mathbf{x}_i \beta))^{I_{ik}}.
+\end{equation*} where \(I_{ik}\) is a indicator variable taking 1 if
+\(y_i = k\). Finally, the log-likelihood function is \begin{equation*}
+  M(\beta, a_1, a_2, a_3) = \sum_{i=1}^n \sum_{k=1}^4 I_{ik} \log(G(a_k - \mathbf{x}_i \beta) - G(a_{k-1} - \mathbf{x}_i \beta)).
+\end{equation*} Usually, \(G(a)\) assumes the standard normal
+distribution, \(\Phi(a)\), or the logistic distribution,
+\(1/(1 + \exp(-a))\).
+
+In \texttt{R}, the library (package) \texttt{MASS} provides the
+\texttt{polr} function which estimates the ordered probit and logit
+model. Although we can use the \texttt{nlm} function when we define the
+log-likelihood function, we do not report this method. To compare
+results, we use the variable \texttt{Levelnum} as outcome variable, and
+apply the linear regression model.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(MASS)}
+\KeywordTok{library}\NormalTok{(tidyverse) }\CommentTok{\#use case\_when()}
+
+\NormalTok{ols \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(Levelnum }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{lnPrice }\OperatorTok{+}\StringTok{ }\NormalTok{Top25, }\DataTypeTok{data =}\NormalTok{ house)}
+
+\NormalTok{model \textless{}{-}}\StringTok{ }\KeywordTok{factor}\NormalTok{(Level) }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{lnPrice }\OperatorTok{+}\StringTok{ }\NormalTok{Top25}
+\NormalTok{oprobit \textless{}{-}}\StringTok{ }\KeywordTok{polr}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ house, }\DataTypeTok{method =} \StringTok{"probit"}\NormalTok{)}
+\NormalTok{ologit \textless{}{-}}\StringTok{ }\KeywordTok{polr}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ house, }\DataTypeTok{method =} \StringTok{"logistic"}\NormalTok{)}
+
+\NormalTok{a\_oprobit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(oprobit}\OperatorTok{$}\NormalTok{zeta, }\DecValTok{3}\NormalTok{)}
+\NormalTok{a\_ologit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(ologit}\OperatorTok{$}\NormalTok{zeta, }\DecValTok{3}\NormalTok{)}
+
+\NormalTok{xb\_oprobit \textless{}{-}}\StringTok{ }\NormalTok{oprobit}\OperatorTok{$}\NormalTok{lp }
+\NormalTok{xb\_ologit \textless{}{-}}\StringTok{ }\NormalTok{ologit}\OperatorTok{$}\NormalTok{lp}
+
+\NormalTok{hatY\_oprobit \textless{}{-}}\StringTok{ }\KeywordTok{case\_when}\NormalTok{(}
+\NormalTok{  xb\_oprobit }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{oprobit}\OperatorTok{$}\NormalTok{zeta[}\DecValTok{1}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{1}\NormalTok{,}
+\NormalTok{  xb\_oprobit }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{oprobit}\OperatorTok{$}\NormalTok{zeta[}\DecValTok{2}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{2}\NormalTok{,}
+\NormalTok{  xb\_oprobit }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{oprobit}\OperatorTok{$}\NormalTok{zeta[}\DecValTok{3}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{3}\NormalTok{,}
+  \OtherTok{TRUE} \OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{4}
+\NormalTok{)}
+\NormalTok{hatY\_ologit \textless{}{-}}\StringTok{ }\KeywordTok{case\_when}\NormalTok{(}
+\NormalTok{  xb\_ologit }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{ologit}\OperatorTok{$}\NormalTok{zeta[}\DecValTok{1}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{1}\NormalTok{,}
+\NormalTok{  xb\_ologit }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{ologit}\OperatorTok{$}\NormalTok{zeta[}\DecValTok{2}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{2}\NormalTok{,}
+\NormalTok{  xb\_ologit }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{ologit}\OperatorTok{$}\NormalTok{zeta[}\DecValTok{3}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{3}\NormalTok{,}
+  \OtherTok{TRUE} \OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{4}
+\NormalTok{)}
+
+\NormalTok{pred\_oprobit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(house}\OperatorTok{$}\NormalTok{Level }\OperatorTok{==}\StringTok{ }\NormalTok{hatY\_oprobit)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(house), }\DecValTok{3}\NormalTok{)}
+\NormalTok{pred\_ologit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(house}\OperatorTok{$}\NormalTok{Level }\OperatorTok{==}\StringTok{ }\NormalTok{hatY\_ologit)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(house), }\DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{interepretations}{%
+\subsection{Interepretations}\label{interepretations}}
+
+Table \ref{housing} shows results. OLS model shows that respondents
+whose household income is in the top 25 percentile live in 3.7\% higher
+floor than other respondents. This implies that high earners want to
+live in higher floor, which may serve as a status goods. The ordered
+probit and logit model are in line with this result. To evaluate two
+models quantitatively, consider the following equation.
+\begin{equation*}
+  E[Levelnum | \mathbf{x}_i] = 
+  25\mathbb{P}[level = 1| \mathbf{x}_i] + 
+  50\mathbb{P}[level = 2| \mathbf{x}_i] + 
+  75\mathbb{P}[level = 3| \mathbf{x}_i] + 
+  100\mathbb{P}[level = 4| \mathbf{x}_i].
+\end{equation*} We compute this equation with \(Top25 = 1\) and
+\(Top25 = 0\) at mean value of \(lnPrice\) and take difference.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{quantef \textless{}{-}}\StringTok{ }\ControlFlowTok{function}\NormalTok{(model) \{}
+\NormalTok{  b \textless{}{-}}\StringTok{ }\KeywordTok{coef}\NormalTok{(model)}
+\NormalTok{  val1 \textless{}{-}}\StringTok{ }\KeywordTok{mean}\NormalTok{(house}\OperatorTok{$}\NormalTok{lnPrice)}\OperatorTok{*}\NormalTok{b[}\DecValTok{1}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{2}\NormalTok{]}
+\NormalTok{  val0 \textless{}{-}}\StringTok{ }\KeywordTok{mean}\NormalTok{(house}\OperatorTok{$}\NormalTok{lnPrice)}\OperatorTok{*}\NormalTok{b[}\DecValTok{1}\NormalTok{]}
+
+\NormalTok{  prob \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\KeywordTok{c}\NormalTok{(}\KeywordTok{rep}\NormalTok{(val1, }\DecValTok{3}\NormalTok{), }\KeywordTok{rep}\NormalTok{(val0, }\DecValTok{3}\NormalTok{)), }\DataTypeTok{ncol =} \DecValTok{2}\NormalTok{, }\DataTypeTok{nrow =} \DecValTok{3}\NormalTok{)}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\DecValTok{3}\NormalTok{) \{}
+    \ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\DecValTok{2}\NormalTok{) \{}
+\NormalTok{      prob[i,j] \textless{}{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(model}\OperatorTok{$}\NormalTok{zeta[i] }\OperatorTok{{-}}\StringTok{ }\NormalTok{prob[i,j])}
+\NormalTok{    \}}
+\NormalTok{  \}}
+\NormalTok{  Ey1 \textless{}{-}}\StringTok{ }\DecValTok{25}\OperatorTok{*}\NormalTok{prob[}\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{] }\OperatorTok{+}\StringTok{ }\DecValTok{50}\OperatorTok{*}\NormalTok{(prob[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{]}\OperatorTok{{-}}\NormalTok{prob[}\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{]) }\OperatorTok{+}\StringTok{ }
+\StringTok{    }\DecValTok{75}\OperatorTok{*}\NormalTok{(prob[}\DecValTok{3}\NormalTok{,}\DecValTok{1}\NormalTok{]}\OperatorTok{{-}}\NormalTok{prob[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{]) }\OperatorTok{+}\StringTok{ }\DecValTok{100}\OperatorTok{*}\NormalTok{(}\DecValTok{1}\OperatorTok{{-}}\NormalTok{prob[}\DecValTok{3}\NormalTok{,}\DecValTok{1}\NormalTok{])}
+\NormalTok{  Ey0 \textless{}{-}}\StringTok{ }\DecValTok{25}\OperatorTok{*}\NormalTok{prob[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\DecValTok{50}\OperatorTok{*}\NormalTok{(prob[}\DecValTok{2}\NormalTok{,}\DecValTok{2}\NormalTok{]}\OperatorTok{{-}}\NormalTok{prob[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{]) }\OperatorTok{+}\StringTok{ }
+\StringTok{    }\DecValTok{75}\OperatorTok{*}\NormalTok{(prob[}\DecValTok{3}\NormalTok{,}\DecValTok{2}\NormalTok{]}\OperatorTok{{-}}\NormalTok{prob[}\DecValTok{2}\NormalTok{,}\DecValTok{2}\NormalTok{]) }\OperatorTok{+}\StringTok{ }\DecValTok{100}\OperatorTok{*}\NormalTok{(}\DecValTok{1}\OperatorTok{{-}}\NormalTok{prob[}\DecValTok{3}\NormalTok{,}\DecValTok{2}\NormalTok{])}
+  
+  \KeywordTok{return}\NormalTok{(Ey1 }\OperatorTok{{-}}\StringTok{ }\NormalTok{Ey0)}
+\NormalTok{\} }
+
+\NormalTok{ef\_oprobit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{quantef}\NormalTok{(oprobit), }\DecValTok{3}\NormalTok{)}
+\NormalTok{ef\_ologit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{quantef}\NormalTok{(ologit), }\DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+As a result, we obtain similar values to OLSE. In the ordered probit
+model, earners in the top 25 percentile live in 4.2\% higher floor than
+others. In the ordered logit model, earners in the top 25 percentile
+live in 5.9\% higher floor than others. Note that, in this application,
+model fitness seems to be bad because the percent correctly predicted is
+low.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{stargazer}\NormalTok{(}
+\NormalTok{  ols, oprobit, ologit,}
+  \DataTypeTok{report =} \StringTok{"vcstp"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+  \DataTypeTok{omit =} \KeywordTok{c}\NormalTok{(}\StringTok{"Constant"}\NormalTok{),}
+  \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Cutoff value at 1|2"}\NormalTok{, }\StringTok{""}\NormalTok{, a\_oprobit[}\DecValTok{1}\NormalTok{], a\_ologit[}\DecValTok{1}\NormalTok{]),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Cutoff value at 2|3"}\NormalTok{, }\StringTok{""}\NormalTok{, a\_oprobit[}\DecValTok{2}\NormalTok{], a\_ologit[}\DecValTok{2}\NormalTok{]),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Cutoff value at 3|4"}\NormalTok{, }\StringTok{""}\NormalTok{, a\_oprobit[}\DecValTok{3}\NormalTok{], a\_ologit[}\DecValTok{3}\NormalTok{]),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Quantitative Effect of Top25"}\NormalTok{, }\StringTok{""}\NormalTok{, ef\_oprobit, ef\_ologit),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Percent correctly predicted"}\NormalTok{, }\StringTok{""}\NormalTok{, pred\_oprobit, pred\_ologit)}
+\NormalTok{  ),}
+  \DataTypeTok{omit.table.layout =} \StringTok{"n"}\NormalTok{, }\DataTypeTok{table.placement =} \StringTok{"t"}\NormalTok{,}
+  \DataTypeTok{title =} \StringTok{"Floor Level of House: Ordered Probit and Logit Model"}\NormalTok{,}
+  \DataTypeTok{label =} \StringTok{"housing"}\NormalTok{,}
+  \DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[t] \centering 
+  \caption{Floor Level of House: Ordered Probit and Logit Model} 
+  \label{housing} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-4} 
+\\[-1.8ex] & Levelnum & \multicolumn{2}{c}{Level} \\ 
+\\[-1.8ex] & \textit{OLS} & \textit{ordered} & \textit{ordered} \\ 
+ & \textit{} & \textit{probit} & \textit{logistic} \\ 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
+\hline \\[-1.8ex] 
+ lnPrice & 0.348 & 0.012 & 0.019 \\ 
+  & (0.430) & (0.016) & (0.026) \\ 
+  & t = 0.810 & t = 0.777 & t = 0.745 \\ 
+  & p = 0.418 & p = 0.438 & p = 0.457 \\ 
+  & & & \\ 
+ Top25 & 3.714 & 0.156 & 0.239 \\ 
+  & (1.723) & (0.064) & (0.106) \\ 
+  & t = 2.156 & t = 2.426 & t = 2.259 \\ 
+  & p = 0.032 & p = 0.016 & p = 0.024 \\ 
+  & & & \\ 
+\hline \\[-1.8ex] 
+Cutoff value at 1|2 &  & -0.149 & -0.25 \\ 
+Cutoff value at 2|3 &  & 0.246 & 0.384 \\ 
+Cutoff value at 3|4 &  & 0.97 & 1.574 \\ 
+Quantitative Effect of Top25 &  & 4.17 & 5.488 \\ 
+Percent correctly predicted &  & 0.167 & 0.167 \\ 
+Observations & 1,612 & 1,612 & 1,612 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
 \end{document}

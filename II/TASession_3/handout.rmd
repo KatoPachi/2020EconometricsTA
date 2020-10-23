@@ -586,3 +586,178 @@ stargazer(
   type = "latex", header = FALSE
 )
 ```
+
+# Empirical Application of Ordered Probit and Logit Model: Housing as Status Goods 
+
+**Breif Background**.
+Social image may affect consumption behavior.
+Specifically, a desire to signal high income or wealth may cause consumers to purchase status goods.
+In this application, we explore whether living in an upper floor serves as a status goods.
+
+\noindent
+**Data**.
+We use the housing data originally coming from the American Housing Survey conducted in 2013 [^source2].
+We use the following variable 
+
+- `Level`: ordered value of a story of respondent's living (1:Low - 4:High)
+- `Levelnum`: variable we recode the response `Level` as 25, 50, 75, 100. This represents the extent of floor height. 
+- `lnPrice`: logged price of housing (proxy for quality of house)
+- `Top25`: a dummy variable taking one if household income is in the top 25 percentile in sample.
+
+[^source2]: <https://www.census.gov/programs-surveys/ahs.html>. This is a repeated cross-section survey. We use the data at one time.
+
+```{r data2}
+house <- read.csv(file = "./data/housing.csv", header = TRUE,  sep = ",")
+house <- house[,c("Level", "lnPrice", "Top25")]
+house$Levelnum <- ifelse(
+  house$Level == 1, 25, 
+  ifelse(house$Level == 2, 50, 
+  ifelse(house$Level == 3, 75, 100)))
+head(house)
+```
+
+\noindent
+**Model**.
+The outcome variable is `Level` taking $\{1, 2, 3, 4\}$.
+Consider the following regression equation of a latent variable:
+\begin{equation*}
+  y_i^* = \mathbf{x}_i \beta + u_i,
+\end{equation*}
+where $\mathbf{x}_i = (lnPrice, Top25)$ and $u_i$ is an error term.
+The relationship between the latent variable $y_i^*$ and the observed outcome variable is 
+\begin{equation*}
+  Level =
+  \begin{cases}
+    1 &\text{if}\quad -\infty < y_i^* \le a_1  \\
+    2 &\text{if}\quad a_1 < y_i^* \le a_2 \\
+    3 &\text{if}\quad a_2 < y_i^* \le a_3 \\
+    4 &\text{if}\quad a_3 < y_i^* < +\infty
+  \end{cases}.
+\end{equation*}
+
+Consider the probability of realization of $y_i$, that is,
+\begin{equation*}
+  \begin{split}
+  \mathbb{P}(y_i = k | \mathbf{x}_i) 
+  &= \mathbb{P}(a_{k-1} - \mathbf{x}_i \beta < u_i \le a_k - \mathbf{x}_i \beta | \mathbf{x}_i)  \\
+  &= G(a_k - \mathbf{x}_i \beta) - G(a_{k-1} - \mathbf{x}_i \beta),
+  \end{split}
+\end{equation*}
+where $a_{4} = +\infty$ and $a_0 = -\infty$.
+Then, the likelihood function is defined by 
+\begin{equation*}
+  p((y_i|\mathbf{x}_i), i = 1, \ldots, n; \beta, a_1, \ldots, a_3)
+  = \prod_{i=1}^n \prod_{k=1}^4 (G(a_k - \mathbf{x}_i \beta) - G(a_{k-1} - \mathbf{x}_i \beta))^{I_{ik}}.
+\end{equation*}
+where $I_{ik}$ is a indicator variable taking 1 if $y_i = k$.
+Finally, the log-likelihood function is 
+\begin{equation*}
+  M(\beta, a_1, a_2, a_3) = \sum_{i=1}^n \sum_{k=1}^4 I_{ik} \log(G(a_k - \mathbf{x}_i \beta) - G(a_{k-1} - \mathbf{x}_i \beta)).
+\end{equation*}
+Usually, $G(a)$ assumes the standard normal distribution, $\Phi(a)$, or the logistic distribution, $1/(1 + \exp(-a))$.
+
+In `R`, the library (package) `MASS` provides the `polr` function which estimates the ordered probit and logit model.
+Although we can use the `nlm` function when we define the log-likelihood function, we do not report this method.
+To compare results, we use the variable `Levelnum` as outcome variable, 
+and apply the linear regression model.
+
+```{r orderModel}
+library(MASS)
+library(tidyverse) #use case_when()
+
+ols <- lm(Levelnum ~ lnPrice + Top25, data = house)
+
+model <- factor(Level) ~ lnPrice + Top25
+oprobit <- polr(model, data = house, method = "probit")
+ologit <- polr(model, data = house, method = "logistic")
+
+a_oprobit <- round(oprobit$zeta, 3)
+a_ologit <- round(ologit$zeta, 3)
+
+xb_oprobit <- oprobit$lp 
+xb_ologit <- ologit$lp
+
+hatY_oprobit <- case_when(
+  xb_oprobit <= oprobit$zeta[1] ~ 1,
+  xb_oprobit <= oprobit$zeta[2] ~ 2,
+  xb_oprobit <= oprobit$zeta[3] ~ 3,
+  TRUE ~ 4
+)
+hatY_ologit <- case_when(
+  xb_ologit <= ologit$zeta[1] ~ 1,
+  xb_ologit <= ologit$zeta[2] ~ 2,
+  xb_ologit <= ologit$zeta[3] ~ 3,
+  TRUE ~ 4
+)
+
+pred_oprobit <- round(sum(house$Level == hatY_oprobit)/nrow(house), 3)
+pred_ologit <- round(sum(house$Level == hatY_ologit)/nrow(house), 3)
+```
+
+## Interepretations
+
+Table \ref{housing} shows results.
+OLS model shows that respondents whose household income is in the top 25 percentile live in 3.7\% higher floor 
+than other respondents.
+This implies that high earners want to live in higher floor, which may serve as a status goods.
+The ordered probit and logit model are in line with this result.
+To evaluate two models quantitatively, consider the following equation.
+\begin{equation*}
+  E[Levelnum | \mathbf{x}_i] = 
+  25\mathbb{P}[level = 1| \mathbf{x}_i] + 
+  50\mathbb{P}[level = 2| \mathbf{x}_i] + 
+  75\mathbb{P}[level = 3| \mathbf{x}_i] + 
+  100\mathbb{P}[level = 4| \mathbf{x}_i].
+\end{equation*}
+We compute this equation with $Top25 = 1$ and $Top25 = 0$ at mean value of $lnPrice$ and take difference.
+
+```{r predict}
+quantef <- function(model) {
+  b <- coef(model)
+  val1 <- mean(house$lnPrice)*b[1] + b[2]
+  val0 <- mean(house$lnPrice)*b[1]
+
+  prob <- matrix(c(rep(val1, 3), rep(val0, 3)), ncol = 2, nrow = 3)
+  for (i in 1:3) {
+    for (j in 1:2) {
+      prob[i,j] <- pnorm(model$zeta[i] - prob[i,j])
+    }
+  }
+  Ey1 <- 25*prob[1,1] + 50*(prob[2,1]-prob[1,1]) + 
+    75*(prob[3,1]-prob[2,1]) + 100*(1-prob[3,1])
+  Ey0 <- 25*prob[1,2] + 50*(prob[2,2]-prob[1,2]) + 
+    75*(prob[3,2]-prob[2,2]) + 100*(1-prob[3,2])
+  
+  return(Ey1 - Ey0)
+} 
+
+ef_oprobit <- round(quantef(oprobit), 3)
+ef_ologit <- round(quantef(ologit), 3)
+```
+
+As a result, we obtain similar values to OLSE.
+In the ordered probit model, 
+earners in the top 25 percentile live in 4.2\% higher floor than others.
+In the ordered logit model,
+earners in the top 25 percentile live in 5.9\% higher floor than others.
+Note that, in this application, 
+model fitness seems to be bad because the percent correctly predicted is low (16.7\%). 
+
+```{r tab_orderModel, results = "asis"}
+stargazer(
+  ols, oprobit, ologit,
+  report = "vcstp", keep.stat = c("n"),
+  omit = c("Constant"),
+  add.lines = list(
+    c("Cutoff value at 1|2", "", a_oprobit[1], a_ologit[1]),
+    c("Cutoff value at 2|3", "", a_oprobit[2], a_ologit[2]),
+    c("Cutoff value at 3|4", "", a_oprobit[3], a_ologit[3]),
+    c("Quantitative Effect of Top25", "", ef_oprobit, ef_ologit),
+    c("Percent correctly predicted", "", pred_oprobit, pred_ologit)
+  ),
+  omit.table.layout = "n", table.placement = "t",
+  title = "Floor Level of House: Ordered Probit and Logit Model",
+  label = "housing",
+  type = "latex", header = FALSE
+)
+```
