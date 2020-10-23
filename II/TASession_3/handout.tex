@@ -998,6 +998,55 @@ coefficient is small. Overall, crews obeyed the code of ``women and
 children first'', but the survival probability of children is not
 largely different from of adult.
 
+\hypertarget{model-fitness}{%
+\subsection{Model Fitness}\label{model-fitness}}
+
+There are two measurements of goodness-of-fit. First, the \emph{percent
+correctly predicted} reports the percentage of unit whose predicted
+\(y_i\) matches the actual \(y_i\). The predicted \(y_i\) takes one if
+\(G(\mathbf{x}_i \hat{\beta}) > 0.5\), and takes zero if
+\(G(\mathbf{x}_i \hat{\beta}) \le 0.5\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{Y \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{survived}
+\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"(Intercept)"}\NormalTok{, }\StringTok{"female"}\NormalTok{, }\StringTok{"age"}\NormalTok{, }\StringTok{"fare"}\NormalTok{)])}
+
+\NormalTok{Xb\_lpm \textless{}{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\KeywordTok{coef}\NormalTok{(LPM), }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
+\NormalTok{Xb\_probit \textless{}{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(b\_probit, }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
+\NormalTok{Xb\_logit \textless{}{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(b\_logit, }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
+
+\NormalTok{hatY\_lpm \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(Xb\_lpm }\OperatorTok{\textgreater{}}\StringTok{ }\FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{hatY\_probit \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\KeywordTok{pnorm}\NormalTok{(Xb\_probit) }\OperatorTok{\textgreater{}}\StringTok{ }\FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{hatY\_logit \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\DecValTok{1}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{Xb\_logit)) }\OperatorTok{\textgreater{}}\StringTok{ }\FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+
+\NormalTok{pcp\_lpm \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(Y }\OperatorTok{==}\StringTok{ }\NormalTok{hatY\_lpm)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(X), }\DecValTok{4}\NormalTok{)}
+\NormalTok{pcp\_probit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(Y }\OperatorTok{==}\StringTok{ }\NormalTok{hatY\_probit)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(X), }\DecValTok{4}\NormalTok{)}
+\NormalTok{pcp\_logit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(Y }\OperatorTok{==}\StringTok{ }\NormalTok{hatY\_logit)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(X), }\DecValTok{4}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Second measurement is the \emph{pseudo R-squared}. The pseudo R-squared
+is obtained by \(1 - \sum_i \hat{u}_i^2/ \sum_i y_i^2\), where
+\(\hat{u}_i = y_i - G(\mathbf{x}_i \hat{\beta})\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{Y2 \textless{}{-}}\StringTok{ }\NormalTok{Y}\OperatorTok{\^{}}\DecValTok{2}
+
+\NormalTok{hatu\_lpm \textless{}{-}}\StringTok{ }\NormalTok{(Y }\OperatorTok{{-}}\StringTok{ }\NormalTok{Xb\_lpm)}\OperatorTok{\^{}}\DecValTok{2}
+\NormalTok{hatu\_probit \textless{}{-}}\StringTok{ }\NormalTok{(Y }\OperatorTok{{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(Xb\_probit))}\OperatorTok{\^{}}\DecValTok{2}
+\NormalTok{hatu\_logit \textless{}{-}}\StringTok{ }\NormalTok{(Y }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{Xb\_logit)))}\OperatorTok{\^{}}\DecValTok{2}
+
+\NormalTok{pr2\_lpm \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(hatu\_lpm)}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(Y2), }\DecValTok{4}\NormalTok{)}
+\NormalTok{pr2\_probit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(hatu\_probit)}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(Y2), }\DecValTok{4}\NormalTok{)}
+\NormalTok{pr2\_logit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(hatu\_logit)}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(Y2), }\DecValTok{4}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Table \ref{titanic} summarizes two measurements of model fitness. There
+is little difference among LPM, probit model, and logit model.
+
 \begin{Shaded}
 \begin{Highlighting}[]
 \KeywordTok{stargazer}\NormalTok{(}
@@ -1009,6 +1058,10 @@ largely different from of adult.
   \DataTypeTok{t.auto =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{p.auto =} \OtherTok{FALSE}\NormalTok{,}
   \DataTypeTok{omit =} \KeywordTok{c}\NormalTok{(}\StringTok{"Constant"}\NormalTok{), }\DataTypeTok{covariate.labels =} \KeywordTok{c}\NormalTok{(}\StringTok{"Female = 1"}\NormalTok{),}
   \DataTypeTok{report =} \StringTok{"vcstp"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+  \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Percent correctly predicted"}\NormalTok{, pcp\_lpm, pcp\_probit, pcp\_logit),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Pseudo R{-}squared"}\NormalTok{, pr2\_lpm, pr2\_probit, pr2\_logit)}
+\NormalTok{  ),}
   \DataTypeTok{omit.table.layout =} \StringTok{"n"}\NormalTok{, }\DataTypeTok{table.placement =} \StringTok{"t"}\NormalTok{,}
   \DataTypeTok{title =} \StringTok{"Titanic Survivors: LPM, Probit (AME), and Logit (AME)"}\NormalTok{,}
   \DataTypeTok{label =} \StringTok{"titanic"}\NormalTok{,}
@@ -1045,6 +1098,8 @@ largely different from of adult.
   & p = 0.000 & p = 0.000 & p = 0.00000 \\ 
   & & & \\ 
 \hline \\[-1.8ex] 
+Percent correctly predicted & 0.7799 & 0.7742 & 0.7742 \\ 
+Pseudo R-squared & 0.5946 & 0.5945 & 0.594 \\ 
 Observations & 1,045 & 1,045 & 1,045 \\ 
 \hline 
 \hline \\[-1.8ex] 

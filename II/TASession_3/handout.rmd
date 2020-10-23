@@ -509,6 +509,50 @@ However, the size of coefficient is small.
 Overall, crews obeyed the code of "women and children first",
 but the survival probability of children is not largely different from of adult.
 
+## Model Fitness
+
+There are two measurements of goodness-of-fit.
+First, the *percent correctly predicted* reports
+the percentage of unit whose predicted $y_i$ matches the actual $y_i$.
+The predicted $y_i$ takes one if $G(\mathbf{x}_i \hat{\beta}) > 0.5$, 
+and takes zero if $G(\mathbf{x}_i \hat{\beta}) \le 0.5$.
+
+```{r pcp}
+Y <- dt$survived
+X <- as.matrix(dt[,c("(Intercept)", "female", "age", "fare")])
+
+Xb_lpm <- X %*% matrix(coef(LPM), ncol = 1)
+Xb_probit <- X %*% matrix(b_probit, ncol = 1)
+Xb_logit <- X %*% matrix(b_logit, ncol = 1)
+
+hatY_lpm <- ifelse(Xb_lpm > 0.5, 1, 0)
+hatY_probit <- ifelse(pnorm(Xb_probit) > 0.5, 1, 0)
+hatY_logit <- ifelse(1/(1 + exp(-Xb_logit)) > 0.5, 1, 0)
+
+pcp_lpm <- round(sum(Y == hatY_lpm)/nrow(X), 4)
+pcp_probit <- round(sum(Y == hatY_probit)/nrow(X), 4)
+pcp_logit <- round(sum(Y == hatY_logit)/nrow(X), 4)
+```
+
+Second measurement is the *pseudo R-squared*.
+The pseudo R-squared is obtained by $1 - \sum_i \hat{u}_i^2/ \sum_i y_i^2$,
+where $\hat{u}_i = y_i - G(\mathbf{x}_i \hat{\beta})$.
+
+```{r pr2}
+Y2 <- Y^2
+
+hatu_lpm <- (Y - Xb_lpm)^2
+hatu_probit <- (Y - pnorm(Xb_probit))^2
+hatu_logit <- (Y - 1/(1 + exp(-Xb_logit)))^2
+
+pr2_lpm <- round(1 - sum(hatu_lpm)/sum(Y2), 4)
+pr2_probit <- round(1 - sum(hatu_probit)/sum(Y2), 4)
+pr2_logit <- round(1 - sum(hatu_logit)/sum(Y2), 4)
+```
+
+Table \ref{titanic} summarizes two measurements of model fitness.
+There is little difference among LPM, probit model, and logit model.
+
 ```{r BinaryModelResult, results = "asis"}
 stargazer(
   LPM, probit_glm, logit_glm,
@@ -519,6 +563,10 @@ stargazer(
   t.auto = FALSE, p.auto = FALSE,
   omit = c("Constant"), covariate.labels = c("Female = 1"),
   report = "vcstp", keep.stat = c("n"),
+  add.lines = list(
+    c("Percent correctly predicted", pcp_lpm, pcp_probit, pcp_logit),
+    c("Pseudo R-squared", pr2_lpm, pr2_probit, pr2_logit)
+  ),
   omit.table.layout = "n", table.placement = "t",
   title = "Titanic Survivors: LPM, Probit (AME), and Logit (AME)",
   label = "titanic",
