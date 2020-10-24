@@ -134,7 +134,7 @@ of Titanic to answer whether crews obeyed the code or not.
 \footnote{data source: \url{http://biostat.mc.vanderbilt.edu/DataSets}.}.
 Although this dataset contains many variables, we use only four
 variables: \texttt{survived}, \texttt{age}, \texttt{fare}, and
-\texttt{sex}. We summarize descpritons of variables as follows:
+\texttt{sex}. We summarize descriptions of variables as follows:
 
 \begin{itemize}
 \tightlist
@@ -1363,10 +1363,10 @@ toward women's social advancement, for example, an increase of number of
 board member. In this application, we explore whether the U.S. bank
 hindered the entrance of female into the workhorse.
 
-\textbf{Data}. We use a built-in dataset called \texttt{BankWages} in
-the library \texttt{AER}. This dataset contains choice of three job
-position: \texttt{custodial}, \texttt{admin} and \texttt{manage}. The
-rank of position is
+\noindent \textbf{Data}. We use a built-in dataset called
+\texttt{BankWages} in the library \texttt{AER}. This dataset contains
+choice of three job position: \texttt{custodial}, \texttt{admin} and
+\texttt{manage}. The rank of position is
 \texttt{custodial\ \textless{}\ admin\ \textless{}\ manage}. Other
 variables are \texttt{education}, \texttt{gender}, and
 \texttt{minority}. We use former two variables as explanatory variables.
@@ -1391,9 +1391,9 @@ variables are \texttt{education}, \texttt{gender}, and
 ## 5  admin        15   male       no
 \end{verbatim}
 
-\textbf{Model}. The outcome variable \(y_i\) takes three values
-\(\{0, 1, 2\}\). Then, the multinomial logit model has the following
-response probabilities \begin{equation*}
+\noindent \textbf{Model}. The outcome variable \(y_i\) takes three
+values \(\{0, 1, 2\}\). Then, the multinomial logit model has the
+following response probabilities \begin{equation*}
   P_{ij} = \mathbb{P}(y_i = j | \mathbf{x}_i) =
   \begin{cases}
     \frac{\exp(\mathbf{x}_i \beta_j)}{1 + \sum_{k=1}^2 \exp(\mathbf{x}_i \beta_k)} &\text{if}\quad j = 1, 2  \\

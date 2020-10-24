@@ -45,7 +45,7 @@ to answer whether crews obeyed the code or not.
 We use an open data about Titanic survivors [^source].
 Although this dataset contains many variables,
 we use only four variables: `survived`, `age`, `fare`, and `sex`.
-We summarize descpritons of variables as follows:
+We summarize descriptions of variables as follows:
 
 - `survived`: a binary variable taking 1 if a passenger survived.
 - `age`: a continuous variable representing passeger's age.
@@ -769,6 +769,7 @@ Recently, many developed countries move toward women's social advancement,
 for example, an increase of number of board member.
 In this application, we explore whether the U.S. bank hindered the entrance of female into the workhorse.
 
+\noindent
 **Data**. 
 We use a built-in dataset called `BankWages` in the library `AER`.
 This dataset contains choice of three job position: `custodial`, `admin` and `manage`.
@@ -785,6 +786,7 @@ dt$job <- factor(dt$job, levels = c("admin", "custodial", "manage"))
 head(BankWages, 5)
 ```
 
+\noindent
 **Model**.
 The outcome variable $y_i$ takes three values $\{0, 1, 2\}$.
 Then, the multinomial logit model has the following response probabilities 
