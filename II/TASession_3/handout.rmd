@@ -506,12 +506,37 @@ summary(margins(logit_glm))
 -->
 
 Table \ref{titanic} shows results of linear probability model, probit model, and logit model.
-All specifications shows that 
-the survival probability of female is about 50\% point higher than of male, 
-which is statistically significant.
-Moreover, the survival probability is decreasing in age, 
-which implies children are more likely to survive.
-However, the size of coefficient is small.
+Qualitatively, all specifications shows same trend.
+The survival probability of females is greater than of male.
+The survival probability is decreaseing in age.
+Quantitatively, LPM shows that
+the survival probability of female is about 50\% point higher than of male.
+Moreover, 
+the survival probability of 0-year-old baby is about 0.3\% point less than of 100-year-old elderly.
+This implies that the survival probability is not largely changed by age.
+To evaluate probit and logit model quantitatively,
+consider 'average' person with respect to `age` and `fare`.
+Average age is about 30, and average fare is about 37.
+Then, the survival probability of female is calculated as follows:
+
+```{r calib_probit_logit}
+#probit
+cval_p <- b_probit[1] + 30*b_probit[3] + 37*b_probit[4] 
+female_p <- pnorm(cval_probit + b_probit[2]) - pnorm(cval_probit)
+#logit
+cval_l <- b_logit[1] + 30*b_logit[3] + 37*b_logit[4]
+female_l <- 1/(1 + exp(-(cval_l + b_logit[2]))) - 1/(1 + exp(-cval_l)) 
+# result
+print("Probit: Diff of prob. b/w average female and male"); female_p
+print("Logit: Diff of prob. b/w average female and male"); female_l
+```
+
+As a result, 
+in terms of the difference of survival probability between females and males
+the probit and logit model obtain similar result to LPM.
+In the same way, we can calculate the partial effect of age in the probit and logit model,
+but we skip this.
+If you have an interest, please try yourself.
 Overall, crews obeyed the code of "women and children first",
 but the survival probability of children is not largely different from of adult.
 

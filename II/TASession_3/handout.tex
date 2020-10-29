@@ -745,13 +745,62 @@ variable \texttt{age} is \begin{equation*}
 \end{equation*} where \(\Lambda(a) = 1/(1 + \exp(-a))\).
 
 Table \ref{titanic} shows results of linear probability model, probit
-model, and logit model. All specifications shows that the survival
-probability of female is about 50\% point higher than of male, which is
-statistically significant. Moreover, the survival probability is
-decreasing in age, which implies children are more likely to survive.
-However, the size of coefficient is small. Overall, crews obeyed the
-code of ``women and children first'', but the survival probability of
-children is not largely different from of adult.
+model, and logit model. Qualitatively, all specifications shows same
+trend. The survival probability of females is greater than of male. The
+survival probability is decreaseing in age. Quantitatively, LPM shows
+that the survival probability of female is about 50\% point higher than
+of male. Moreover, the survival probability of 0-year-old baby is about
+0.3\% point less than of 100-year-old elderly. This implies that the
+survival probability is not largely changed by age. To evaluate probit
+and logit model quantitatively, consider `average' person with respect
+to \texttt{age} and \texttt{fare}. Average age is about 30, and average
+fare is about 37. Then, the survival probability of female is calculated
+as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#probit}
+\NormalTok{cval\_p \textless{}{-}}\StringTok{ }\NormalTok{b\_probit[}\DecValTok{1}\NormalTok{] }\OperatorTok{+}\StringTok{ }\DecValTok{30}\OperatorTok{*}\NormalTok{b\_probit[}\DecValTok{3}\NormalTok{] }\OperatorTok{+}\StringTok{ }\DecValTok{37}\OperatorTok{*}\NormalTok{b\_probit[}\DecValTok{4}\NormalTok{] }
+\NormalTok{female\_p \textless{}{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(cval\_probit }\OperatorTok{+}\StringTok{ }\NormalTok{b\_probit[}\DecValTok{2}\NormalTok{]) }\OperatorTok{{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(cval\_probit)}
+\CommentTok{\#logit}
+\NormalTok{cval\_l \textless{}{-}}\StringTok{ }\NormalTok{b\_logit[}\DecValTok{1}\NormalTok{] }\OperatorTok{+}\StringTok{ }\DecValTok{30}\OperatorTok{*}\NormalTok{b\_logit[}\DecValTok{3}\NormalTok{] }\OperatorTok{+}\StringTok{ }\DecValTok{37}\OperatorTok{*}\NormalTok{b\_logit[}\DecValTok{4}\NormalTok{]}
+\NormalTok{female\_l \textless{}{-}}\StringTok{ }\DecValTok{1}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{(cval\_l }\OperatorTok{+}\StringTok{ }\NormalTok{b\_logit[}\DecValTok{2}\NormalTok{]))) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{cval\_l)) }
+\CommentTok{\# result}
+\KeywordTok{print}\NormalTok{(}\StringTok{"Probit: Diff of prob. b/w average female and male"}\NormalTok{); female\_p}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Probit: Diff of prob. b/w average female and male"
+\end{verbatim}
+
+\begin{verbatim}
+## (Intercept) 
+##    0.527715
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"Logit: Diff of prob. b/w average female and male"}\NormalTok{); female\_l}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Logit: Diff of prob. b/w average female and male"
+\end{verbatim}
+
+\begin{verbatim}
+## (Intercept) 
+##     0.52958
+\end{verbatim}
+
+As a result, in terms of the difference of survival probability between
+females and males the probit and logit model obtain similar result to
+LPM. In the same way, we can calculate the partial effect of age in the
+probit and logit model, but we skip this. If you have an interest,
+please try yourself. Overall, crews obeyed the code of ``women and
+children first'', but the survival probability of children is not
+largely different from of adult.
 
 \hypertarget{model-fitness}{%
 \subsection{Model Fitness}\label{model-fitness}}
