@@ -161,8 +161,13 @@ we use \texttt{female} variable in regression.
 
 \NormalTok{dt}\OperatorTok{$}\NormalTok{female \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(dt}\OperatorTok{$}\NormalTok{sex }\OperatorTok{==}\StringTok{ "female"}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
 \NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{subset}\NormalTok{(dt, }\OperatorTok{!}\KeywordTok{is.na}\NormalTok{(survived)}\OperatorTok{\&!}\KeywordTok{is.na}\NormalTok{(age)}\OperatorTok{\&!}\KeywordTok{is.na}\NormalTok{(fare)}\OperatorTok{\&!}\KeywordTok{is.na}\NormalTok{(female))}
-
 \NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"survived"}\NormalTok{, }\StringTok{"age"}\NormalTok{, }\StringTok{"fare"}\NormalTok{, }\StringTok{"female"}\NormalTok{)]}
+
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{120511}\NormalTok{)}
+\NormalTok{train\_id \textless{}{-}}\StringTok{ }\KeywordTok{sample}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\KeywordTok{nrow}\NormalTok{(dt), }\DataTypeTok{size =} \DecValTok{2}\OperatorTok{*}\KeywordTok{nrow}\NormalTok{(dt)}\OperatorTok{/}\DecValTok{3}\NormalTok{, }\DataTypeTok{replace =} \OtherTok{FALSE}\NormalTok{)}
+\NormalTok{train\_dt \textless{}{-}}\StringTok{ }\NormalTok{dt[train\_id,]}
+\NormalTok{test\_dt \textless{}{-}}\StringTok{ }\NormalTok{dt[}\OperatorTok{{-}}\NormalTok{train\_id,]}
+
 \KeywordTok{head}\NormalTok{(dt)}
 \end{Highlighting}
 \end{Shaded}
@@ -217,7 +222,7 @@ that is, \begin{equation*}
 \begin{Shaded}
 \begin{Highlighting}[]
 \NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{survived }\OperatorTok{\textasciitilde{}}\StringTok{ }\KeywordTok{factor}\NormalTok{(female) }\OperatorTok{+}\StringTok{ }\NormalTok{age }\OperatorTok{+}\StringTok{ }\NormalTok{fare}
-\NormalTok{LPM \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt)}
+\NormalTok{LPM \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ train\_dt)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -233,8 +238,8 @@ standard errors using the White method. \begin{equation*}
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{\# heteroskedasticity{-}robust standard errors}
-\NormalTok{dt}\OperatorTok{$}\StringTok{"(Intercept)"}\NormalTok{ \textless{}{-}}\StringTok{ }\DecValTok{1}
-\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"(Intercept)"}\NormalTok{, }\StringTok{"female"}\NormalTok{, }\StringTok{"age"}\NormalTok{, }\StringTok{"fare"}\NormalTok{)])}
+\NormalTok{train\_dt}\OperatorTok{$}\StringTok{"(Intercept)"}\NormalTok{ \textless{}{-}}\StringTok{ }\DecValTok{1}
+\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(train\_dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"(Intercept)"}\NormalTok{, }\StringTok{"female"}\NormalTok{, }\StringTok{"age"}\NormalTok{, }\StringTok{"fare"}\NormalTok{)])}
 \NormalTok{u \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(LPM}\OperatorTok{$}\NormalTok{residuals}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)}
 
 \NormalTok{XX \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
@@ -263,10 +268,10 @@ standard errors using the White method. \begin{equation*}
 
 \begin{verbatim}
 ##                   (Intercept) factor(female)1           age          fare
-## (Intercept)      9.754357e-04   -2.891381e-04 -2.333963e-05 -3.329763e-07
-## factor(female)1 -2.891381e-04    7.136865e-04  2.373259e-06 -1.272800e-06
-## age             -2.333963e-05    2.373259e-06  8.026024e-07 -4.090649e-08
-## fare            -3.329763e-07   -1.272800e-06 -4.090649e-08  5.524412e-08
+## (Intercept)      1.505787e-03   -3.905773e-04 -3.676396e-05 -5.951346e-07
+## factor(female)1 -3.905773e-04    1.089299e-03  2.569835e-06 -2.154400e-06
+## age             -3.676396e-05    2.569835e-06  1.264948e-06 -6.274261e-08
+## fare            -5.951346e-07   -2.154400e-06 -6.274261e-08  9.167801e-08
 \end{verbatim}
 
 \begin{Shaded}
@@ -281,10 +286,10 @@ standard errors using the White method. \begin{equation*}
 
 \begin{verbatim}
 ##               (Intercept)        female           age          fare
-## (Intercept)  1.133289e-03 -2.798532e-04 -2.789675e-05  2.813843e-07
-## female      -2.798532e-04  7.903766e-04  3.169092e-06 -2.401923e-06
-## age         -2.789675e-05  3.169092e-06  8.857523e-07 -3.650375e-08
-## fare         2.813843e-07 -2.401923e-06 -3.650375e-08  4.071639e-08
+## (Intercept)  1.810499e-03 -3.968956e-04 -4.601203e-05  8.979498e-07
+## female      -3.968956e-04  1.239665e-03  4.975911e-06 -4.566026e-06
+## age         -4.601203e-05  4.975911e-06  1.476806e-06 -7.956793e-08
+## fare         8.979498e-07 -4.566026e-06 -7.956793e-08  7.846876e-08
 \end{verbatim}
 
 \begin{Shaded}
@@ -299,22 +304,7 @@ standard errors using the White method. \begin{equation*}
 
 \begin{verbatim}
 ##     (Intercept) factor(female)1             age            fare 
-##    0.0336643606    0.0281136372    0.0009411442    0.0002017830
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{print}\NormalTok{(}\StringTok{"The Robust t{-}value using White method"}\NormalTok{); }\KeywordTok{coef}\NormalTok{(LPM)}\OperatorTok{/}\NormalTok{rse\_b}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## [1] "The Robust t-value using White method"
-\end{verbatim}
-
-\begin{verbatim}
-##     (Intercept) factor(female)1             age            fare 
-##        6.482874       18.229508       -1.884168        7.162302
+##    0.0425499596    0.0352088828    0.0012152389    0.0002801228
 \end{verbatim}
 
 Using the package \texttt{lmtest} and \texttt{sandwich} is the easiest
@@ -331,18 +321,7 @@ way to calculate heteroskedasticity-robust standard errors and
 
 \begin{verbatim}
 ##     (Intercept) factor(female)1             age            fare 
-##    0.0336643606    0.0281136372    0.0009411442    0.0002017830
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{coeftest}\NormalTok{(LPM, }\DataTypeTok{vcov =} \KeywordTok{vcovHC}\NormalTok{(LPM, }\DataTypeTok{type =} \StringTok{"HC0"}\NormalTok{))[, }\StringTok{"t value"}\NormalTok{]}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-##     (Intercept) factor(female)1             age            fare 
-##        6.482874       18.229508       -1.884168        7.162302
+##    0.0425499596    0.0352088828    0.0012152389    0.0002801228
 \end{verbatim}
 
 Finally, we summarize results of linear probability model in table
@@ -351,19 +330,12 @@ of LPM later.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# t{-}stats}
-\NormalTok{t\_b \textless{}{-}}\StringTok{ }\KeywordTok{coef}\NormalTok{(LPM)}\OperatorTok{/}\NormalTok{se\_b }
-\NormalTok{rt\_b \textless{}{-}}\StringTok{ }\KeywordTok{coef}\NormalTok{(LPM)}\OperatorTok{/}\NormalTok{rse\_b}
-\CommentTok{\# p{-}value Pr( \textgreater{} |t|)}
-\NormalTok{p\_b \textless{}{-}}\StringTok{ }\KeywordTok{pt}\NormalTok{(}\KeywordTok{abs}\NormalTok{(t\_b), }\DataTypeTok{df =} \KeywordTok{nrow}\NormalTok{(X)}\OperatorTok{{-}}\KeywordTok{ncol}\NormalTok{(X), }\DataTypeTok{lower =} \OtherTok{FALSE}\NormalTok{)}\OperatorTok{*}\DecValTok{2}
-\NormalTok{rp\_b \textless{}{-}}\StringTok{ }\KeywordTok{pt}\NormalTok{(}\KeywordTok{abs}\NormalTok{(rt\_b), }\DataTypeTok{df =} \KeywordTok{nrow}\NormalTok{(X)}\OperatorTok{{-}}\KeywordTok{ncol}\NormalTok{(X), }\DataTypeTok{lower =} \OtherTok{FALSE}\NormalTok{)}\OperatorTok{*}\DecValTok{2}
-
 \KeywordTok{library}\NormalTok{(stargazer)}
 \KeywordTok{stargazer}\NormalTok{(}
 \NormalTok{  LPM, LPM,}
-  \DataTypeTok{se =} \KeywordTok{list}\NormalTok{(se\_b, rse\_b), }\DataTypeTok{t =} \KeywordTok{list}\NormalTok{(t\_b, rt\_b), }\DataTypeTok{p =} \KeywordTok{list}\NormalTok{(p\_b, rp\_b),}
+  \DataTypeTok{se =} \KeywordTok{list}\NormalTok{(se\_b, rse\_b),}
   \DataTypeTok{t.auto =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{p.auto =} \OtherTok{FALSE}\NormalTok{,}
-  \DataTypeTok{report =} \StringTok{"vcstp"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+  \DataTypeTok{report =} \StringTok{"vcs"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
   \DataTypeTok{covariate.labels =} \KeywordTok{c}\NormalTok{(}\StringTok{"Female = 1"}\NormalTok{),}
   \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
     \KeywordTok{c}\NormalTok{(}\StringTok{"Standard errors"}\NormalTok{, }\StringTok{"Homoskedasticity{-}based"}\NormalTok{, }\StringTok{"Heteroskedasticity{-}robust"}\NormalTok{)),}
@@ -387,28 +359,20 @@ of LPM later.
 \\[-1.8ex] & (1) & (2)\\ 
 \hline \\[-1.8ex] 
  Female = 1 & 0.512 & 0.512 \\ 
-  & (0.027) & (0.028) \\ 
-  & t = 19.184 & t = 18.230 \\ 
-  & p = 0.000 & p = 0.000 \\ 
+  & (0.033) & (0.035) \\ 
   & & \\ 
- age & $-$0.002 & $-$0.002 \\ 
+ age & $-$0.003 & $-$0.003 \\ 
   & (0.001) & (0.001) \\ 
-  & t = $-$1.979 & t = $-$1.884 \\ 
-  & p = 0.049 & p = 0.060 \\ 
   & & \\ 
  fare & 0.001 & 0.001 \\ 
-  & (0.0002) & (0.0002) \\ 
-  & t = 6.149 & t = 7.162 \\ 
-  & p = 0.000 & p = 0.000 \\ 
+  & (0.0003) & (0.0003) \\ 
   & & \\ 
- Constant & 0.218 & 0.218 \\ 
-  & (0.031) & (0.034) \\ 
-  & t = 6.988 & t = 6.483 \\ 
-  & p = 0.000 & p = 0.000 \\ 
+ Constant & 0.245 & 0.245 \\ 
+  & (0.039) & (0.043) \\ 
   & & \\ 
 \hline \\[-1.8ex] 
 Standard errors & Homoskedasticity-based & Heteroskedasticity-robust \\ 
-Observations & 1,045 & 1,045 \\ 
+Observations & 696 & 696 \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular} 
@@ -474,8 +438,10 @@ function to minimize the log-likelihood function.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{Y \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{survived}
-\NormalTok{female \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{female; age \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{age; fare \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{fare}
+\NormalTok{Y \textless{}{-}}\StringTok{ }\NormalTok{train\_dt}\OperatorTok{$}\NormalTok{survived}
+\NormalTok{female \textless{}{-}}\StringTok{ }\NormalTok{train\_dt}\OperatorTok{$}\NormalTok{female}
+\NormalTok{age \textless{}{-}}\StringTok{ }\NormalTok{train\_dt}\OperatorTok{$}\NormalTok{age}
+\NormalTok{fare \textless{}{-}}\StringTok{ }\NormalTok{train\_dt}\OperatorTok{$}\NormalTok{fare}
 
 \CommentTok{\# log{-}likelihood}
 \NormalTok{LnLik \textless{}{-}}\StringTok{ }\ControlFlowTok{function}\NormalTok{(b, }\DataTypeTok{model =} \KeywordTok{c}\NormalTok{(}\StringTok{"probit"}\NormalTok{, }\StringTok{"logit"}\NormalTok{)) \{}
@@ -495,7 +461,7 @@ function to minimize the log-likelihood function.
 \NormalTok{\}}
 
 \CommentTok{\#Newton{-}Raphson}
-\NormalTok{init \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\FloatTok{0.218}\NormalTok{, }\FloatTok{0.512}\NormalTok{, }\FloatTok{{-}0.002}\NormalTok{, }\FloatTok{0.001}\NormalTok{)}
+\NormalTok{init \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\FloatTok{0.169}\NormalTok{, }\FloatTok{0.520}\NormalTok{, }\FloatTok{{-}0.0002}\NormalTok{, }\FloatTok{0.001}\NormalTok{)}
 \NormalTok{probit \textless{}{-}}\StringTok{ }\KeywordTok{nlm}\NormalTok{(LnLik, init, }\DataTypeTok{model =} \StringTok{"probit"}\NormalTok{, }\DataTypeTok{hessian =} \OtherTok{TRUE}\NormalTok{)}
 
 \NormalTok{label \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"(Intercept)"}\NormalTok{, }\StringTok{"factor(female)1"}\NormalTok{, }\StringTok{"age"}\NormalTok{, }\StringTok{"fare"}\NormalTok{)}
@@ -508,7 +474,7 @@ function to minimize the log-likelihood function.
 
 \CommentTok{\#glm function}
 \NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{survived }\OperatorTok{\textasciitilde{}}\StringTok{ }\KeywordTok{factor}\NormalTok{(female) }\OperatorTok{+}\StringTok{ }\NormalTok{age }\OperatorTok{+}\StringTok{ }\NormalTok{fare}
-\NormalTok{probit\_glm \textless{}{-}}\StringTok{ }\KeywordTok{glm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{family =} \KeywordTok{binomial}\NormalTok{(}\StringTok{"probit"}\NormalTok{))}
+\NormalTok{probit\_glm \textless{}{-}}\StringTok{ }\KeywordTok{glm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ train\_dt, }\DataTypeTok{family =} \KeywordTok{binomial}\NormalTok{(}\StringTok{"probit"}\NormalTok{))}
 
 \CommentTok{\#result}
 \KeywordTok{print}\NormalTok{(}\StringTok{"The MLE of probit model using nlm"}\NormalTok{); b\_probit}
@@ -521,7 +487,7 @@ function to minimize the log-likelihood function.
 
 \begin{verbatim}
 ##     (Intercept) factor(female)1             age            fare 
-##    -0.813995120     1.435384017    -0.006415761     0.005954843
+##    -0.740010404     1.440663450    -0.009316882     0.006302940
 \end{verbatim}
 
 \begin{Shaded}
@@ -536,10 +502,10 @@ function to minimize the log-likelihood function.
 
 \begin{verbatim}
 ##                   (Intercept) factor(female)1           age          fare
-## (Intercept)      1.149118e-02   -3.569149e-03 -2.654781e-04 -1.375309e-05
-## factor(female)1 -3.569149e-03    8.251773e-03  2.000500e-05 -5.991997e-06
-## age             -2.654781e-04    2.000500e-05  9.630856e-06 -6.874343e-07
-## fare            -1.375309e-05   -5.991997e-06 -6.874343e-07  1.103772e-06
+## (Intercept)      1.764185e-02   -4.735516e-03 -4.149486e-04 -2.453847e-05
+## factor(female)1 -4.735516e-03    1.255295e-02  8.495496e-06 -5.592007e-06
+## age             -4.149486e-04    8.495496e-06  1.512962e-05 -9.929199e-07
+## fare            -2.453847e-05   -5.592007e-06 -9.929199e-07  1.737151e-06
 \end{verbatim}
 
 \begin{Shaded}
@@ -554,7 +520,7 @@ function to minimize the log-likelihood function.
 
 \begin{verbatim}
 ##     (Intercept) factor(female)1             age            fare 
-##     0.107196925     0.090839272     0.003103362     0.001050606
+##     0.132822608     0.112039969     0.003889681     0.001318010
 \end{verbatim}
 
 \begin{Shaded}
@@ -569,7 +535,7 @@ function to minimize the log-likelihood function.
 
 \begin{verbatim}
 ##     (Intercept) factor(female)1             age            fare 
-##    -0.814075240     1.435384903    -0.006413717     0.005955479
+##    -0.740094134     1.440662013    -0.009314690     0.006303577
 \end{verbatim}
 
 \begin{Shaded}
@@ -584,7 +550,7 @@ function to minimize the log-likelihood function.
 
 \begin{verbatim}
 ##     (Intercept) factor(female)1             age            fare 
-##     0.108614928     0.090860818     0.003139413     0.001056285
+##     0.134738833     0.112061942     0.003966673     0.001326048
 \end{verbatim}
 
 Using \texttt{LogLik}, we can also estimate logit model by
@@ -605,7 +571,7 @@ function.
 \NormalTok{LL\_logit \textless{}{-}}\StringTok{ }\OperatorTok{{-}}\NormalTok{logit}\OperatorTok{$}\NormalTok{minimum}
 
 \CommentTok{\#glm function}
-\NormalTok{logit\_glm \textless{}{-}}\StringTok{ }\KeywordTok{glm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{family =} \KeywordTok{binomial}\NormalTok{(}\StringTok{"logit"}\NormalTok{))}
+\NormalTok{logit\_glm \textless{}{-}}\StringTok{ }\KeywordTok{glm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ train\_dt, }\DataTypeTok{family =} \KeywordTok{binomial}\NormalTok{(}\StringTok{"logit"}\NormalTok{))}
 
 \CommentTok{\#result}
 \KeywordTok{print}\NormalTok{(}\StringTok{"The MLE of logit model"}\NormalTok{); b\_logit}
@@ -618,7 +584,7 @@ function.
 
 \begin{verbatim}
 ##     (Intercept) factor(female)1             age            fare 
-##     -1.33719278      2.35516448     -0.01105760      0.01002878
+##     -1.19071868      2.36579523     -0.01665811      0.01049121
 \end{verbatim}
 
 \begin{Shaded}
@@ -633,10 +599,10 @@ function.
 
 \begin{verbatim}
 ##                   (Intercept) factor(female)1           age          fare
-## (Intercept)      0.0351392692   -1.052616e-02 -8.031155e-04 -4.682750e-05
-## factor(female)1 -0.0105261593    2.411636e-02  3.401375e-05 -7.818252e-06
-## age             -0.0008031155    3.401375e-05  2.939124e-05 -2.170680e-06
-## fare            -0.0000468275   -7.818252e-06 -2.170680e-06  3.448283e-06
+## (Intercept)      5.347251e-02   -1.306856e-02 -1.260674e-03 -7.166131e-05
+## factor(female)1 -1.306856e-02    3.678907e-02 -4.389835e-05 -2.773805e-06
+## age             -1.260674e-03   -4.389835e-05  4.703086e-05 -3.343743e-06
+## fare            -7.166131e-05   -2.773805e-06 -3.343743e-06  5.199195e-06
 \end{verbatim}
 
 \begin{Shaded}
@@ -651,7 +617,7 @@ function.
 
 \begin{verbatim}
 ##     (Intercept) factor(female)1             age            fare 
-##     0.187454712     0.155294438     0.005421369     0.001856955
+##     0.231241234     0.191804780     0.006857905     0.002280174
 \end{verbatim}
 
 \begin{Shaded}
@@ -666,7 +632,7 @@ function.
 
 \begin{verbatim}
 ##     (Intercept) factor(female)1             age            fare 
-##     -1.33727469      2.35516632     -0.01105553      0.01002942
+##     -1.19080405      2.36579304     -0.01665588      0.01049185
 \end{verbatim}
 
 \begin{Shaded}
@@ -681,7 +647,7 @@ function.
 
 \begin{verbatim}
 ##     (Intercept) factor(female)1             age            fare 
-##     0.187350369     0.155280058     0.005424281     0.001847912
+##     0.231133819     0.191810415     0.006862245     0.002272391
 \end{verbatim}
 
 As a result, table \ref{probit_logit} summarizes results of probit model
@@ -691,20 +657,11 @@ will discuss interpretation of results and goodness-of-fit later.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# z{-}value}
-\NormalTok{z\_probit \textless{}{-}}\StringTok{ }\NormalTok{b\_probit}\OperatorTok{/}\NormalTok{se\_probit}
-\NormalTok{z\_logit \textless{}{-}}\StringTok{ }\NormalTok{b\_logit}\OperatorTok{/}\NormalTok{se\_logit}
-
-\CommentTok{\# Pr(\textgreater{}|z|)}
-\NormalTok{p\_probit \textless{}{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(}\KeywordTok{abs}\NormalTok{(z\_probit), }\DataTypeTok{lower =} \OtherTok{FALSE}\NormalTok{)}\OperatorTok{*}\DecValTok{2}
-\NormalTok{p\_logit \textless{}{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(}\KeywordTok{abs}\NormalTok{(z\_logit), }\DataTypeTok{lower =} \OtherTok{FALSE}\NormalTok{)}\OperatorTok{*}\DecValTok{2}
-
 \KeywordTok{stargazer}\NormalTok{(}
 \NormalTok{  probit\_glm, logit\_glm,}
   \DataTypeTok{coef =} \KeywordTok{list}\NormalTok{(b\_probit, b\_logit), }\DataTypeTok{se =} \KeywordTok{list}\NormalTok{(se\_probit, se\_logit),}
-  \DataTypeTok{t =} \KeywordTok{list}\NormalTok{(z\_probit, z\_logit), }\DataTypeTok{p =} \KeywordTok{list}\NormalTok{(p\_probit, p\_logit),}
   \DataTypeTok{t.auto =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{p.auto =} \OtherTok{FALSE}\NormalTok{,}
-  \DataTypeTok{report =} \StringTok{"vcstp"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+  \DataTypeTok{report =} \StringTok{"vcs"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
   \DataTypeTok{covariate.labels =} \KeywordTok{c}\NormalTok{(}\StringTok{"Female = 1"}\NormalTok{),}
   \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
     \KeywordTok{c}\NormalTok{(}\StringTok{"Log{-}Likelihood"}\NormalTok{, }\KeywordTok{round}\NormalTok{(LL\_probit, }\DecValTok{3}\NormalTok{), }\KeywordTok{round}\NormalTok{(LL\_logit, }\DecValTok{3}\NormalTok{))),}
@@ -729,29 +686,21 @@ will discuss interpretation of results and goodness-of-fit later.
 \\[-1.8ex] & \textit{probit} & \textit{logistic} \\ 
 \\[-1.8ex] & (1) & (2)\\ 
 \hline \\[-1.8ex] 
- Female = 1 & 1.435 & 2.355 \\ 
-  & (0.091) & (0.155) \\ 
-  & t = 15.801 & t = 15.166 \\ 
-  & p = 0.000 & p = 0.000 \\ 
+ Female = 1 & 1.441 & 2.366 \\ 
+  & (0.112) & (0.192) \\ 
   & & \\ 
- age & $-$0.006 & $-$0.011 \\ 
-  & (0.003) & (0.005) \\ 
-  & t = $-$2.067 & t = $-$2.040 \\ 
-  & p = 0.039 & p = 0.042 \\ 
+ age & $-$0.009 & $-$0.017 \\ 
+  & (0.004) & (0.007) \\ 
   & & \\ 
  fare & 0.006 & 0.010 \\ 
   & (0.001) & (0.002) \\ 
-  & t = 5.668 & t = 5.401 \\ 
-  & p = 0.000 & p = 0.00000 \\ 
   & & \\ 
- Constant & $-$0.814 & $-$1.337 \\ 
-  & (0.107) & (0.187) \\ 
-  & t = $-$7.593 & t = $-$7.133 \\ 
-  & p = 0.000 & p = 0.000 \\ 
+ Constant & $-$0.740 & $-$1.191 \\ 
+  & (0.133) & (0.231) \\ 
   & & \\ 
 \hline \\[-1.8ex] 
-Log-Likelihood & -530.404 & -530.947 \\ 
-Observations & 1,045 & 1,045 \\ 
+Log-Likelihood & -351.507 & -351.873 \\ 
+Observations & 696 & 696 \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular} 
@@ -820,182 +769,9 @@ need to calculate standard errors manually. The \texttt{DeltaAME}
 function is a function returing average marginal effect and its standard
 errors.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{DeltaAME \textless{}{-}}\StringTok{ }\ControlFlowTok{function}\NormalTok{(b, X, vcov, }\DataTypeTok{jbin =} \OtherTok{NULL}\NormalTok{, }\DataTypeTok{model =} \KeywordTok{c}\NormalTok{(}\StringTok{"probit"}\NormalTok{, }\StringTok{"logit"}\NormalTok{)) \{}
-\NormalTok{  Xb \textless{}{-}}\StringTok{ }\KeywordTok{numeric}\NormalTok{(}\KeywordTok{nrow}\NormalTok{(X))}
-  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(b)) \{}
-\NormalTok{     Xb \textless{}{-}}\StringTok{ }\NormalTok{Xb }\OperatorTok{+}\StringTok{ }\NormalTok{b[i] }\OperatorTok{*}\StringTok{ }\NormalTok{X[,i]}
-\NormalTok{  \}}
-
-  \ControlFlowTok{if}\NormalTok{ (model }\OperatorTok{==}\StringTok{ "probit"}\NormalTok{) \{}
-\NormalTok{    dens \textless{}{-}}\StringTok{ }\KeywordTok{dnorm}\NormalTok{(Xb)}
-\NormalTok{    grad \textless{}{-}}\StringTok{ }\OperatorTok{{-}}\NormalTok{Xb }\OperatorTok{*}\StringTok{ }\NormalTok{dens}
-\NormalTok{  \} }\ControlFlowTok{else}\NormalTok{ \{}
-\NormalTok{    dens \textless{}{-}}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{Xb)}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{Xb))}\OperatorTok{\^{}}\DecValTok{2}
-\NormalTok{    grad \textless{}{-}}\StringTok{ }\NormalTok{dens }\OperatorTok{*}\StringTok{ }\NormalTok{(}\OperatorTok{{-}}\DecValTok{1}\OperatorTok{+}\DecValTok{2}\OperatorTok{*}\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{Xb)}\OperatorTok{/}\NormalTok{(}\DecValTok{1}\OperatorTok{+}\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{Xb)))}
-\NormalTok{  \}}
-
-\NormalTok{  ame \textless{}{-}}\StringTok{ }\KeywordTok{mean}\NormalTok{(dens) }\OperatorTok{*}\StringTok{ }\NormalTok{b}
-  \ControlFlowTok{if}\NormalTok{ (}\OperatorTok{!}\KeywordTok{is.null}\NormalTok{(jbin)) \{}
-    \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in}\NormalTok{ jbin) \{}
-\NormalTok{      val1 \textless{}{-}}\StringTok{ }\NormalTok{X[,}\OperatorTok{{-}}\NormalTok{i] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(b[}\OperatorTok{{-}}\NormalTok{i], }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{) }\OperatorTok{+}\StringTok{ }\NormalTok{b[i]}
-\NormalTok{      val0 \textless{}{-}}\StringTok{ }\NormalTok{X[,}\OperatorTok{{-}}\NormalTok{i] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(b[}\OperatorTok{{-}}\NormalTok{i], }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
-      \ControlFlowTok{if}\NormalTok{ (model }\OperatorTok{==}\StringTok{ "probit"}\NormalTok{) \{}
-\NormalTok{        amed \textless{}{-}}\StringTok{ }\KeywordTok{mean}\NormalTok{(}\KeywordTok{pnorm}\NormalTok{(val1) }\OperatorTok{{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(val0))}
-\NormalTok{      \} }\ControlFlowTok{else}\NormalTok{ \{ }
-\NormalTok{        amed \textless{}{-}}\StringTok{ }\KeywordTok{mean}\NormalTok{((}\DecValTok{1}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{val1))) }\OperatorTok{{-}}\StringTok{ }\NormalTok{(}\DecValTok{1}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{val0))))}
-\NormalTok{      \}}
-\NormalTok{      ame[i] \textless{}{-}}\StringTok{ }\NormalTok{amed}
-\NormalTok{    \}}
-\NormalTok{  \}}
-
-\NormalTok{  e \textless{}{-}}\StringTok{ }\OtherTok{NULL}
-  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(b)) \{}
-\NormalTok{    e \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(e, }\KeywordTok{rep}\NormalTok{(}\KeywordTok{mean}\NormalTok{(X[,i] }\OperatorTok{*}\StringTok{ }\NormalTok{grad), }\KeywordTok{length}\NormalTok{(b)))}
-\NormalTok{  \}}
-
-\NormalTok{  Jacob \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(e, }\DataTypeTok{nrow =} \KeywordTok{length}\NormalTok{(b), }\DataTypeTok{ncol =} \KeywordTok{length}\NormalTok{(b))}
-
-  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{nrow}\NormalTok{(Jacob)) \{}
-\NormalTok{    Jacob[i,] \textless{}{-}}\StringTok{ }\NormalTok{b[i] }\OperatorTok{*}\StringTok{ }\NormalTok{Jacob[i,]}
-\NormalTok{  \}}
-  \KeywordTok{diag}\NormalTok{(Jacob) \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(Jacob) }\OperatorTok{+}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\KeywordTok{mean}\NormalTok{(dens), }\KeywordTok{length}\NormalTok{(b))}
-
-  \ControlFlowTok{if}\NormalTok{ (}\OperatorTok{!}\KeywordTok{is.null}\NormalTok{(jbin)) \{}
-    \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in}\NormalTok{ jbin) \{}
-\NormalTok{      val1 \textless{}{-}}\StringTok{ }\NormalTok{X[,}\OperatorTok{{-}}\NormalTok{i] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(b[}\OperatorTok{{-}}\NormalTok{i], }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{) }\OperatorTok{+}\StringTok{ }\NormalTok{b[i]}
-\NormalTok{      val0 \textless{}{-}}\StringTok{ }\NormalTok{X[,}\OperatorTok{{-}}\NormalTok{i] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(b[}\OperatorTok{{-}}\NormalTok{i], }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
-\NormalTok{      de \textless{}{-}}\StringTok{ }\OtherTok{NULL}
-      \ControlFlowTok{if}\NormalTok{ (model }\OperatorTok{==}\StringTok{ "probit"}\NormalTok{) \{}
-        \ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(b)) \{}
-           \ControlFlowTok{if}\NormalTok{ (j }\OperatorTok{!=}\StringTok{ }\NormalTok{i) \{}
-\NormalTok{            dep \textless{}{-}}\StringTok{ }\NormalTok{X[,j] }\OperatorTok{*}\StringTok{ }\NormalTok{(}\KeywordTok{dnorm}\NormalTok{(val1) }\OperatorTok{{-}}\StringTok{ }\KeywordTok{dnorm}\NormalTok{(val0))}
-\NormalTok{            de \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(de, }\KeywordTok{mean}\NormalTok{(dep))}
-\NormalTok{           \} }\ControlFlowTok{else}\NormalTok{ \{}
-\NormalTok{            dep \textless{}{-}}\StringTok{ }\KeywordTok{dnorm}\NormalTok{(val1)}
-\NormalTok{            de \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(de, }\KeywordTok{mean}\NormalTok{(dep))}
-\NormalTok{           \}}
-\NormalTok{        \}        }
-\NormalTok{      \} }\ControlFlowTok{else}\NormalTok{ \{}
-        \ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(b)) \{}
-           \ControlFlowTok{if}\NormalTok{ (j }\OperatorTok{!=}\StringTok{ }\NormalTok{i) \{}
-\NormalTok{            dep \textless{}{-}}\StringTok{ }\NormalTok{X[,j] }\OperatorTok{*}\StringTok{ }
-\StringTok{              }\NormalTok{((}\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{val1)}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{val1))}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{) }\OperatorTok{{-}}\StringTok{ }\NormalTok{(}\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{val0)}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{val0))}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{))}
-\NormalTok{            de \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(de, }\KeywordTok{mean}\NormalTok{(dep))}
-\NormalTok{           \} }\ControlFlowTok{else}\NormalTok{ \{}
-\NormalTok{            dep \textless{}{-}}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{val1)}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{val1))}\OperatorTok{\^{}}\DecValTok{2}
-\NormalTok{            de \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(de, }\KeywordTok{mean}\NormalTok{(dep))}
-\NormalTok{           \}}
-\NormalTok{        \} }
-\NormalTok{      \}}
-\NormalTok{      Jacob[i,] \textless{}{-}}\StringTok{ }\NormalTok{de}
-\NormalTok{    \}}
-\NormalTok{  \}}
-
-\NormalTok{  label \textless{}{-}}\StringTok{ }\KeywordTok{names}\NormalTok{(b)}
-  \KeywordTok{colnames}\NormalTok{(Jacob) \textless{}{-}}\StringTok{ }\NormalTok{label; }\KeywordTok{rownames}\NormalTok{(Jacob) \textless{}{-}}\StringTok{ }\NormalTok{label}
-
-\NormalTok{  vcov\_ame \textless{}{-}}\StringTok{ }\NormalTok{Jacob }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{vcov }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(Jacob)}
-\NormalTok{  se\_ame \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(vcov\_ame))}
-\NormalTok{  z\_ame \textless{}{-}}\StringTok{ }\NormalTok{ame}\OperatorTok{/}\NormalTok{se\_ame}
-\NormalTok{  p\_ame \textless{}{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(}\KeywordTok{abs}\NormalTok{(z\_ame), }\DataTypeTok{lower =} \OtherTok{FALSE}\NormalTok{)}\OperatorTok{*}\DecValTok{2}
-
-  \KeywordTok{return}\NormalTok{(}\KeywordTok{list}\NormalTok{(}\DataTypeTok{AME =}\NormalTok{ ame[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{], }\DataTypeTok{SE =}\NormalTok{ se\_ame[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{], }\DataTypeTok{zval =}\NormalTok{ z\_ame[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{], }\DataTypeTok{pval =}\NormalTok{ p\_ame[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{]))}
-\NormalTok{\}}
-
-\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"(Intercept)"}\NormalTok{, }\StringTok{"female"}\NormalTok{, }\StringTok{"age"}\NormalTok{, }\StringTok{"fare"}\NormalTok{)])}
-\NormalTok{ame\_probit \textless{}{-}}\StringTok{ }\KeywordTok{DeltaAME}\NormalTok{(b\_probit, X, vcov\_probit, }\DataTypeTok{jbin =} \DecValTok{2}\NormalTok{, }\DataTypeTok{model =} \StringTok{"probit"}\NormalTok{)}
-\NormalTok{ame\_logit \textless{}{-}}\StringTok{ }\KeywordTok{DeltaAME}\NormalTok{(b\_logit, X, vcov\_logit, }\DataTypeTok{jbin =} \DecValTok{2}\NormalTok{, }\DataTypeTok{model =} \StringTok{"logit"}\NormalTok{)}
-
-\KeywordTok{print}\NormalTok{(}\StringTok{"AME of probit estimates"}\NormalTok{); ame\_probit}\OperatorTok{$}\NormalTok{AME}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## [1] "AME of probit estimates"
-\end{verbatim}
-
-\begin{verbatim}
-## factor(female)1             age            fare 
-##     0.508541457    -0.001824620     0.001693537
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{print}\NormalTok{(}\StringTok{"AME of logit estimates"}\NormalTok{); ame\_logit}\OperatorTok{$}\NormalTok{AME }
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## [1] "AME of logit estimates"
-\end{verbatim}
-
-\begin{verbatim}
-## factor(female)1             age            fare 
-##     0.507384641    -0.001823282     0.001653639
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{print}\NormalTok{(}\StringTok{"SE of AME of probit estimates"}\NormalTok{); ame\_probit}\OperatorTok{$}\NormalTok{SE }
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## [1] "SE of AME of probit estimates"
-\end{verbatim}
-
-\begin{verbatim}
-## factor(female)1             age            fare 
-##    0.0285474135    0.0008786651    0.0002874017
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{print}\NormalTok{(}\StringTok{"SE of AME of logit estimates"}\NormalTok{); ame\_logit}\OperatorTok{$}\NormalTok{SE}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## [1] "SE of AME of logit estimates"
-\end{verbatim}
-
-\begin{verbatim}
-## factor(female)1             age            fare 
-##    0.0287277842    0.0008897546    0.0002948759
-\end{verbatim}
-
 When we use the \texttt{glm} function, we can use the function
 \texttt{margins} in the library \texttt{margins} to obtain the average
 marginal effect.
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{library}\NormalTok{(margins)}
-\KeywordTok{summary}\NormalTok{(}\KeywordTok{margins}\NormalTok{(probit\_glm))}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-##   factor     AME     SE       z      p   lower   upper
-##      age -0.0018 0.0009 -2.0520 0.0402 -0.0036 -0.0001
-##     fare  0.0017 0.0003  5.8398 0.0000  0.0011  0.0023
-##  female1  0.5085 0.0286 17.7611 0.0000  0.4524  0.5647
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{summary}\NormalTok{(}\KeywordTok{margins}\NormalTok{(logit\_glm))}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-##   factor     AME     SE       z      p   lower   upper
-##      age -0.0018 0.0009 -2.0480 0.0406 -0.0036 -0.0001
-##     fare  0.0017 0.0003  5.6338 0.0000  0.0011  0.0022
-##  female1  0.5074 0.0287 17.6652 0.0000  0.4511  0.5637
-\end{verbatim}
 
 Table \ref{titanic} shows results of linear probability model, probit
 model, and logit model. In the probit and logit model, coefficients
@@ -1021,20 +797,38 @@ correctly predicted} reports the percentage of unit whose predicted
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{Y \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{survived}
-\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"(Intercept)"}\NormalTok{, }\StringTok{"female"}\NormalTok{, }\StringTok{"age"}\NormalTok{, }\StringTok{"fare"}\NormalTok{)])}
+\CommentTok{\# In{-}sample}
+\NormalTok{in\_Y \textless{}{-}}\StringTok{ }\NormalTok{train\_dt}\OperatorTok{$}\NormalTok{survived}
+\NormalTok{in\_X \textless{}{-}}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(train\_dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"(Intercept)"}\NormalTok{, }\StringTok{"female"}\NormalTok{, }\StringTok{"age"}\NormalTok{, }\StringTok{"fare"}\NormalTok{)])}
 
-\NormalTok{Xb\_lpm \textless{}{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\KeywordTok{coef}\NormalTok{(LPM), }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
-\NormalTok{Xb\_probit \textless{}{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(b\_probit, }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
-\NormalTok{Xb\_logit \textless{}{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(b\_logit, }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
+\NormalTok{in\_Xb\_lpm \textless{}{-}}\StringTok{ }\NormalTok{in\_X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\KeywordTok{coef}\NormalTok{(LPM), }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
+\NormalTok{in\_Xb\_probit \textless{}{-}}\StringTok{ }\NormalTok{in\_X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(b\_probit, }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
+\NormalTok{in\_Xb\_logit \textless{}{-}}\StringTok{ }\NormalTok{in\_X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(b\_logit, }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
 
-\NormalTok{hatY\_lpm \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(Xb\_lpm }\OperatorTok{\textgreater{}}\StringTok{ }\FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
-\NormalTok{hatY\_probit \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\KeywordTok{pnorm}\NormalTok{(Xb\_probit) }\OperatorTok{\textgreater{}}\StringTok{ }\FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
-\NormalTok{hatY\_logit \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\DecValTok{1}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{Xb\_logit)) }\OperatorTok{\textgreater{}}\StringTok{ }\FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{in\_hatY\_lpm \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(in\_Xb\_lpm }\OperatorTok{\textgreater{}}\StringTok{ }\FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{in\_hatY\_probit \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\KeywordTok{pnorm}\NormalTok{(in\_Xb\_probit) }\OperatorTok{\textgreater{}}\StringTok{ }\FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{in\_hatY\_logit \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\DecValTok{1}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{in\_Xb\_logit)) }\OperatorTok{\textgreater{}}\StringTok{ }\FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
 
-\NormalTok{pcp\_lpm \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(Y }\OperatorTok{==}\StringTok{ }\NormalTok{hatY\_lpm)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(X), }\DecValTok{4}\NormalTok{)}
-\NormalTok{pcp\_probit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(Y }\OperatorTok{==}\StringTok{ }\NormalTok{hatY\_probit)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(X), }\DecValTok{4}\NormalTok{)}
-\NormalTok{pcp\_logit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(Y }\OperatorTok{==}\StringTok{ }\NormalTok{hatY\_logit)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(X), }\DecValTok{4}\NormalTok{)}
+\NormalTok{in\_pcp\_lpm \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(in\_Y }\OperatorTok{==}\StringTok{ }\NormalTok{in\_hatY\_lpm)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(in\_X), }\DecValTok{4}\NormalTok{)}
+\NormalTok{in\_pcp\_probit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(in\_Y }\OperatorTok{==}\StringTok{ }\NormalTok{in\_hatY\_probit)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(in\_X), }\DecValTok{4}\NormalTok{)}
+\NormalTok{in\_pcp\_logit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(in\_Y }\OperatorTok{==}\StringTok{ }\NormalTok{in\_hatY\_logit)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(in\_X), }\DecValTok{4}\NormalTok{)}
+
+\CommentTok{\# Out{-}of{-}sample}
+\NormalTok{out\_Y \textless{}{-}}\StringTok{ }\NormalTok{test\_dt}\OperatorTok{$}\NormalTok{survived}
+\NormalTok{test\_dt}\OperatorTok{$}\StringTok{"(Intercept)"}\NormalTok{ \textless{}{-}}\StringTok{ }\DecValTok{1}
+\NormalTok{out\_X \textless{}{-}}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(test\_dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"(Intercept)"}\NormalTok{, }\StringTok{"female"}\NormalTok{, }\StringTok{"age"}\NormalTok{, }\StringTok{"fare"}\NormalTok{)])}
+
+\NormalTok{out\_Xb\_lpm \textless{}{-}}\StringTok{ }\NormalTok{out\_X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\KeywordTok{coef}\NormalTok{(LPM), }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
+\NormalTok{out\_Xb\_probit \textless{}{-}}\StringTok{ }\NormalTok{out\_X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(b\_probit, }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
+\NormalTok{out\_Xb\_logit \textless{}{-}}\StringTok{ }\NormalTok{out\_X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{matrix}\NormalTok{(b\_logit, }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
+
+\NormalTok{out\_hatY\_lpm \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(out\_Xb\_lpm }\OperatorTok{\textgreater{}}\StringTok{ }\FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{out\_hatY\_probit \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\KeywordTok{pnorm}\NormalTok{(out\_Xb\_probit) }\OperatorTok{\textgreater{}}\StringTok{ }\FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{out\_hatY\_logit \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\DecValTok{1}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{out\_Xb\_logit)) }\OperatorTok{\textgreater{}}\StringTok{ }\FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+
+\NormalTok{out\_pcp\_lpm \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(out\_Y }\OperatorTok{==}\StringTok{ }\NormalTok{out\_hatY\_lpm)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(out\_X), }\DecValTok{4}\NormalTok{)}
+\NormalTok{out\_pcp\_probit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(out\_Y }\OperatorTok{==}\StringTok{ }\NormalTok{out\_hatY\_probit)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(out\_X), }\DecValTok{4}\NormalTok{)}
+\NormalTok{out\_pcp\_logit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(out\_Y }\OperatorTok{==}\StringTok{ }\NormalTok{out\_hatY\_logit)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(out\_X), }\DecValTok{4}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -1044,11 +838,11 @@ is obtained by \(1 - \sum_i \hat{u}_i^2/ \sum_i y_i^2\), where
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{Y2 \textless{}{-}}\StringTok{ }\NormalTok{Y}\OperatorTok{\^{}}\DecValTok{2}
+\NormalTok{Y2 \textless{}{-}}\StringTok{ }\NormalTok{in\_Y}\OperatorTok{\^{}}\DecValTok{2}
 
-\NormalTok{hatu\_lpm \textless{}{-}}\StringTok{ }\NormalTok{(Y }\OperatorTok{{-}}\StringTok{ }\NormalTok{Xb\_lpm)}\OperatorTok{\^{}}\DecValTok{2}
-\NormalTok{hatu\_probit \textless{}{-}}\StringTok{ }\NormalTok{(Y }\OperatorTok{{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(Xb\_probit))}\OperatorTok{\^{}}\DecValTok{2}
-\NormalTok{hatu\_logit \textless{}{-}}\StringTok{ }\NormalTok{(Y }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{Xb\_logit)))}\OperatorTok{\^{}}\DecValTok{2}
+\NormalTok{hatu\_lpm \textless{}{-}}\StringTok{ }\NormalTok{(in\_Y }\OperatorTok{{-}}\StringTok{ }\NormalTok{in\_Xb\_lpm)}\OperatorTok{\^{}}\DecValTok{2}
+\NormalTok{hatu\_probit \textless{}{-}}\StringTok{ }\NormalTok{(in\_Y }\OperatorTok{{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(in\_Xb\_probit))}\OperatorTok{\^{}}\DecValTok{2}
+\NormalTok{hatu\_logit \textless{}{-}}\StringTok{ }\NormalTok{(in\_Y }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{{-}}\NormalTok{in\_Xb\_logit)))}\OperatorTok{\^{}}\DecValTok{2}
 
 \NormalTok{pr2\_lpm \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(hatu\_lpm)}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(Y2), }\DecValTok{4}\NormalTok{)}
 \NormalTok{pr2\_probit \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(hatu\_probit)}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(Y2), }\DecValTok{4}\NormalTok{)}
@@ -1063,15 +857,16 @@ is little difference among LPM, probit model, and logit model.
 \begin{Highlighting}[]
 \KeywordTok{stargazer}\NormalTok{(}
 \NormalTok{  LPM, probit\_glm, logit\_glm,}
-  \DataTypeTok{coef =} \KeywordTok{list}\NormalTok{(}\KeywordTok{coef}\NormalTok{(LPM), ame\_probit}\OperatorTok{$}\NormalTok{AME, ame\_logit}\OperatorTok{$}\NormalTok{AME),}
-  \DataTypeTok{se =} \KeywordTok{list}\NormalTok{(rse\_b, ame\_probit}\OperatorTok{$}\NormalTok{SE, ame\_logit}\OperatorTok{$}\NormalTok{SE),}
-  \DataTypeTok{t =} \KeywordTok{list}\NormalTok{(rt\_b, ame\_probit}\OperatorTok{$}\NormalTok{zval, ame\_logit}\OperatorTok{$}\NormalTok{zval),}
-  \DataTypeTok{p =} \KeywordTok{list}\NormalTok{(rp\_b, ame\_probit}\OperatorTok{$}\NormalTok{pval, ame\_logit}\OperatorTok{$}\NormalTok{pval),}
+  \DataTypeTok{coef =} \KeywordTok{list}\NormalTok{(}\KeywordTok{coef}\NormalTok{(LPM), b\_probit, b\_logit),}
+  \DataTypeTok{se =} \KeywordTok{list}\NormalTok{(rse\_b, se\_probit, se\_logit),}
   \DataTypeTok{t.auto =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{p.auto =} \OtherTok{FALSE}\NormalTok{,}
   \DataTypeTok{omit =} \KeywordTok{c}\NormalTok{(}\StringTok{"Constant"}\NormalTok{), }\DataTypeTok{covariate.labels =} \KeywordTok{c}\NormalTok{(}\StringTok{"Female = 1"}\NormalTok{),}
-  \DataTypeTok{report =} \StringTok{"vcstp"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+  \DataTypeTok{report =} \StringTok{"vcs"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
   \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
-    \KeywordTok{c}\NormalTok{(}\StringTok{"Percent correctly predicted"}\NormalTok{, pcp\_lpm, pcp\_probit, pcp\_logit),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Percent correctly predicted (in{-}sample)"}\NormalTok{, }
+\NormalTok{      in\_pcp\_lpm, in\_pcp\_probit, in\_pcp\_logit),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Percent correctly predicted (out{-}of{-}sample)"}\NormalTok{,}
+\NormalTok{      out\_pcp\_lpm, out\_pcp\_probit, out\_pcp\_logit),}
     \KeywordTok{c}\NormalTok{(}\StringTok{"Pseudo R{-}squared"}\NormalTok{, pr2\_lpm, pr2\_probit, pr2\_logit)}
 \NormalTok{  ),}
   \DataTypeTok{omit.table.layout =} \StringTok{"n"}\NormalTok{, }\DataTypeTok{table.placement =} \StringTok{"t"}\NormalTok{,}
@@ -1094,25 +889,20 @@ is little difference among LPM, probit model, and logit model.
 \\[-1.8ex] & \textit{OLS} & \textit{probit} & \textit{logistic} \\ 
 \\[-1.8ex] & (1) & (2) & (3)\\ 
 \hline \\[-1.8ex] 
- Female = 1 & 0.512 & 0.509 & 0.507 \\ 
-  & (0.028) & (0.029) & (0.029) \\ 
-  & t = 18.230 & t = 17.814 & t = 17.662 \\ 
-  & p = 0.000 & p = 0.000 & p = 0.000 \\ 
+ Female = 1 & 0.512 & 1.441 & 2.366 \\ 
+  & (0.035) & (0.112) & (0.192) \\ 
   & & & \\ 
- age & $-$0.002 & $-$0.002 & $-$0.002 \\ 
-  & (0.001) & (0.001) & (0.001) \\ 
-  & t = $-$1.884 & t = $-$2.077 & t = $-$2.049 \\ 
-  & p = 0.060 & p = 0.038 & p = 0.041 \\ 
+ age & $-$0.003 & $-$0.009 & $-$0.017 \\ 
+  & (0.001) & (0.004) & (0.007) \\ 
   & & & \\ 
- fare & 0.001 & 0.002 & 0.002 \\ 
-  & (0.0002) & (0.0003) & (0.0003) \\ 
-  & t = 7.162 & t = 5.893 & t = 5.608 \\ 
-  & p = 0.000 & p = 0.000 & p = 0.00000 \\ 
+ fare & 0.001 & 0.006 & 0.010 \\ 
+  & (0.0003) & (0.001) & (0.002) \\ 
   & & & \\ 
 \hline \\[-1.8ex] 
-Percent correctly predicted & 0.7799 & 0.7742 & 0.7742 \\ 
-Pseudo R-squared & 0.5946 & 0.5945 & 0.594 \\ 
-Observations & 1,045 & 1,045 & 1,045 \\ 
+Percent correctly predicted (in-sample) & 0.7802 & 0.7744 & 0.7744 \\ 
+Percent correctly predicted (out-of-sample) & 0.7794 & 0.7765 & 0.7765 \\ 
+Pseudo R-squared & 0.5869 & 0.5873 & 0.5869 \\ 
+Observations & 696 & 696 & 696 \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular} 

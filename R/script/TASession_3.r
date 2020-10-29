@@ -5,20 +5,25 @@ dt <- read.csv(
 
 dt$female <- ifelse(dt$sex == "female", 1, 0)
 dt <- subset(dt, !is.na(survived)&!is.na(age)&!is.na(fare)&!is.na(female))
-
 dt <- dt[,c("survived", "age", "fare", "female")]
+
+set.seed(120511)
+train_id <- sample(1:nrow(dt), size = 2*nrow(dt)/3, replace = FALSE)
+train_dt <- dt[train_id,]
+test_dt <- dt[-train_id,]
+
 head(dt)
 
 
 ## ----ols----------------------------------------------------------------------
 model <- survived ~ factor(female) + age + fare
-LPM <- lm(model, data = dt)
+LPM <- lm(model, data = train_dt)
 
 
 ## ----RobustSE-----------------------------------------------------------------
 # heteroskedasticity-robust standard errors
-dt$"(Intercept)" <- 1
-X <- as.matrix(dt[,c("(Intercept)", "female", "age", "fare")])
+train_dt$"(Intercept)" <- 1
+X <- as.matrix(train_dt[,c("(Intercept)", "female", "age", "fare")])
 u <- diag(LPM$residuals^2)
 
 XX <- t(X) %*% X
@@ -40,30 +45,21 @@ se_b <- sqrt(diag(vcov(LPM)))
 print("The Variance of OLS"); vcov(LPM)
 print("The Robust variance of OLS"); vcov_b
 print("The Robust se using White method"); rse_b
-print("The Robust t-value using White method"); coef(LPM)/rse_b
 
 
 ## ----lmtest-------------------------------------------------------------------
 library(lmtest) #use function `coeftest`
 library(sandwich) #use function `vcovHC`
 coeftest(LPM, vcov = vcovHC(LPM, type = "HC0"))[, "Std. Error"]
-coeftest(LPM, vcov = vcovHC(LPM, type = "HC0"))[, "t value"]
 
 
 ## ----LPM_result, results = "asis"---------------------------------------------
-# t-stats
-t_b <- coef(LPM)/se_b 
-rt_b <- coef(LPM)/rse_b
-# p-value Pr( > |t|)
-p_b <- pt(abs(t_b), df = nrow(X)-ncol(X), lower = FALSE)*2
-rp_b <- pt(abs(rt_b), df = nrow(X)-ncol(X), lower = FALSE)*2
-
 library(stargazer)
 stargazer(
   LPM, LPM,
-  se = list(se_b, rse_b), t = list(t_b, rt_b), p = list(p_b, rp_b),
+  se = list(se_b, rse_b),
   t.auto = FALSE, p.auto = FALSE,
-  report = "vcstp", keep.stat = c("n"),
+  report = "vcs", keep.stat = c("n"),
   covariate.labels = c("Female = 1"),
   add.lines = list(
     c("Standard errors", "Homoskedasticity-based", "Heteroskedasticity-robust")),
@@ -74,8 +70,10 @@ stargazer(
 
 
 ## ----probit-------------------------------------------------------------------
-Y <- dt$survived
-female <- dt$female; age <- dt$age; fare <- dt$fare
+Y <- train_dt$survived
+female <- train_dt$female
+age <- train_dt$age
+fare <- train_dt$fare
 
 # log-likelihood
 LnLik <- function(b, model = c("probit", "logit")) {
@@ -95,7 +93,7 @@ LnLik <- function(b, model = c("probit", "logit")) {
 }
 
 #Newton-Raphson
-init <- c(0.218, 0.512, -0.002, 0.001)
+init <- c(0.169, 0.520, -0.0002, 0.001)
 probit <- nlm(LnLik, init, model = "probit", hessian = TRUE)
 
 label <- c("(Intercept)", "factor(female)1", "age", "fare")
@@ -108,7 +106,7 @@ LL_probit <- -probit$minimum
 
 #glm function
 model <- survived ~ factor(female) + age + fare
-probit_glm <- glm(model, data = dt, family = binomial("probit"))
+probit_glm <- glm(model, data = train_dt, family = binomial("probit"))
 
 #result
 print("The MLE of probit model using nlm"); b_probit
@@ -131,7 +129,7 @@ vcov_logit <- solve(logit$hessian); se_logit <- sqrt(diag(vcov_logit))
 LL_logit <- -logit$minimum
 
 #glm function
-logit_glm <- glm(model, data = dt, family = binomial("logit"))
+logit_glm <- glm(model, data = train_dt, family = binomial("logit"))
 
 #result
 print("The MLE of logit model"); b_logit
@@ -142,152 +140,66 @@ print("The se of logit using glm"); sqrt(diag(vcov(logit_glm)))
 
 
 ## ----summary_probit_logit, results = "asis"-----------------------------------
-# z-value
-z_probit <- b_probit/se_probit
-z_logit <- b_logit/se_logit
-
-# Pr(>|z|)
-p_probit <- pnorm(abs(z_probit), lower = FALSE)*2
-p_logit <- pnorm(abs(z_logit), lower = FALSE)*2
-
 stargazer(
   probit_glm, logit_glm,
   coef = list(b_probit, b_logit), se = list(se_probit, se_logit),
-  t = list(z_probit, z_logit), p = list(p_probit, p_logit),
   t.auto = FALSE, p.auto = FALSE,
-  report = "vcstp", keep.stat = c("n"),
+  report = "vcs", keep.stat = c("n"),
   covariate.labels = c("Female = 1"),
   add.lines = list(
     c("Log-Likelihood", round(LL_probit, 3), round(LL_logit, 3))),
   title = "Results of Probit and Logit model",
   label = "probit_logit",
-  type = "latex", header = FALSE, font.size = "small",
+  type = "text", header = FALSE, font.size = "small",
   table.placement = "h", omit.table.layout = "n"
 )
 
 
-## ----AME----------------------------------------------------------------------
-DeltaAME <- function(b, X, vcov, jbin = NULL, model = c("probit", "logit")) {
-  Xb <- numeric(nrow(X))
-  for (i in 1:length(b)) {
-     Xb <- Xb + b[i] * X[,i]
-  }
-
-  if (model == "probit") {
-    dens <- dnorm(Xb)
-    grad <- -Xb * dens
-  } else {
-    dens <- exp(-Xb)/(1 + exp(-Xb))^2
-    grad <- dens * (-1+2*exp(-Xb)/(1+exp(-Xb)))
-  }
-
-  ame <- mean(dens) * b
-  if (!is.null(jbin)) {
-    for (i in jbin) {
-      val1 <- X[,-i] %*% matrix(b[-i], ncol = 1) + b[i]
-      val0 <- X[,-i] %*% matrix(b[-i], ncol = 1)
-      if (model == "probit") {
-        amed <- mean(pnorm(val1) - pnorm(val0))
-      } else { 
-        amed <- mean((1/(1 + exp(-val1))) - (1/(1 + exp(-val0))))
-      }
-      ame[i] <- amed
-    }
-  }
-
-  e <- NULL
-  for (i in 1:length(b)) {
-    e <- c(e, rep(mean(X[,i] * grad), length(b)))
-  }
-
-  Jacob <- matrix(e, nrow = length(b), ncol = length(b))
-
-  for (i in 1:nrow(Jacob)) {
-    Jacob[i,] <- b[i] * Jacob[i,]
-  }
-  diag(Jacob) <- diag(Jacob) + rep(mean(dens), length(b))
-
-  if (!is.null(jbin)) {
-    for (i in jbin) {
-      val1 <- X[,-i] %*% matrix(b[-i], ncol = 1) + b[i]
-      val0 <- X[,-i] %*% matrix(b[-i], ncol = 1)
-      de <- NULL
-      if (model == "probit") {
-        for (j in 1:length(b)) {
-           if (j != i) {
-            dep <- X[,j] * (dnorm(val1) - dnorm(val0))
-            de <- c(de, mean(dep))
-           } else {
-            dep <- dnorm(val1)
-            de <- c(de, mean(dep))
-           }
-        }        
-      } else {
-        for (j in 1:length(b)) {
-           if (j != i) {
-            dep <- X[,j] * 
-              ((exp(-val1)/(1 + exp(-val1))^2) - (exp(-val0)/(1 + exp(-val0))^2))
-            de <- c(de, mean(dep))
-           } else {
-            dep <- exp(-val1)/(1 + exp(-val1))^2
-            de <- c(de, mean(dep))
-           }
-        } 
-      }
-      Jacob[i,] <- de
-    }
-  }
-
-  label <- names(b)
-  colnames(Jacob) <- label; rownames(Jacob) <- label
-
-  vcov_ame <- Jacob %*% vcov %*% t(Jacob)
-  se_ame <- sqrt(diag(vcov_ame))
-  z_ame <- ame/se_ame
-  p_ame <- pnorm(abs(z_ame), lower = FALSE)*2
-
-  return(list(AME = ame[-1], SE = se_ame[-1], zval = z_ame[-1], pval = p_ame[-1]))
-}
-
-X <- as.matrix(dt[,c("(Intercept)", "female", "age", "fare")])
-ame_probit <- DeltaAME(b_probit, X, vcov_probit, jbin = 2, model = "probit")
-ame_logit <- DeltaAME(b_logit, X, vcov_logit, jbin = 2, model = "logit")
-
-print("AME of probit estimates"); ame_probit$AME
-print("AME of logit estimates"); ame_logit$AME 
-print("SE of AME of probit estimates"); ame_probit$SE 
-print("SE of AME of logit estimates"); ame_logit$SE
 
 
-## ----Margin-------------------------------------------------------------------
-library(margins)
-summary(margins(probit_glm))
-summary(margins(logit_glm))
 
 
 ## ----pcp----------------------------------------------------------------------
-Y <- dt$survived
-X <- as.matrix(dt[,c("(Intercept)", "female", "age", "fare")])
+# In-sample
+in_Y <- train_dt$survived
+in_X <- as.matrix(train_dt[,c("(Intercept)", "female", "age", "fare")])
 
-Xb_lpm <- X %*% matrix(coef(LPM), ncol = 1)
-Xb_probit <- X %*% matrix(b_probit, ncol = 1)
-Xb_logit <- X %*% matrix(b_logit, ncol = 1)
+in_Xb_lpm <- in_X %*% matrix(coef(LPM), ncol = 1)
+in_Xb_probit <- in_X %*% matrix(b_probit, ncol = 1)
+in_Xb_logit <- in_X %*% matrix(b_logit, ncol = 1)
 
-hatY_lpm <- ifelse(Xb_lpm > 0.5, 1, 0)
-hatY_probit <- ifelse(pnorm(Xb_probit) > 0.5, 1, 0)
-hatY_logit <- ifelse(1/(1 + exp(-Xb_logit)) > 0.5, 1, 0)
+in_hatY_lpm <- ifelse(in_Xb_lpm > 0.5, 1, 0)
+in_hatY_probit <- ifelse(pnorm(in_Xb_probit) > 0.5, 1, 0)
+in_hatY_logit <- ifelse(1/(1 + exp(-in_Xb_logit)) > 0.5, 1, 0)
 
-pcp_lpm <- round(sum(Y == hatY_lpm)/nrow(X), 4)
-pcp_probit <- round(sum(Y == hatY_probit)/nrow(X), 4)
-pcp_logit <- round(sum(Y == hatY_logit)/nrow(X), 4)
+in_pcp_lpm <- round(sum(in_Y == in_hatY_lpm)/nrow(in_X), 4)
+in_pcp_probit <- round(sum(in_Y == in_hatY_probit)/nrow(in_X), 4)
+in_pcp_logit <- round(sum(in_Y == in_hatY_logit)/nrow(in_X), 4)
+
+# Out-of-sample
+out_Y <- test_dt$survived
+test_dt$"(Intercept)" <- 1
+out_X <- as.matrix(test_dt[,c("(Intercept)", "female", "age", "fare")])
+
+out_Xb_lpm <- X %*% matrix(coef(LPM), ncol = 1)
+out_Xb_probit <- X %*% matrix(b_probit, ncol = 1)
+out_Xb_logit <- X %*% matrix(b_logit, ncol = 1)
+
+out_hatY_lpm <- ifelse(out_Xb_lpm > 0.5, 1, 0)
+out_hatY_probit <- ifelse(pnorm(out_Xb_probit) > 0.5, 1, 0)
+out_hatY_logit <- ifelse(1/(1 + exp(-out_Xb_logit)) > 0.5, 1, 0)
+
+out_pcp_lpm <- round(sum(out_Y == out_hatY_lpm)/nrow(out_X), 4)
+out_pcp_probit <- round(sum(out_Y == out_hatY_probit)/nrow(out_X), 4)
+out_pcp_logit <- round(sum(out_Y == out_hatY_logit)/nrow(out_X), 4)
 
 
 ## ----pr2----------------------------------------------------------------------
-Y2 <- Y^2
+Y2 <- in_Y^2
 
-hatu_lpm <- (Y - Xb_lpm)^2
-hatu_probit <- (Y - pnorm(Xb_probit))^2
-hatu_logit <- (Y - 1/(1 + exp(-Xb_logit)))^2
+hatu_lpm <- (in_Y - in_Xb_lpm)^2
+hatu_probit <- (in_Y - pnorm(in_Xb_probit))^2
+hatu_logit <- (in_Y - 1/(1 + exp(-in_Xb_logit)))^2
 
 pr2_lpm <- round(1 - sum(hatu_lpm)/sum(Y2), 4)
 pr2_probit <- round(1 - sum(hatu_probit)/sum(Y2), 4)
@@ -297,21 +209,22 @@ pr2_logit <- round(1 - sum(hatu_logit)/sum(Y2), 4)
 ## ----BinaryModelResult, results = "asis"--------------------------------------
 stargazer(
   LPM, probit_glm, logit_glm,
-  coef = list(coef(LPM), ame_probit$AME, ame_logit$AME),
-  se = list(rse_b, ame_probit$SE, ame_logit$SE),
-  t = list(rt_b, ame_probit$zval, ame_logit$zval),
-  p = list(rp_b, ame_probit$pval, ame_logit$pval),
+  coef = list(coef(LPM), b_probit, b_logit),
+  se = list(rse_b, se_probit, se_logit),
   t.auto = FALSE, p.auto = FALSE,
   omit = c("Constant"), covariate.labels = c("Female = 1"),
-  report = "vcstp", keep.stat = c("n"),
+  report = "vcs", keep.stat = c("n"),
   add.lines = list(
-    c("Percent correctly predicted", pcp_lpm, pcp_probit, pcp_logit),
+    c("Percent correctly predicted (in-sample)", 
+      in_pcp_lpm, in_pcp_probit, in_pcp_logit),
+    c("Percent correctly predicted (out-of-sample)",
+      out_pcp_lpm, out_pcp_probit, out_pcp_logit),
     c("Pseudo R-squared", pr2_lpm, pr2_probit, pr2_logit)
   ),
   omit.table.layout = "n", table.placement = "t",
   title = "Titanic Survivors: LPM, Probit (AME), and Logit (AME)",
   label = "titanic",
-  type = "latex", header = FALSE
+  type = "text", header = FALSE
 )
 
 
