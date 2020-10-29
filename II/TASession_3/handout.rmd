@@ -43,6 +43,7 @@ to answer whether crews obeyed the code or not.
 \noindent
 **Data**.
 We use an open data about Titanic survivors [^source].
+Number of observations is 1,045.
 Although this dataset contains many variables,
 we use only four variables: `survived`, `age`, `fare`, and `sex`.
 We summarize descriptions of variables as follows:
@@ -57,9 +58,9 @@ Intead of `sex`, we use `female` variable in regression.
 
 Moreover, we split data into two subsets: the *training* data and the *test* data.
 The training data is randomly drawn from the original data.
-The sample size of this data is two thirs of total observations.
+The sample size of this data is two thirs of total observations, that is, $N = 696$.
 We use the training data (*in-sample*) to estimate and evaluate model fitness.
-The test data consists of observations which the training data does not include.
+The test data consists of observations which the training data does not include ($N = 349$).
 We use the test data (*out-of-sample*) to evaluate model prediction.
 
 [^source]: data source: <http://biostat.mc.vanderbilt.edu/DataSets>.
@@ -115,7 +116,10 @@ In `R`, we can use the OLS method, running `lm()` function.
 model <- survived ~ factor(female) + age + fare
 LPM <- lm(model, data = train_dt)
 ```
-However, `lm()` function does not deal with heteroskedasticity problem.
+
+The linear probability model is heteroskedastic, 
+that is, $V(u_i | \mathbf{x}_i) = G(\mathbf{x}_i \beta)(1 - G(\mathbf{x}_i \beta))$.
+However, `lm()` function assumes homoskedasticity.
 To resolve it, we need to claculate heteroskedasticity-robust standard errors using the White method.
 \begin{equation*}
   \hat{V}(\hat{\beta}) =
@@ -123,6 +127,7 @@ To resolve it, we need to claculate heteroskedasticity-robust standard errors us
   \left( \frac{1}{n} \sum_i \hat{u}_i^2 \mathbf{x}'_i \mathbf{x}_i \right)
   \left( \frac{1}{n} \sum_i \mathbf{x}'_i \mathbf{x}_i \right)^{-1}
 \end{equation*}
+where $\hat{u}_i = y_i - G(\mathbf{x}_i \hat{\beta})$.
 
 ```{r RobustSE}
 # heteroskedasticity-robust standard errors
@@ -223,21 +228,25 @@ The asymptotic distribution of $\hat{\beta}$ is $\hat{\beta} \overset{d}{\to} N(
 \end{equation*}
 In practice, we replace $E[E[ \nabla^2_{\beta\beta'} \log p_{\beta}(y_i | \mathbf{x}_i) | \mathbf{x}_i ]]$ by 
 \begin{equation*}
-  \frac{1}{n} \sum_i \nabla^2_{\beta\beta'} \log p_{\hat{\beta}}(y_i | \mathbf{x}_i),
+  \frac{1}{n} \sum_i \nabla^2_{\beta\beta'} \log p_{\hat{\beta}}(y_i | \mathbf{x}_i).
+\end{equation*}
+This implies that 
+\begin{equation*}
+  \Sigma_{\beta} = - \left( \sum_i \frac{1}{n} \sum_i \nabla^2_{\beta\beta'} \log p_{\hat{\beta}}(y_i | \mathbf{x}_i) \right)^{-1}.
 \end{equation*}
 that is,
 \begin{equation*}
-  \hat{\Sigma}_{\beta} = \left( \sum_i \nabla^2_{\beta\beta'} (-\log p_{\hat{\beta}}(y_i | \mathbf{x}_i)) \right)^{-1}.
+  \hat{\Sigma}_{\beta} = -\left( \sum_i \nabla^2_{\beta\beta'} (\log p_{\hat{\beta}}(y_i | \mathbf{x}_i)) \right)^{-1}.
 \end{equation*}
 
-In `R`, the function `nlm()` provides the Newton-Raphson algorithm to minimize the function [^optim].
+In `R`, there are two ways to estimate probit and logit model.
+First, the function `nlm()` provides the Newton-Raphson algorithm to minimize the function [^optim].
 To run this function, we need to define the log-likelihood function (`LnLik`) beforehand.
-Moreover, since we need to give initial values in augments, we use coefficients estimated by OLS.
-Alternatively, we often use `glm()` function.
+Moreover, we must give initial values in augments.
+In this application, we use OLSE as initial values 
+because we expect to obtain same signs of coefficients as LPM.
+Another way is to run `glm()` function, which is widely used.
 Using this function, we do not need to define the log-likelihood function and initial values.
-Since estimates of `glm()` are approximate to estiamtes of `nlm()`,
-we can use this command safely.
-In this application, we use `nlm` function to minimize the log-likelihood function.
 
 [^optim]: `optim()` function is an another way to minimize the function. Especially, the function `optim(method = "BFGS")` provides the Quasi-Newton algorithm which carries on the spirit of Newton method.
 
