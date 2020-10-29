@@ -55,6 +55,13 @@ We summarize descriptions of variables as follows:
 Using `sex`, we will make a binary variable, called `female`, taking 1 if passeger is female.
 Intead of `sex`, we use `female` variable in regression.
 
+Moreover, we split data into two subsets: the *training* data and the *test* data.
+The training data is randomly drawn from the original data.
+The sample size of this data is two thirs of total observations.
+We use the training data (*in-sample*) to estimate and evaluate model fitness.
+The test data consists of observations which the training data does not include.
+We use the test data (*out-of-sample*) to evaluate model prediction.
+
 [^source]: data source: <http://biostat.mc.vanderbilt.edu/DataSets>.
 
 ```{r data}
@@ -67,7 +74,7 @@ dt <- subset(dt, !is.na(survived)&!is.na(age)&!is.na(fare)&!is.na(female))
 dt <- dt[,c("survived", "age", "fare", "female")]
 
 set.seed(120511)
-train_id <- sample(1:nrow(dt), size = 2*nrow(dt)/3, replace = FALSE)
+train_id <- sample(1:nrow(dt), size = (2/3)*nrow(dt), replace = FALSE)
 train_dt <- dt[train_id,]
 test_dt <- dt[-train_id,]
 
@@ -145,7 +152,7 @@ print("The Robust se using White method"); rse_b
 ```
 
 Using the package `lmtest` and `sandwich` is 
-the easiest way to calculate heteroskedasticity-robust standard errors and $t$-statistics.
+the easiest way to calculate heteroskedasticity-robust standard errors.
 
 ```{r lmtest}
 library(lmtest) #use function `coeftest`
@@ -308,7 +315,6 @@ print("The se of logit using glm"); sqrt(diag(vcov(logit_glm)))
 ```
 
 As a result, table \ref{probit_logit} summarizes results of probit model and logit model.
-$t$-statistics represents $z$-value which follows the standard normal distribution.
 Standard errors are in parentheses.
 We will discuss interpretation of results and goodness-of-fit later.
 
@@ -334,6 +340,7 @@ In the linear probability model,
 interepretations of coefficients are straight-forward.
 The coefficient $\beta_1$ is the change in survival probability given a one-unit increase in continuous variable $x$.
 In the case of discrete variable, the coefficient $\beta_1$ is the difference in survival probability between two groups.
+
 However, when we use the probit or logit model,
 it is hard for us to interepret results
 because the partial effect is not constant across other covariates.
@@ -353,13 +360,14 @@ The partial effect of dummy variable `female` is
   =& 
   \begin{cases}
     \beta_1 &\text{if LPM}  \\
-    \Phi(\beta_0 + \beta_1 + \beta_2 age + \beta_3 fare) - \Phi(\beta_0 + \beta_1 + \beta_2 age + \beta_3 fare)  &\text{if Probit}  \\
-    \Lambda(\beta_0 + \beta_1 + \beta_2 age + \beta_3 fare) - \Lambda(\beta_0 + \beta_1 + \beta_2 age + \beta_3 fare)  &\text{if Logit}
+    \Phi(\beta_0 + \beta_1 + \beta_2 age + \beta_3 fare) - \Phi(\beta_0 + \beta_2 age + \beta_3 fare)  &\text{if Probit}  \\
+    \Lambda(\beta_0 + \beta_1 + \beta_2 age + \beta_3 fare) - \Lambda(\beta_0 + \beta_2 age + \beta_3 fare)  &\text{if Logit}
   \end{cases}
   \end{split},
 \end{equation*}
 where $\Lambda(a) = 1/(1 + \exp(-a))$. 
 
+<!-- Drop this part
 The first solution is to compute the partial effect at interesting values of $\mathbf{x}_i$.
 We often use the sample average of covariates ("average" person) to plugin in the partial effect formula.
 This is sometimes called *marginal effect at means*.
@@ -495,13 +503,9 @@ library(margins)
 summary(margins(probit_glm))
 summary(margins(logit_glm))
 ```
+-->
 
-Table \ref{titanic} shows results of linear probability model,
-probit model, and logit model.
-In the probit and logit model, 
-coefficients report average marginal effects,
-$t$-statistics report $z$-statistics which follows the standard normal distribution.
-
+Table \ref{titanic} shows results of linear probability model, probit model, and logit model.
 All specifications shows that 
 the survival probability of female is about 50\% point higher than of male, 
 which is statistically significant.
@@ -518,6 +522,7 @@ First, the *percent correctly predicted* reports
 the percentage of unit whose predicted $y_i$ matches the actual $y_i$.
 The predicted $y_i$ takes one if $G(\mathbf{x}_i \hat{\beta}) > 0.5$, 
 and takes zero if $G(\mathbf{x}_i \hat{\beta}) \le 0.5$.
+We calculate this index, using the training data and the test data.
 
 ```{r pcp}
 # In-sample
@@ -595,6 +600,8 @@ stargazer(
 )
 ```
 
+<!-- Drop this part
+
 # Empirical Application of Ordered Probit and Logit Model: Housing as Status Goods 
 
 **Breif Background**.
@@ -614,7 +621,7 @@ We use the following variable
 
 [^source2]: <https://www.census.gov/programs-surveys/ahs.html>. This is a repeated cross-section survey. We use the data at one time.
 
-```{r data2}
+```{r data2, eval = FALSE, purl = FALSE, echo = FALSE}
 house <- read.csv(file = "./data/housing.csv", header = TRUE,  sep = ",")
 house <- house[,c("Level", "lnPrice", "Top25")]
 house$Levelnum <- ifelse(
@@ -669,7 +676,7 @@ Although we can use the `nlm` function when we define the log-likelihood functio
 To compare results, we use the variable `Levelnum` as outcome variable, 
 and apply the linear regression model.
 
-```{r orderModel}
+```{r orderModel, eval = FALSE, purl = FALSE, echo = FALSE}
 library(MASS)
 library(tidyverse) #use case_when()
 
@@ -719,7 +726,7 @@ To evaluate two models quantitatively, consider the following equation.
 \end{equation*}
 We compute this equation with $Top25 = 1$ and $Top25 = 0$ at mean value of $lnPrice$ and take difference.
 
-```{r predict}
+```{r predict, eval = FALSE, purl = FALSE, echo = FALSE}
 quantef <- function(model) {
   b <- coef(model)
   val1 <- mean(house$lnPrice)*b[1] + b[2]
@@ -751,7 +758,7 @@ earners in the top 25 percentile live in 5.9\% higher floor than others.
 Note that, in this application, 
 model fitness seems to be bad because the percent correctly predicted is low (16.7\%). 
 
-```{r tab_orderModel, results = "asis"}
+```{r tab_orderModel, eval = FALSE, purl = FALSE, echo = FALSE}
 stargazer(
   ols, oprobit, ologit,
   report = "vcstp", keep.stat = c("n"),
@@ -769,6 +776,9 @@ stargazer(
   type = "latex", header = FALSE
 )
 ```
+-->
+
+<!-- Drop this part
 
 # Empirical Application of Multinomial Model: Gender Discremination in  Job Position 
 
@@ -785,7 +795,7 @@ The rank of position is `custodial < admin < manage`.
 Other variables are `education`, `gender`, and `minority`.
 We use former two variables as explanatory variables.
 
-```{r supermarket}
+```{r supermarket, eval = FALSE, purl = FALSE, echo = FALSE}
 library(AER)
 data(BankWages)
 dt <- BankWages
@@ -814,7 +824,7 @@ where $d_{ij}$ is a dummy variable taking 1 if $y_i = j$.
 In `R`, some packages provide the multinomial logit model.
 In this application, we use the `multinom` function in the library `nnet`.
 
-```{r multinomial, results = "hide"}
+```{r multinomial, results = "hide", eval = FALSE, purl = FALSE, echo = FALSE}
 library(nnet)
 est_mlogit <- multinom(job ~ education + gender, data = dt)
 
@@ -847,7 +857,7 @@ Finally, we should check the model fitness.
 The predicted position is the outcome with the highest estimated probability.
 The multinomial logit model correctly predicts many cases (correction rate: 85.2\%).
 
-```{r tab_multinomial, results = "asis"}
+```{r tab_multinomial, results = "asis", eval = FALSE, purl = FALSE, echo = FALSE}
 stargazer(
   est_mlogit,
   covariate.labels = c("Education", "Female = 1"),
@@ -864,3 +874,4 @@ stargazer(
   type = "latex", header = FALSE  
 )
 ```
+-->
