@@ -33,41 +33,46 @@ knitr::opts_knit$set(root.dir = "C:/Users/katoo/Desktop/2020EconometricsTA/R")
 
 # Empirical Application of Ordered Probit and Logit Model: Housing as Status Goods 
 
-**Breif Background**.
-Social image may affect consumption behavior.
-Specifically, a desire to signal high income or wealth may cause consumers to purchase status goods.
-In this application, we explore whether living in an upper floor serves as a status goods.
+## Background and Data
 
-\noindent
-**Data**.
+A desire to signal high income or wealth may cause consumers to purchase status goods such as luxury cars.
+In this application, we explore whether housing serves as status goods, using the case of apartment building.
+We investigate the relationship between living in a high floor and income, controlling the quality of housing.
+Our hypothesis is that high-earners are more likely to live on the upper floor.
+
 We use the housing data originally coming from the American Housing Survey conducted in 2013 [^source2].
-We use the following variable 
+This dataset (hereafter `housing`) contains the following variables:
 
 - `Level`: ordered value of a story of respondent's living (1:Low - 4:High)
-- `Levelnum`: variable we recode the response `Level` as 25, 50, 75, 100. This represents the extent of floor height. 
 - `lnPrice`: logged price of housing (proxy for quality of house)
 - `Top25`: a dummy variable taking one if household income is in the top 25 percentile in sample.
 
+We split data into two subsets: the *training* data and the *test* data.
+The training data, which is used for estimation and model fitness, is randoly drawn from the original data.
+The sample size of this subset is two thirds of total observations of the original one ($N = 1,074$).
+The test data, which is used for model prediction, consists of observations which the training data does not include ($N = 538$).
+
 [^source2]: <https://www.census.gov/programs-surveys/ahs.html>. This is a repeated cross-section survey. We use the data at one time.
 
-```{r data2}
-house <- read.csv(file = "./data/housing.csv", header = TRUE,  sep = ",")
-house <- house[,c("Level", "lnPrice", "Top25")]
-house$Levelnum <- ifelse(
-  house$Level == 1, 25, 
-  ifelse(house$Level == 2, 50, 
-  ifelse(house$Level == 3, 75, 100)))
-head(house)
+```{r houseData}
+dt <- read.csv(file = "./data/housing.csv", header = TRUE,  sep = ",")
+dt <- dt[,c("Level", "lnPrice", "Top25")]
+
+set.seed(120511)
+train_id <- sample(1:nrow(dt), size = (2/3)*nrow(dt), replace = FALSE)
+train_dt <- dt[train_id,]; test_dt <- dt[-train_id,]
+
+head(train_dt)
 ```
 
-\noindent
-**Model**.
+## Model
+
 The outcome variable is `Level` taking $\{1, 2, 3, 4\}$.
 Consider the following regression equation of a latent variable:
 \begin{equation*}
   y_i^* = \mathbf{x}_i \beta + u_i,
 \end{equation*}
-where $\mathbf{x}_i = (lnPrice, Top25)$ and $u_i$ is an error term.
+where a vector of explanatory variables are `lnPrice` and `Top25`, and $u_i$ is an error term.
 The relationship between the latent variable $y_i^*$ and the observed outcome variable is 
 \begin{equation*}
   Level =
@@ -102,103 +107,99 @@ Usually, $G(a)$ assumes the standard normal distribution, $\Phi(a)$, or the logi
 
 In `R`, the library (package) `MASS` provides the `polr` function which estimates the ordered probit and logit model.
 Although we can use the `nlm` function when we define the log-likelihood function, we do not report this method.
-To compare results, we use the variable `Levelnum` as outcome variable, 
-and apply the linear regression model.
 
 ```{r orderModel}
 library(MASS)
-library(tidyverse) #use case_when()
-
-ols <- lm(Levelnum ~ lnPrice + Top25, data = house)
 
 model <- factor(Level) ~ lnPrice + Top25
-oprobit <- polr(model, data = house, method = "probit")
-ologit <- polr(model, data = house, method = "logistic")
+oprobit <- polr(model, data = train_dt, method = "probit")
+ologit <- polr(model, data = train_dt, method = "logistic")
 
 a_oprobit <- round(oprobit$zeta, 3)
 a_ologit <- round(ologit$zeta, 3)
-
-xb_oprobit <- oprobit$lp 
-xb_ologit <- ologit$lp
-
-hatY_oprobit <- case_when(
-  xb_oprobit <= oprobit$zeta[1] ~ 1,
-  xb_oprobit <= oprobit$zeta[2] ~ 2,
-  xb_oprobit <= oprobit$zeta[3] ~ 3,
-  TRUE ~ 4
-)
-hatY_ologit <- case_when(
-  xb_ologit <= ologit$zeta[1] ~ 1,
-  xb_ologit <= ologit$zeta[2] ~ 2,
-  xb_ologit <= ologit$zeta[3] ~ 3,
-  TRUE ~ 4
-)
-
-pred_oprobit <- round(sum(house$Level == hatY_oprobit)/nrow(house), 3)
-pred_ologit <- round(sum(house$Level == hatY_ologit)/nrow(house), 3)
 ```
 
-## Interepretations
+## Interepretation and Model Fitness
 
 Table \ref{housing} shows results.
-OLS model shows that respondents whose household income is in the top 25 percentile live in 3.7\% higher floor 
-than other respondents.
-This implies that high earners want to live in higher floor, which may serve as a status goods.
-The ordered probit and logit model are in line with this result.
-To evaluate two models quantitatively, consider the following equation.
-\begin{equation*}
-  E[Levelnum | \mathbf{x}_i] = 
-  25\mathbb{P}[level = 1| \mathbf{x}_i] + 
-  50\mathbb{P}[level = 2| \mathbf{x}_i] + 
-  75\mathbb{P}[level = 3| \mathbf{x}_i] + 
-  100\mathbb{P}[level = 4| \mathbf{x}_i].
-\end{equation*}
-We compute this equation with $Top25 = 1$ and $Top25 = 0$ at mean value of $lnPrice$ and take difference.
+In both models, the latent variable $y_i^*$ is increasing in `Top25`.
+This means that high-earners have higer value of latent variable $y_i^*$.
+Since the cutoff values are increasing in the observed $y_i$,
+we can conclude that high-earners are more likely to live on the upper floor.
 
-```{r predict}
-quantef <- function(model) {
-  b <- coef(model)
-  val1 <- mean(house$lnPrice)*b[1] + b[2]
-  val0 <- mean(house$lnPrice)*b[1]
+To evaluate model fitness, 
+we use the *percent correctly predicted*, which is the percentage of unit whose predicted $y_i$ matches the actual $y_i$.
+First, we calculate $\mathbf{x}_i \hat{\beta}$.
+If this value is in $(-\infty, \hat{a}_1]$, $(\hat{a}_1, a_2]$, $(\hat{a}_2, \hat{a}_3]$, and $(\hat{a}_3, +\infty)$,
+then we take $\hat{y}_i = 1$, $\hat{y}_i = 2$, $\hat{y}_i = 3$ and $\hat{y}_i = 4$, respectively.
+Using the training data (in-sample) and the test data (out-of-sample), 
+we calculate this index.
 
-  prob <- matrix(c(rep(val1, 3), rep(val0, 3)), ncol = 2, nrow = 3)
-  for (i in 1:3) {
-    for (j in 1:2) {
-      prob[i,j] <- pnorm(model$zeta[i] - prob[i,j])
-    }
-  }
-  Ey1 <- 25*prob[1,1] + 50*(prob[2,1]-prob[1,1]) + 
-    75*(prob[3,1]-prob[2,1]) + 100*(1-prob[3,1])
-  Ey0 <- 25*prob[1,2] + 50*(prob[2,2]-prob[1,2]) + 
-    75*(prob[3,2]-prob[2,2]) + 100*(1-prob[3,2])
-  
-  return(Ey1 - Ey0)
-} 
+```{r fitness}
+library(tidyverse) #use case_when()
+# coefficients
+bp <- matrix(coef(oprobit), nrow = 2); bl <- matrix(coef(ologit), nrow = 2)
+# cutoff value
+ap <- oprobit$zeta; al <- ologit$zeta
+# in-sample prediction
+indt <- as.matrix(train_dt[,c("lnPrice", "Top25")])
+in_xbp <- indt %*% bp; in_xbl <- indt %*% bl
 
-ef_oprobit <- round(quantef(oprobit), 3)
-ef_ologit <- round(quantef(ologit), 3)
+in_hatYp <- case_when(
+  in_xbp <= ap[1] ~ 1,
+  in_xbp <= ap[2] ~ 2,
+  in_xbp <= ap[3] ~ 3,
+  TRUE ~ 4
+)
+
+in_hatYl <- case_when(
+  in_xbl <= al[1] ~ 1,
+  in_xbl <= al[2] ~ 2,
+  in_xbl <= al[3] ~ 3,
+  TRUE ~ 4
+)
+
+inpred_p <- round(sum(train_dt$Level == in_hatYp)/nrow(train_dt), 3)
+inpred_l <- round(sum(train_dt$Level == in_hatYl)/nrow(train_dt), 3)
+
+# out-of-sample prediction
+outdt <- as.matrix(test_dt[,c("lnPrice", "Top25")])
+out_xbp <- outdt %*% bp; out_xbl <- outdt %*% bl
+
+out_hatYp <- case_when(
+  out_xbp <= ap[1] ~ 1,
+  out_xbp <= ap[2] ~ 2,
+  out_xbp <= ap[3] ~ 3,
+  TRUE ~ 4
+)
+
+out_hatYl <- case_when(
+  out_xbl <= al[1] ~ 1,
+  out_xbl <= al[2] ~ 2,
+  out_xbl <= al[3] ~ 3,
+  TRUE ~ 4
+)
+
+outpred_p <- round(sum(test_dt$Level == out_hatYp)/nrow(test_dt), 3)
+outpred_l <- round(sum(test_dt$Level == out_hatYl)/nrow(test_dt), 3)
 ```
 
-As a result, we obtain similar values to OLSE.
-In the ordered probit model, 
-earners in the top 25 percentile live in 4.2\% higher floor than others.
-In the ordered logit model,
-earners in the top 25 percentile live in 5.9\% higher floor than others.
-Note that, in this application, 
-model fitness seems to be bad because the percent correctly predicted is low (16.7\%). 
+As a result, the percent correctly predicted is almost 16\% when we use the in-sample data.
+When we use the test data, this index slightly increases.
+Overall, out model seems not to be good because the percent correctly predicted is low.
 
 ```{r tab_orderModel, results = "asis"}
 library(stargazer)
 stargazer(
-  ols, oprobit, ologit,
-  report = "vcstp", keep.stat = c("n"),
+  oprobit, ologit,
+  report = "vcs", keep.stat = c("n"),
   omit = c("Constant"),
   add.lines = list(
-    c("Cutoff value at 1|2", "", a_oprobit[1], a_ologit[1]),
-    c("Cutoff value at 2|3", "", a_oprobit[2], a_ologit[2]),
-    c("Cutoff value at 3|4", "", a_oprobit[3], a_ologit[3]),
-    c("Quantitative Effect of Top25", "", ef_oprobit, ef_ologit),
-    c("Percent correctly predicted", "", pred_oprobit, pred_ologit)
+    c("Cutoff value at 1|2", a_oprobit[1], a_ologit[1]),
+    c("Cutoff value at 2|3", a_oprobit[2], a_ologit[2]),
+    c("Cutoff value at 3|4", a_oprobit[3], a_ologit[3]),
+    c("Percent correctly predicted (in-sample)", inpred_p, inpred_l),
+    c("Percent correctly predicted (out-of-sample)", outpred_p, outpred_l)
   ),
   omit.table.layout = "n", table.placement = "t",
   title = "Floor Level of House: Ordered Probit and Logit Model",
@@ -207,33 +208,53 @@ stargazer(
 )
 ```
 
-# Empirical Application of Multinomial Model: Gender Discremination in  Job Position 
+# Empirical Application of Multinomial Model: Gender Discremination in Job Position 
 
-**Brief Background**. 
-Recently, many developed countries move toward women's social advancement,
-for example, an increase of number of board member.
-In this application, we explore whether the U.S. bank hindered the entrance of female into the workhorse.
+## Background and Data
 
-\noindent
-**Data**. 
+Recently, many developed countries move toward women's social advancement, for example, an increase of number of board member.
+In this application, we explore whether the gender discremination existed in the U.S. bank industry.
+Our hypothesis is that women are less likely to be given a higher position than male.
+
 We use a built-in dataset called `BankWages` in the library `AER`.
-This dataset contains choice of three job position: `custodial`, `admin` and `manage`.
-The rank of position is `custodial < admin < manage`.
-Other variables are `education`, `gender`, and `minority`.
-We use former two variables as explanatory variables.
+This datase contains the following variables:
 
-```{r supermarket}
+- `job`: three job position. The rank of position is `custodial < admin < manage`.
+- `education`: years of education
+- `gender`: a dummy variable of female
+
+Again, we split data into two subsets: the *training* data and the *test* data.
+The training data, which is used for estimation and model fitness, is randoly drawn from the original data.
+The sample size of this subset is two thirds of total observations of the original one ($N = 316$).
+The test data, which is used for model prediction, consists of observations which the training data does not include ($N = 158$).
+
+To use the multinomial logit model in `R`, 
+we need to transform outcome variable into the form `factor`, which is special variable form in `R`.
+The variable form `factor` is similar to dummy variables.
+For example, `factor(dt$job, levels = c("admin", "custodial", "manage"))` 
+transforms the variable form `job` from the form `character` into the form `factor`.
+Moreover, when we use `job` as explanatory variables, 
+`R` automatically makes two dummy variables of `custodial` and `manage`.
+
+```{r bankData}
 library(AER)
 data(BankWages)
 dt <- BankWages
 dt$job <- as.character(dt$job)
 dt$job <- factor(dt$job, levels = c("admin", "custodial", "manage"))
-head(BankWages, 5)
+dt <- dt[,c("job", "education", "gender")]
+
+set.seed(120511)
+train_id <- sample(1:nrow(dt), size = (2/3)*nrow(dt), replace = FALSE)
+train_dt <- dt[train_id,]; test_dt <- dt[-train_id,]
+
+head(train_dt)
 ```
 
-\noindent
-**Model**.
+## Model
+
 The outcome variable $y_i$ takes three values $\{0, 1, 2\}$.
+Note that there is no meaning in order.
 Then, the multinomial logit model has the following response probabilities 
 \begin{equation*}
   P_{ij} = \mathbb{P}(y_i = j | \mathbf{x}_i) =
@@ -253,45 +274,70 @@ In this application, we use the `multinom` function in the library `nnet`.
 
 ```{r multinomial, results = "hide"}
 library(nnet)
-est_mlogit <- multinom(job ~ education + gender, data = dt)
-
-# observations and percent correctly predicted
-pred <- est_mlogit$fitted.value
-pred <- colnames(pred)[apply(pred, 1, which.max)]
-n <- length(pred)
-pcp <- round(sum(pred == dt$job)/n, 3)
-
-# Log-likelihood and pseudo R-sq
-loglik1 <- as.numeric(nnet:::logLik.multinom(est_mlogit))
-est_mlogit0 <- multinom(job ~ 1, data = dt)
-loglik0 <- as.numeric(nnet:::logLik.multinom(est_mlogit0))
-pr2 <- round(1 - loglik1/loglik0, 3)
+est_mlogit <- multinom(job ~ education + gender, data = train_dt)
 ```
 
-## Interpretations
+## Interpretations and Model Fitness
 
 Table \ref{job} summarizes the result of multinomial logit model.
-The coefficient represents the change of $\log(P_{ij}/P_{i0})$ in corresponding covariate.
-For example, eduction decreases the log-odds between `custodial` and `admin`, 
-$\log(P_{i, custodial}/P_{i, admin})$ by -0.562.
+The coefficient represents the change of $\log(P_{ij}/P_{i0})$ in corresponding covariate
+beucase the response probabilities yields
+\begin{equation*}
+    \frac{P_{ij}}{P_{i0}} = \exp(\mathbf{x}_i \beta_j)  \Leftrightarrow
+    \log \left( \frac{P_{ij}}{P_{i0}} \right) = \mathbf{x}_i \beta_j.
+\end{equation*}
+For example, eduction decreases the log-odds between `custodial` and `admin` by -0.562.
 This implies that those who received higher education are more likely to obtain the position `admin`.
 Highly-educated workers are also more likely to obtain the position `manage`.
 Moreover, a female dummy decrease the log-odds between `manage` and `admin` by -0.748,
 which implies that females are less likely to obtain higher position `manage`.
 From this result, we conclude that the U.S. bank disencouraged females to assign higher job position.
 
-Finally, we should check the model fitness.
-The predicted position is the outcome with the highest estimated probability.
-The multinomial logit model correctly predicts many cases (correction rate: 85.2\%).
+To evalue model fitness and prediction, 
+we use two indices: the *pseudo R-squared* and *percent correctly predicted*.
+The *preudo R-sqaured* is calculated by $1 - L_1/L_0$ where 
+$L_1$ is the value of log-likelihood for estimated model 
+and $L_0$ is the value of log-likelihood in the model with only an intercept.
+`R` snippet for calculation of pseudo R-sqaured is as follows:
+Note that `nnet:::logLik.multinom()` returns the value of log-likelihood.
+
+```{r puseudoR, results = "hide"}
+loglik1 <- as.numeric(nnet:::logLik.multinom(est_mlogit))
+est_mlogit0 <- multinom(job ~ 1, data = train_dt)
+loglik0 <- as.numeric(nnet:::logLik.multinom(est_mlogit0))
+pr2 <- round(1 - loglik1/loglik0, 3)
+```
+
+The second index is the *precent correctly predicted*.
+The predicted outcome is the outcome with the highest estimated probability.
+Using the training data (in-sample) and the test data (out-of-sample), 
+we calculate this index.
+`R` snippet for calculation of this index is as follows.
+
+```{r prediction}
+# in-sample prediction
+inpred <- predict(est_mlogit, newdata = train_dt, "probs")
+inpred <- colnames(inpred)[apply(inpred, 1, which.max)]
+inpcp <- round(sum(inpred == train_dt$job)/length(inpred), 3)
+# out-of-sample prediction
+outpred <- predict(est_mlogit, newdata = test_dt, "probs")
+outpred <- colnames(outpred)[apply(outpred, 1, which.max)]
+outpcp <- round(sum(outpred == test_dt$job)/length(outpred), 3)
+```
+
+As a result, our model is good in terms of fitness and prediction
+because the percent correctly predicted is high (83.9\% of in-sample data and 88.0\% of out-of-sample data),
+and the pseudo R-sqaured is 0.523.
 
 ```{r tab_multinomial, results = "asis"}
 stargazer(
   est_mlogit,
   covariate.labels = c("Education", "Female = 1"),
-  report = "vcstp", omit.stat = c("aic"),
+  report = "vcs", omit.stat = c("aic"),
   add.lines = list(
     c("Observations", n, ""),
-    c("Percent correctly predicted", pcp, ""),
+    c("Percent correctly predicted (in-sample)", inpcp, ""),
+    c("Percent correctly predicted (out-of-sample)", outpcp, ""),
     c("Log-likelihood", round(loglik1, 3), ""),
     c("Pseudo R-sq", pr2, "")
   ),
