@@ -50,7 +50,7 @@ We use the following variable
 
 [^source2]: <https://www.census.gov/programs-surveys/ahs.html>. This is a repeated cross-section survey. We use the data at one time.
 
-```{r data2, eval = FALSE, purl = FALSE, echo = FALSE}
+```{r data2}
 house <- read.csv(file = "./data/housing.csv", header = TRUE,  sep = ",")
 house <- house[,c("Level", "lnPrice", "Top25")]
 house$Levelnum <- ifelse(
@@ -105,7 +105,7 @@ Although we can use the `nlm` function when we define the log-likelihood functio
 To compare results, we use the variable `Levelnum` as outcome variable, 
 and apply the linear regression model.
 
-```{r orderModel, eval = FALSE, purl = FALSE, echo = FALSE}
+```{r orderModel}
 library(MASS)
 library(tidyverse) #use case_when()
 
@@ -155,7 +155,7 @@ To evaluate two models quantitatively, consider the following equation.
 \end{equation*}
 We compute this equation with $Top25 = 1$ and $Top25 = 0$ at mean value of $lnPrice$ and take difference.
 
-```{r predict, eval = FALSE, purl = FALSE, echo = FALSE}
+```{r predict}
 quantef <- function(model) {
   b <- coef(model)
   val1 <- mean(house$lnPrice)*b[1] + b[2]
@@ -187,7 +187,8 @@ earners in the top 25 percentile live in 5.9\% higher floor than others.
 Note that, in this application, 
 model fitness seems to be bad because the percent correctly predicted is low (16.7\%). 
 
-```{r tab_orderModel, eval = FALSE, purl = FALSE, echo = FALSE}
+```{r tab_orderModel, results = "asis"}
+library(stargazer)
 stargazer(
   ols, oprobit, ologit,
   report = "vcstp", keep.stat = c("n"),
@@ -221,7 +222,7 @@ The rank of position is `custodial < admin < manage`.
 Other variables are `education`, `gender`, and `minority`.
 We use former two variables as explanatory variables.
 
-```{r supermarket, eval = FALSE, purl = FALSE, echo = FALSE}
+```{r supermarket}
 library(AER)
 data(BankWages)
 dt <- BankWages
@@ -250,7 +251,7 @@ where $d_{ij}$ is a dummy variable taking 1 if $y_i = j$.
 In `R`, some packages provide the multinomial logit model.
 In this application, we use the `multinom` function in the library `nnet`.
 
-```{r multinomial, results = "hide", eval = FALSE, purl = FALSE, echo = FALSE}
+```{r multinomial, results = "hide"}
 library(nnet)
 est_mlogit <- multinom(job ~ education + gender, data = dt)
 
@@ -283,7 +284,7 @@ Finally, we should check the model fitness.
 The predicted position is the outcome with the highest estimated probability.
 The multinomial logit model correctly predicts many cases (correction rate: 85.2\%).
 
-```{r tab_multinomial, results = "asis", eval = FALSE, purl = FALSE, echo = FALSE}
+```{r tab_multinomial, results = "asis"}
 stargazer(
   est_mlogit,
   covariate.labels = c("Education", "Female = 1"),
