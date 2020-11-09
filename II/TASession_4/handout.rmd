@@ -372,3 +372,75 @@ This dataset contains the following variables:
 dt <- read.csv(file = "./data/labor.csv", header = TRUE,  sep = ",")
 summary(dt)
 ```
+
+## Model 
+
+Since we cannot observe those who could not partiapte in the labor market (`whrs = 0`),
+we use the truncated regression model.
+Thus, the selection rule is as follows:
+
+\begin{equation*}
+  \begin{cases}
+    y_i = x_i \beta + u_i &\text{if}\:\: s_i = 1  \\
+    s_i = 1 &\text{if}\:\: 0 < y_i
+  \end{cases}.
+\end{equation*}
+where $u_i \sim N(0, \sigma^2)$.
+
+Since we are interested in estimating $\beta$, we must condition on $s_i = 1$.
+The probability density function of $y_i$ conditional on $(x_i, s_i = 1)$ is 
+
+\begin{equation*}
+  p_{\theta}(y_i | x_i, s_i = 1) = \frac{f(y_i | x_i)}{\int_0^{+\infty} f(y_i | x_i) dy_i}.
+\end{equation*}
+where $\theta = (\beta, \sigma^2)'$.
+Because the distribution of $y_i$ depends on the distribution of $u_i$,
+using $u_i = y_i - x_i \beta$, we obtain 
+
+\begin{equation*}
+  p_{\theta}(u_i | x_i, -x_i \beta < u_i) 
+  = \frac{1}{\sigma} \frac{\phi(\frac{y_i - x_i \beta}{\sigma})}{1 - \Phi(\frac{- x_i \beta}{\sigma})}.
+\end{equation*}
+Thus, the log-likelihood function is 
+
+\begin{equation*}
+  M_n(\theta) 
+  = \sum_{i=1}^n \log \left( \frac{1}{\sigma} \frac{\phi(\frac{y_i - x_i \beta}{\sigma})}{1 - \Phi(\frac{- x_i \beta}{\sigma})} \right).
+\end{equation*}
+
+We provide two ways to estimate truncated regression, using `R`.
+First way is to define the log-likelihood function directly and minimize its function by `nlm` function.
+Recall that `nlm` function provides the Newton method to minimize the function.
+We need to give intial values in argument of this function.
+Coefficients of initial values, `b[2:5]`, are zero, 
+and intercept, `b[1]`, and $\sigma$, `b[6]`, are given by mean and standard deviation of `whrs`, respectively.
+
+```{r truncMle}
+whrs <- dt$whrs
+kl6 <- dt$kl6; k618 <- dt$k618
+wa <- dt$wa; we <- dt$we
+
+LnLik <- function(b) {
+  xb <- b[1] + b[2]*kl6 + b[3]*k618 + b[4]*wa + b[5]*we
+  sigma <- b[6]
+  condp <- dnorm((whrs - xb)/sigma)/(1 - pnorm(-xb/sigma))
+  LL_i <- log(condp/sigma)
+  LL <- -sum(LL_i)
+  return(LL)
+}
+
+init <- c(mean(whrs), 0, 0, 0, 0, sd(whrs))
+est.LnLik <- nlm(LnLik, init, hessian = TRUE)
+```
+
+Second way is to use the function `truncreg` in the library `truncreg`.
+This function must specify the trucated point in arguments `point` and `direction`.
+If `direction = "left"`, the outcome variable is truncated from below at `point`, that is, `point < y`.
+On the other hand, if `direction = "right"`, the outcome variable is truncated from above at `point`, that is, `y < point`.
+
+```{r truncreg}
+library(truncreg)
+model <- whrs ~ kl6 + k618 + wa + we
+est.trunc <- truncreg(model, data = dt, point = 0, direction = "left")
+```
+
