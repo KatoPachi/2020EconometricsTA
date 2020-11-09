@@ -601,6 +601,21 @@ Our dataset originally comes from Stata sample data. \footnote{\url{http://www.s
   intentionally remove married women who could not participate in the
   labor market.} This dataset contains the following variables:
 
+\begin{itemize}
+\tightlist
+\item
+  \texttt{whrs}: Hours of work. This outcome variable is truncated from
+  below at zero.
+\item
+  \texttt{kl6}: the number of preschool children
+\item
+  \texttt{k618}: The number of school‐aged children
+\item
+  \texttt{wa}: age
+\item
+  \texttt{we}: The number of years of education
+\end{itemize}
+
 \begin{Shaded}
 \begin{Highlighting}[]
 \NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\DataTypeTok{file =} \StringTok{"./data/labor.csv"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{TRUE}\NormalTok{,  }\DataTypeTok{sep =} \StringTok{","}\NormalTok{)}
@@ -624,5 +639,86 @@ Our dataset originally comes from Stata sample data. \footnote{\url{http://www.s
 ##  3rd Qu.:13.75  
 ##  Max.   :17.00
 \end{verbatim}
+
+\hypertarget{model-2}{%
+\subsection{Model}\label{model-2}}
+
+Since we cannot observe those who could not partiapte in the labor
+market (\texttt{whrs\ =\ 0}), we use the truncated regression model.
+Thus, the selection rule is as follows:
+
+\begin{equation*}
+  \begin{cases}
+    y_i = x_i \beta + u_i &\text{if}\:\: s_i = 1  \\
+    s_i = 1 &\text{if}\:\: 0 < y_i
+  \end{cases}.
+\end{equation*} where \(u_i \sim N(0, \sigma^2)\).
+
+Since we are interested in estimating \(\beta\), we must condition on
+\(s_i = 1\). The probability density function of \(y_i\) conditional on
+\((x_i, s_i = 1)\) is
+
+\begin{equation*}
+  p_{\theta}(y_i | x_i, s_i = 1) = \frac{f(y_i | x_i)}{\int_0^{+\infty} f(y_i | x_i) dy_i}.
+\end{equation*} where \(\theta = (\beta, \sigma^2)'\). Because the
+distribution of \(y_i\) depends on the distribution of \(u_i\), using
+\(u_i = y_i - x_i \beta\), we obtain
+
+\begin{equation*}
+  p_{\theta}(u_i | x_i, -x_i \beta < u_i) 
+  = \frac{1}{\sigma} \frac{\phi(\frac{y_i - x_i \beta}{\sigma})}{1 - \Phi(\frac{- x_i \beta}{\sigma})}.
+\end{equation*} Thus, the log-likelihood function is
+
+\begin{equation*}
+  M_n(\theta) 
+  = \sum_{i=1}^n \log \left( \frac{1}{\sigma} \frac{\phi(\frac{y_i - x_i \beta}{\sigma})}{1 - \Phi(\frac{- x_i \beta}{\sigma})} \right).
+\end{equation*}
+
+We provide two ways to estimate truncated regression, using \texttt{R}.
+First way is to define the log-likelihood function directly and minimize
+its function by \texttt{nlm} function. Recall that \texttt{nlm} function
+provides the Newton method to minimize the function. We need to give
+intial values in argument of this function. Coefficients of initial
+values, \texttt{b{[}2:5{]}}, are zero, and intercept, \texttt{b{[}1{]}},
+and \(\sigma\), \texttt{b{[}6{]}}, are given by mean and standard
+deviation of \texttt{whrs}, respectively.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{whrs \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{whrs}
+\NormalTok{kl6 \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{kl6; k618 \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{k618}
+\NormalTok{wa \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{wa; we \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{we}
+
+\NormalTok{LnLik \textless{}{-}}\StringTok{ }\ControlFlowTok{function}\NormalTok{(b) \{}
+\NormalTok{  xb \textless{}{-}}\StringTok{ }\NormalTok{b[}\DecValTok{1}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{2}\NormalTok{]}\OperatorTok{*}\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{3}\NormalTok{]}\OperatorTok{*}\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{4}\NormalTok{]}\OperatorTok{*}\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{5}\NormalTok{]}\OperatorTok{*}\NormalTok{we}
+\NormalTok{  sigma \textless{}{-}}\StringTok{ }\NormalTok{b[}\DecValTok{6}\NormalTok{]}
+\NormalTok{  condp \textless{}{-}}\StringTok{ }\KeywordTok{dnorm}\NormalTok{((whrs }\OperatorTok{{-}}\StringTok{ }\NormalTok{xb)}\OperatorTok{/}\NormalTok{sigma)}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(}\OperatorTok{{-}}\NormalTok{xb}\OperatorTok{/}\NormalTok{sigma))}
+\NormalTok{  LL\_i \textless{}{-}}\StringTok{ }\KeywordTok{log}\NormalTok{(condp}\OperatorTok{/}\NormalTok{sigma)}
+\NormalTok{  LL \textless{}{-}}\StringTok{ }\OperatorTok{{-}}\KeywordTok{sum}\NormalTok{(LL\_i)}
+  \KeywordTok{return}\NormalTok{(LL)}
+\NormalTok{\}}
+
+\NormalTok{init \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\KeywordTok{mean}\NormalTok{(whrs), }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\KeywordTok{sd}\NormalTok{(whrs))}
+\NormalTok{est.LnLik \textless{}{-}}\StringTok{ }\KeywordTok{nlm}\NormalTok{(LnLik, init, }\DataTypeTok{hessian =} \OtherTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Second way is to use the function \texttt{truncreg} in the library
+\texttt{truncreg}. This function must specify the trucated point in
+arguments \texttt{point} and \texttt{direction}. If
+\texttt{direction\ =\ "left"}, the outcome variable is truncated from
+below at \texttt{point}, that is, \texttt{point\ \textless{}\ y}. On the
+other hand, if \texttt{direction\ =\ "right"}, the outcome variable is
+truncated from above at \texttt{point}, that is,
+\texttt{y\ \textless{}\ point}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(truncreg)}
+\NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{whrs }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{we}
+\NormalTok{est.trunc \textless{}{-}}\StringTok{ }\KeywordTok{truncreg}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{point =} \DecValTok{0}\NormalTok{, }\DataTypeTok{direction =} \StringTok{"left"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
 
 \end{document}
