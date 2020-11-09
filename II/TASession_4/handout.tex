@@ -678,10 +678,10 @@ We provide two ways to estimate truncated regression, using \texttt{R}.
 First way is to define the log-likelihood function directly and minimize
 its function by \texttt{nlm} function. Recall that \texttt{nlm} function
 provides the Newton method to minimize the function. We need to give
-intial values in argument of this function. Coefficients of initial
-values, \texttt{b{[}2:5{]}}, are zero, and intercept, \texttt{b{[}1{]}},
-and \(\sigma\), \texttt{b{[}6{]}}, are given by mean and standard
-deviation of \texttt{whrs}, respectively.
+intial values in argument of this function. Coefficients of explanatory
+variables, \texttt{b{[}3:6{]}}, are zero, and intercept,
+\texttt{b{[}2{]}}, and \(\sigma\), \texttt{b{[}1{]}}, are given by mean
+and standard deviation of \texttt{whrs}, respectively.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -690,15 +690,15 @@ deviation of \texttt{whrs}, respectively.
 \NormalTok{wa \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{wa; we \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{we}
 
 \NormalTok{LnLik \textless{}{-}}\StringTok{ }\ControlFlowTok{function}\NormalTok{(b) \{}
-\NormalTok{  xb \textless{}{-}}\StringTok{ }\NormalTok{b[}\DecValTok{1}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{2}\NormalTok{]}\OperatorTok{*}\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{3}\NormalTok{]}\OperatorTok{*}\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{4}\NormalTok{]}\OperatorTok{*}\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{5}\NormalTok{]}\OperatorTok{*}\NormalTok{we}
-\NormalTok{  sigma \textless{}{-}}\StringTok{ }\NormalTok{b[}\DecValTok{6}\NormalTok{]}
+\NormalTok{  sigma \textless{}{-}}\StringTok{ }\NormalTok{b[}\DecValTok{1}\NormalTok{]}
+\NormalTok{  xb \textless{}{-}}\StringTok{ }\NormalTok{b[}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{3}\NormalTok{]}\OperatorTok{*}\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{4}\NormalTok{]}\OperatorTok{*}\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{5}\NormalTok{]}\OperatorTok{*}\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{6}\NormalTok{]}\OperatorTok{*}\NormalTok{we}
 \NormalTok{  condp \textless{}{-}}\StringTok{ }\KeywordTok{dnorm}\NormalTok{((whrs }\OperatorTok{{-}}\StringTok{ }\NormalTok{xb)}\OperatorTok{/}\NormalTok{sigma)}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(}\OperatorTok{{-}}\NormalTok{xb}\OperatorTok{/}\NormalTok{sigma))}
 \NormalTok{  LL\_i \textless{}{-}}\StringTok{ }\KeywordTok{log}\NormalTok{(condp}\OperatorTok{/}\NormalTok{sigma)}
 \NormalTok{  LL \textless{}{-}}\StringTok{ }\OperatorTok{{-}}\KeywordTok{sum}\NormalTok{(LL\_i)}
   \KeywordTok{return}\NormalTok{(LL)}
 \NormalTok{\}}
 
-\NormalTok{init \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\KeywordTok{mean}\NormalTok{(whrs), }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\KeywordTok{sd}\NormalTok{(whrs))}
+\NormalTok{init \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\KeywordTok{sd}\NormalTok{(whrs), }\KeywordTok{mean}\NormalTok{(whrs), }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)}
 \NormalTok{est.LnLik \textless{}{-}}\StringTok{ }\KeywordTok{nlm}\NormalTok{(LnLik, init, }\DataTypeTok{hessian =} \OtherTok{TRUE}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
@@ -717,8 +717,90 @@ truncated from above at \texttt{point}, that is,
 \KeywordTok{library}\NormalTok{(truncreg)}
 \NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{whrs }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{we}
 \NormalTok{est.trunc \textless{}{-}}\StringTok{ }\KeywordTok{truncreg}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{point =} \DecValTok{0}\NormalTok{, }\DataTypeTok{direction =} \StringTok{"left"}\NormalTok{)}
+\NormalTok{se.trunc \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{vcov}\NormalTok{(est.trunc)))}
 \end{Highlighting}
 \end{Shaded}
 
+\hypertarget{interpretations}{%
+\subsection{Interpretations}\label{interpretations}}
+
+Table \ref{lfp} shows results of truncated regression estimated by two
+methods. As a comparison, we also show the OLS result in column (3). All
+specifications show that the number of preschool and school-aged
+children reduces the hours of work. The size of coefficient of the
+number of preschool and school-aged children become stronger when we
+apply the truncated regression. Although the relationship between labor
+participation and women's characteristics is statistically
+insignificant, size of coefficients largely differs among three
+specifications.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ols \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt)}
+\NormalTok{coef.LnLik \textless{}{-}}\StringTok{ }\NormalTok{est.LnLik}\OperatorTok{$}\NormalTok{estimate}
+\NormalTok{se.LnLik \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{solve}\NormalTok{(est.LnLik}\OperatorTok{$}\NormalTok{hessian)))}
+\KeywordTok{names}\NormalTok{(coef.LnLik) \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"sigma"}\NormalTok{, }\KeywordTok{names}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ols)))}
+\KeywordTok{names}\NormalTok{(se.LnLik) \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"sigma"}\NormalTok{, }\KeywordTok{names}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ols)))}
+
+\KeywordTok{stargazer}\NormalTok{(}
+\NormalTok{  ols, ols, ols,}
+  \DataTypeTok{column.labels =} \KeywordTok{c}\NormalTok{(}\StringTok{"Truncated (truncreg)"}\NormalTok{, }\StringTok{"Truncated (nlm)"}\NormalTok{, }\StringTok{"OLS"}\NormalTok{),}
+  \DataTypeTok{coef =} \KeywordTok{list}\NormalTok{(}\KeywordTok{coef}\NormalTok{(est.trunc), coef.LnLik[}\DecValTok{2}\OperatorTok{:}\DecValTok{6}\NormalTok{]),}
+  \DataTypeTok{se =} \KeywordTok{list}\NormalTok{(se.trunc, se.LnLik[}\DecValTok{2}\OperatorTok{:}\DecValTok{6}\NormalTok{]),}
+  \DataTypeTok{report =} \StringTok{"vcs"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+  \DataTypeTok{covariate.labels =} \KeywordTok{c}\NormalTok{(}
+    \StringTok{"}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{\#.Preschool Children"}\NormalTok{,}
+    \StringTok{"}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{\#.School{-}aged Children"}\NormalTok{,}
+    \StringTok{"Age"}\NormalTok{, }\StringTok{"Education Years"}
+\NormalTok{  ),}
+  \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Estimated Sigma"}\NormalTok{, }
+      \KeywordTok{round}\NormalTok{(}\KeywordTok{coef}\NormalTok{(est.trunc)[}\DecValTok{6}\NormalTok{], }\DecValTok{3}\NormalTok{), }\KeywordTok{round}\NormalTok{(coef.LnLik[}\DecValTok{1}\NormalTok{], }\DecValTok{3}\NormalTok{)),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Log{-}Likelihood"}\NormalTok{, }
+      \KeywordTok{round}\NormalTok{(est.trunc}\OperatorTok{$}\NormalTok{logLik, }\DecValTok{3}\NormalTok{), }\KeywordTok{round}\NormalTok{(}\OperatorTok{{-}}\NormalTok{est.LnLik}\OperatorTok{$}\NormalTok{minimum, }\DecValTok{3}\NormalTok{))}
+\NormalTok{  ),}
+  \DataTypeTok{omit.table.layout =} \StringTok{"n"}\NormalTok{, }\DataTypeTok{table.placement =} \StringTok{"t"}\NormalTok{,}
+  \DataTypeTok{title =} \StringTok{"Truncated Regression: Labor Market Participation of Married Women"}\NormalTok{,}
+  \DataTypeTok{label =} \StringTok{"lfp"}\NormalTok{,}
+  \DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}  
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[t] \centering 
+  \caption{Truncated Regression: Labor Market Participation of Married Women} 
+  \label{lfp} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-4} 
+\\[-1.8ex] & \multicolumn{3}{c}{whrs} \\ 
+ & Truncated (truncreg) & Truncated (nlm) & OLS \\ 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
+\hline \\[-1.8ex] 
+ \#.Preschool Children & $-$456.785 & $-$803.032 & $-$421.482 \\ 
+  & (266.367) & (252.803) & (167.973) \\ 
+  & & & \\ 
+ \#.School-aged Children & $-$153.347 & $-$172.875 & $-$104.457 \\ 
+  & (81.780) & (100.590) & (54.186) \\ 
+  & & & \\ 
+ Age & $-$5.379 & $-$8.821 & $-$4.785 \\ 
+  & (13.492) & (14.646) & (9.691) \\ 
+  & & & \\ 
+ Education Years & $-$0.092 & 16.529 & 9.353 \\ 
+  & (43.702) & (46.430) & (31.238) \\ 
+  & & & \\ 
+ Constant & 1,624.584 & 1,586.228 & 1,629.817 \\ 
+  & (857.730) & (932.878) & (615.130) \\ 
+  & & & \\ 
+\hline \\[-1.8ex] 
+Estimated Sigma & 941.464 & 983.736 &  \\ 
+Log-Likelihood & -1201.698 & -1200.916 &  \\ 
+Observations & 150 & 150 & 150 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
 
 \end{document}
