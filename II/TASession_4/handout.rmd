@@ -412,8 +412,8 @@ We provide two ways to estimate truncated regression, using `R`.
 First way is to define the log-likelihood function directly and minimize its function by `nlm` function.
 Recall that `nlm` function provides the Newton method to minimize the function.
 We need to give intial values in argument of this function.
-Coefficients of initial values, `b[2:5]`, are zero, 
-and intercept, `b[1]`, and $\sigma$, `b[6]`, are given by mean and standard deviation of `whrs`, respectively.
+Coefficients of explanatory variables, `b[3:6]`, are zero, 
+and intercept, `b[2]`, and $\sigma$, `b[1]`, are given by mean and standard deviation of `whrs`, respectively.
 
 ```{r truncMle}
 whrs <- dt$whrs
@@ -421,15 +421,15 @@ kl6 <- dt$kl6; k618 <- dt$k618
 wa <- dt$wa; we <- dt$we
 
 LnLik <- function(b) {
-  xb <- b[1] + b[2]*kl6 + b[3]*k618 + b[4]*wa + b[5]*we
-  sigma <- b[6]
+  sigma <- b[1]
+  xb <- b[2] + b[3]*kl6 + b[4]*k618 + b[5]*wa + b[6]*we
   condp <- dnorm((whrs - xb)/sigma)/(1 - pnorm(-xb/sigma))
   LL_i <- log(condp/sigma)
   LL <- -sum(LL_i)
   return(LL)
 }
 
-init <- c(mean(whrs), 0, 0, 0, 0, sd(whrs))
+init <- c(sd(whrs), mean(whrs), 0, 0, 0, 0)
 est.LnLik <- nlm(LnLik, init, hessian = TRUE)
 ```
 
@@ -442,5 +442,47 @@ On the other hand, if `direction = "right"`, the outcome variable is truncated f
 library(truncreg)
 model <- whrs ~ kl6 + k618 + wa + we
 est.trunc <- truncreg(model, data = dt, point = 0, direction = "left")
+se.trunc <- sqrt(diag(vcov(est.trunc)))
 ```
 
+
+## Interpretations
+
+Table \ref{lfp} shows results of truncated regression estimated by two methods.
+As a comparison, we also show the OLS result in column (3).
+All specifications show that the number of preschool and school-aged children reduces the hours of work.
+The size of coefficient of the number of preschool and school-aged children become stronger
+when we apply the truncated regression.
+Although the relationship between labor participation and women's characteristics is statistically insignificant,
+size of coefficients largely differs among three specifications.
+
+```{r tab_truncate, results = "asis"}
+ols <- lm(model, data = dt)
+coef.LnLik <- est.LnLik$estimate
+se.LnLik <- sqrt(diag(solve(est.LnLik$hessian)))
+names(coef.LnLik) <- c("sigma", names(coef(ols)))
+names(se.LnLik) <- c("sigma", names(coef(ols)))
+
+stargazer(
+  ols, ols, ols,
+  column.labels = c("Truncated (truncreg)", "Truncated (nlm)", "OLS"),
+  coef = list(coef(est.trunc), coef.LnLik[2:6]),
+  se = list(se.trunc, se.LnLik[2:6]),
+  report = "vcs", keep.stat = c("n"),
+  covariate.labels = c(
+    "\\#.Preschool Children",
+    "\\#.School-aged Children",
+    "Age", "Education Years"
+  ),
+  add.lines = list(
+    c("Estimated Sigma", 
+      round(coef(est.trunc)[6], 3), round(coef.LnLik[1], 3)),
+    c("Log-Likelihood", 
+      round(est.trunc$logLik, 3), round(-est.LnLik$minimum, 3))
+  ),
+  omit.table.layout = "n", table.placement = "t",
+  title = "Truncated Regression: Labor Market Participation of Married Women",
+  label = "lfp",
+  type = "latex", header = FALSE  
+)
+```
