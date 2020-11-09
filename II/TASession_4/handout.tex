@@ -582,4 +582,47 @@ Pseudo R-sq & 0.523 &  \\
 \end{tabular} 
 \end{table}
 
+\hypertarget{empirical-application-of-truncated-regression-labor-participation-of-married-women}{%
+\section{Empirical Application of Truncated Regression: Labor
+Participation of Married
+Women}\label{empirical-application-of-truncated-regression-labor-participation-of-married-women}}
+
+\hypertarget{background-and-data-2}{%
+\subsection{Background and Data}\label{background-and-data-2}}
+
+To develop women's social advancement, we should create environment to
+keep a good balance between work and childcare after marriage. In this
+application, using the dataset of married women, we explore how much
+childcare prevents married women to participate in labor market.
+
+Our dataset originally comes from Stata sample data. \footnote{\url{http://www.stata-press.com/data/r13/laborsub.dt}.
+  Because this is dta file, we need to import it, using the
+  \texttt{read.dta} function in the library \texttt{foreign}. I
+  intentionally remove married women who could not participate in the
+  labor market.} This dataset contains the following variables:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\DataTypeTok{file =} \StringTok{"./data/labor.csv"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{TRUE}\NormalTok{,  }\DataTypeTok{sep =} \StringTok{","}\NormalTok{)}
+\KeywordTok{summary}\NormalTok{(dt)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       whrs           kl6              k618             wa       
+##  Min.   :  12   Min.   :0.0000   Min.   :0.000   Min.   :30.00  
+##  1st Qu.: 645   1st Qu.:0.0000   1st Qu.:0.000   1st Qu.:35.00  
+##  Median :1406   Median :0.0000   Median :1.000   Median :43.50  
+##  Mean   :1333   Mean   :0.1733   Mean   :1.313   Mean   :42.79  
+##  3rd Qu.:1903   3rd Qu.:0.0000   3rd Qu.:2.000   3rd Qu.:48.75  
+##  Max.   :4950   Max.   :2.0000   Max.   :8.000   Max.   :60.00  
+##        we       
+##  Min.   : 6.00  
+##  1st Qu.:12.00  
+##  Median :12.00  
+##  Mean   :12.64  
+##  3rd Qu.:13.75  
+##  Max.   :17.00
+\end{verbatim}
+
 \end{document}

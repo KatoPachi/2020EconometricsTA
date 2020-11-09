@@ -347,3 +347,28 @@ stargazer(
   type = "latex", header = FALSE  
 )
 ```
+
+# Empirical Application of Truncated Regression: Labor Participation of Married Women
+
+## Background and Data
+
+To develop women's social advancement,
+we should create environment to keep a good balance between work and childcare after marriage.
+In this application, using the dataset of married women, 
+we explore how much childcare prevents married women to participate in labor market.
+
+Our dataset originally comes from Stata sample data. [^source3]
+This dataset contains the following variables:
+
+- `whrs`: Hours of work. This outcome variable is truncated from below at zero.
+- `kl6`: the number of preschool children
+- `k618`: The number of school‐aged children
+- `wa`: age
+- `we`: The number of years of education
+
+[^source3]: <http://www.stata-press.com/data/r13/laborsub.dt>. Because this is dta file, we need to import it, using the `read.dta` function in the library `foreign`. I intentionally remove married women who could not participate in the labor market.
+
+```{r laborData}
+dt <- read.csv(file = "./data/labor.csv", header = TRUE,  sep = ",")
+summary(dt)
+```
