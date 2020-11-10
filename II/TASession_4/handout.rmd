@@ -57,12 +57,13 @@ The test data, which is used for model prediction, consists of observations whic
 ```{r houseData}
 dt <- read.csv(file = "./data/housing.csv", header = TRUE,  sep = ",")
 dt <- dt[,c("Level", "lnPrice", "Top25")]
+dt$Level <- factor(dt$Level)
 
 set.seed(120511)
 train_id <- sample(1:nrow(dt), size = (2/3)*nrow(dt), replace = FALSE)
 train_dt <- dt[train_id,]; test_dt <- dt[-train_id,]
 
-head(train_dt)
+summary(train_dt)
 ```
 
 ## Model
@@ -115,7 +116,7 @@ Although we can use the `nlm` function when we define the log-likelihood functio
 ```{r orderModel}
 library(MASS)
 
-model <- factor(Level) ~ lnPrice + Top25
+model <- Level ~ lnPrice + Top25
 oprobit <- polr(model, data = train_dt, method = "probit")
 ologit <- polr(model, data = train_dt, method = "logistic")
 ```
@@ -255,7 +256,7 @@ set.seed(120511)
 train_id <- sample(1:nrow(dt), size = (2/3)*nrow(dt), replace = FALSE)
 train_dt <- dt[train_id,]; test_dt <- dt[-train_id,]
 
-head(train_dt)
+summary(train_dt)
 ```
 
 ## Model
