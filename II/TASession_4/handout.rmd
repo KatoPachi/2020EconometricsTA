@@ -118,9 +118,6 @@ library(MASS)
 model <- factor(Level) ~ lnPrice + Top25
 oprobit <- polr(model, data = train_dt, method = "probit")
 ologit <- polr(model, data = train_dt, method = "logistic")
-
-a_oprobit <- round(oprobit$zeta, 3)
-a_ologit <- round(ologit$zeta, 3)
 ```
 
 ## Interepretation and Model Fitness
@@ -145,6 +142,7 @@ library(tidyverse) #use case_when()
 bp <- matrix(coef(oprobit), nrow = 2); bl <- matrix(coef(ologit), nrow = 2)
 # cutoff value
 ap <- oprobit$zeta; al <- ologit$zeta
+seap <- sqrt(diag(vcov(oprobit)))[3:5]; seal <- sqrt(diag(vcov(ologit)))[3:5]
 # in-sample prediction
 indt <- as.matrix(train_dt[,c("lnPrice", "Top25")])
 in_xbp <- indt %*% bp; in_xbl <- indt %*% bl
@@ -193,15 +191,20 @@ When we use the test data, this index slightly increases.
 Overall, out model seems not to be good because the percent correctly predicted is low.
 
 ```{r tab_orderModel, results = "asis"}
+seap <- sprintf("(%1.3f)", seap); seal <- sprintf("(%1.3f)", seal)
+
 library(stargazer)
 stargazer(
   oprobit, ologit,
   report = "vcs", keep.stat = c("n"),
   omit = c("Constant"),
   add.lines = list(
-    c("Cutoff value at 1|2", a_oprobit[1], a_ologit[1]),
-    c("Cutoff value at 2|3", a_oprobit[2], a_ologit[2]),
-    c("Cutoff value at 3|4", a_oprobit[3], a_ologit[3]),
+    c("Cutoff value at 1|2", round(ap[1], 3), round(al[1], 3)),
+    c("", seap[1], seal[1]),
+    c("Cutoff value at 2|3", round(ap[2], 3), round(al[2], 3)),
+    c("", seap[2], seal[2]),
+    c("Cutoff value at 3|4", round(ap[3], 3), round(al[3], 3)),
+    c("", seap[3], seal[3]),
     c("Percent correctly predicted (in-sample)", inpred_p, inpred_l),
     c("Percent correctly predicted (out-of-sample)", outpred_p, outpred_l)
   ),
@@ -339,7 +342,7 @@ stargazer(
   covariate.labels = c("Education", "Female = 1"),
   report = "vcs", omit.stat = c("aic"),
   add.lines = list(
-    c("Observations", n, ""),
+    c("Observations", length(inpred), ""),
     c("Percent correctly predicted (in-sample)", inpcp, ""),
     c("Percent correctly predicted (out-of-sample)", outpcp, ""),
     c("Log-likelihood", round(loglik1, 3), ""),
