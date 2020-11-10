@@ -43,7 +43,7 @@ Our hypothesis is that high-earners are more likely to live on the upper floor.
 We use the housing data originally coming from the American Housing Survey conducted in 2013 [^source2].
 This dataset (hereafter `housing`) contains the following variables:
 
-- `Level`: ordered value of a story of respondent's living (1:Low - 4:High)
+- `Level`: ordered value of floor where respondent lives (1:Low - 4:High)
 - `lnPrice`: logged price of housing (proxy for quality of house)
 - `Top25`: a dummy variable taking one if household income is in the top 25 percentile in sample.
 
@@ -104,6 +104,10 @@ Finally, the log-likelihood function is
   M(\beta, a_1, a_2, a_3) = \sum_{i=1}^n \sum_{k=1}^4 I_{ik} \log(G(a_k - \mathbf{x}_i \beta) - G(a_{k-1} - \mathbf{x}_i \beta)).
 \end{equation*}
 Usually, $G(a)$ assumes the standard normal distribution, $\Phi(a)$, or the logistic distribution, $1/(1 + \exp(-a))$.
+We estimate $\theta = (\beta, a_1, a_2, a_3)'$ to minimize the log-likelihood function, that is,
+\begin{equation*}
+  \hat{\theta} \in \argmin_{(\beta, a_1, a_2, a_3)} M(\beta, a_1, a_2, a_3).
+\end{equation*}
 
 In `R`, the library (package) `MASS` provides the `polr` function which estimates the ordered probit and logit model.
 Although we can use the `nlm` function when we define the log-likelihood function, we do not report this method.
@@ -254,7 +258,7 @@ head(train_dt)
 ## Model
 
 The outcome variable $y_i$ takes three values $\{0, 1, 2\}$.
-Note that there is no meaning in order.
+Note that the labelling of the choices is arbitrary.
 Then, the multinomial logit model has the following response probabilities 
 \begin{equation*}
   P_{ij} = \mathbb{P}(y_i = j | \mathbf{x}_i) =
@@ -383,10 +387,11 @@ Thus, the selection rule is as follows:
 \begin{equation*}
   \begin{cases}
     y_i = x_i \beta + u_i &\text{if}\:\: s_i = 1  \\
-    s_i = 1 &\text{if}\:\: 0 < y_i
+    s_i = 1 &\text{if}\:\: a_1 < y_i < a_2
   \end{cases}.
 \end{equation*}
 where $u_i \sim N(0, \sigma^2)$.
+In this case, $a_1 = 0$ and $a_2 = +\infty$.
 
 Since we are interested in estimating $\beta$, we must condition on $s_i = 1$.
 The probability density function of $y_i$ conditional on $(x_i, s_i = 1)$ is 
