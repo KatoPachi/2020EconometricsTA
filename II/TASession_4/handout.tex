@@ -165,23 +165,24 @@ consists of observations which the training data does not include
 \begin{Highlighting}[]
 \NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\DataTypeTok{file =} \StringTok{"./data/housing.csv"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{TRUE}\NormalTok{,  }\DataTypeTok{sep =} \StringTok{","}\NormalTok{)}
 \NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"Level"}\NormalTok{, }\StringTok{"lnPrice"}\NormalTok{, }\StringTok{"Top25"}\NormalTok{)]}
+\NormalTok{dt}\OperatorTok{$}\NormalTok{Level \textless{}{-}}\StringTok{ }\KeywordTok{factor}\NormalTok{(dt}\OperatorTok{$}\NormalTok{Level)}
 
 \KeywordTok{set.seed}\NormalTok{(}\DecValTok{120511}\NormalTok{)}
 \NormalTok{train\_id \textless{}{-}}\StringTok{ }\KeywordTok{sample}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\KeywordTok{nrow}\NormalTok{(dt), }\DataTypeTok{size =}\NormalTok{ (}\DecValTok{2}\OperatorTok{/}\DecValTok{3}\NormalTok{)}\OperatorTok{*}\KeywordTok{nrow}\NormalTok{(dt), }\DataTypeTok{replace =} \OtherTok{FALSE}\NormalTok{)}
 \NormalTok{train\_dt \textless{}{-}}\StringTok{ }\NormalTok{dt[train\_id,]; test\_dt \textless{}{-}}\StringTok{ }\NormalTok{dt[}\OperatorTok{{-}}\NormalTok{train\_id,]}
 
-\KeywordTok{head}\NormalTok{(train\_dt)}
+\KeywordTok{summary}\NormalTok{(train\_dt)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-##      Level   lnPrice Top25
-## 1099     4  9.903538     0
-## 2        4 11.512935     1
-## 1398     4 11.775297     0
-## 405      2 12.429220     0
-## 579      1 11.289794     0
-## 1157     1 10.596660     0
+##  Level      lnPrice            Top25       
+##  1:404   Min.   : 0.6931   Min.   :0.0000  
+##  2:165   1st Qu.:11.2898   1st Qu.:0.0000  
+##  3:269   Median :11.8494   Median :0.0000  
+##  4:236   Mean   :11.6353   Mean   :0.2393  
+##          3rd Qu.:12.4292   3rd Qu.:0.0000  
+##          Max.   :14.0931   Max.   :1.0000
 \end{verbatim}
 
 \hypertarget{model}{%
@@ -234,7 +235,7 @@ log-likelihood function, we do not report this method.
 \begin{Highlighting}[]
 \KeywordTok{library}\NormalTok{(MASS)}
 
-\NormalTok{model \textless{}{-}}\StringTok{ }\KeywordTok{factor}\NormalTok{(Level) }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{lnPrice }\OperatorTok{+}\StringTok{ }\NormalTok{Top25}
+\NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{Level }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{lnPrice }\OperatorTok{+}\StringTok{ }\NormalTok{Top25}
 \NormalTok{oprobit \textless{}{-}}\StringTok{ }\KeywordTok{polr}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ train\_dt, }\DataTypeTok{method =} \StringTok{"probit"}\NormalTok{)}
 \NormalTok{ologit \textless{}{-}}\StringTok{ }\KeywordTok{polr}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ train\_dt, }\DataTypeTok{method =} \StringTok{"logistic"}\NormalTok{)}
 \end{Highlighting}
@@ -437,18 +438,18 @@ two dummy variables of \texttt{custodial} and \texttt{manage}.
 \NormalTok{train\_id \textless{}{-}}\StringTok{ }\KeywordTok{sample}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\KeywordTok{nrow}\NormalTok{(dt), }\DataTypeTok{size =}\NormalTok{ (}\DecValTok{2}\OperatorTok{/}\DecValTok{3}\NormalTok{)}\OperatorTok{*}\KeywordTok{nrow}\NormalTok{(dt), }\DataTypeTok{replace =} \OtherTok{FALSE}\NormalTok{)}
 \NormalTok{train\_dt \textless{}{-}}\StringTok{ }\NormalTok{dt[train\_id,]; test\_dt \textless{}{-}}\StringTok{ }\NormalTok{dt[}\OperatorTok{{-}}\NormalTok{train\_id,]}
 
-\KeywordTok{head}\NormalTok{(train\_dt)}
+\KeywordTok{summary}\NormalTok{(train\_dt)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-##        job education gender
-## 75   admin        15 female
-## 2    admin        16   male
-## 374  admin        15   male
-## 405  admin        12 female
-## 67  manage        16   male
-## 92   admin         8 female
+##         job        education        gender   
+##  admin    :240   Min.   : 8.00   male  :178  
+##  custodial: 18   1st Qu.:12.00   female:138  
+##  manage   : 58   Median :12.00               
+##                  Mean   :13.52               
+##                  3rd Qu.:15.00               
+##                  Max.   :21.00
 \end{verbatim}
 
 \hypertarget{model-1}{%
