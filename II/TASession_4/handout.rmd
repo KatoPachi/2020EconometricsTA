@@ -348,6 +348,7 @@ stargazer(
 )
 ```
 
+<!--
 # Empirical Application of Truncated Regression: Labor Participation of Married Women
 
 ## Background and Data
@@ -368,7 +369,7 @@ This dataset contains the following variables:
 
 [^source3]: <http://www.stata-press.com/data/r13/laborsub.dt>. Because this is dta file, we need to import it, using the `read.dta` function in the library `foreign`. I intentionally remove married women who could not participate in the labor market.
 
-```{r laborData}
+```{r laborData, eval = FALSE, purl = FALSE, echo = FALSE}
 dt <- read.csv(file = "./data/labor.csv", header = TRUE,  sep = ",")
 summary(dt)
 ```
@@ -415,7 +416,7 @@ We need to give intial values in argument of this function.
 Coefficients of explanatory variables, `b[3:6]`, are zero, 
 and intercept, `b[2]`, and $\sigma$, `b[1]`, are given by mean and standard deviation of `whrs`, respectively.
 
-```{r truncMle}
+```{r truncMle, eval = FALSE, purl = FALSE, echo = FALSE}
 whrs <- dt$whrs
 kl6 <- dt$kl6; k618 <- dt$k618
 wa <- dt$wa; we <- dt$we
@@ -438,7 +439,7 @@ This function must specify the trucated point in arguments `point` and `directio
 If `direction = "left"`, the outcome variable is truncated from below at `point`, that is, `point < y`.
 On the other hand, if `direction = "right"`, the outcome variable is truncated from above at `point`, that is, `y < point`.
 
-```{r truncreg}
+```{r truncreg, eval = FALSE, purl = FALSE, echo = FALSE}
 library(truncreg)
 model <- whrs ~ kl6 + k618 + wa + we
 est.trunc <- truncreg(model, data = dt, point = 0, direction = "left")
@@ -456,7 +457,7 @@ when we apply the truncated regression.
 Although the relationship between labor participation and women's characteristics is statistically insignificant,
 size of coefficients largely differs among three specifications.
 
-```{r tab_truncate, results = "asis"}
+```{r tab_truncate, results = "asis", eval = FALSE, purl = FALSE, echo = FALSE}
 ols <- lm(model, data = dt)
 coef.LnLik <- est.LnLik$estimate
 se.LnLik <- sqrt(diag(solve(est.LnLik$hessian)))
@@ -486,3 +487,4 @@ stargazer(
   type = "latex", header = FALSE  
 )
 ```
+-->
