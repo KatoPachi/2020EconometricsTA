@@ -1,0 +1,595 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+  12pt,
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Econometrics II TA Session \#4},
+  pdfauthor={Hiroki Kato},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\usepackage{zxjatype}
+\setCJKmainfont[BoldFont = IPAゴシック]{IPA明朝}
+\setCJKsansfont{IPAゴシック}
+\setCJKmonofont{IPAゴシック}
+\parindent = 1em
+\newcommand{\argmax}{\mathop{\rm arg~max}\limits}
+\newcommand{\argmin}{\mathop{\rm arg~min}\limits}
+\DeclareMathOperator*{\plim}{plim}
+\usepackage{xcolor}
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{Econometrics II TA Session \#4}
+\author{Hiroki Kato}
+\date{}
+
+\begin{document}
+\maketitle
+
+\hypertarget{empirical-application-of-ordered-probit-and-logit-model-housing-as-status-goods}{%
+\section{Empirical Application of Ordered Probit and Logit Model:
+Housing as Status
+Goods}\label{empirical-application-of-ordered-probit-and-logit-model-housing-as-status-goods}}
+
+\hypertarget{background-and-data}{%
+\subsection{Background and Data}\label{background-and-data}}
+
+A desire to signal high income or wealth may cause consumers to purchase
+status goods such as luxury cars. In this application, we explore
+whether housing serves as status goods, using the case of apartment
+building. We investigate the relationship between living in a high floor
+and income, controlling the quality of housing. Our hypothesis is that
+high-earners are more likely to live on the upper floor.
+
+We use the housing data originally coming from the American Housing
+Survey conducted in 2013 \footnote{\url{https://www.census.gov/programs-surveys/ahs.html}.
+  This is a repeated cross-section survey. We use the data at one time.}.
+This dataset (hereafter \texttt{housing}) contains the following
+variables:
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{Level}: ordered value of floor where respondent lives (1:Low -
+  4:High)
+\item
+  \texttt{lnPrice}: logged price of housing (proxy for quality of house)
+\item
+  \texttt{Top25}: a dummy variable taking one if household income is in
+  the top 25 percentile in sample.
+\end{itemize}
+
+We split data into two subsets: the \emph{training} data and the
+\emph{test} data. The training data, which is used for estimation and
+model fitness, is randoly drawn from the original data. The sample size
+of this subset is two thirds of total observations of the original one
+(\(N = 1,074\)). The test data, which is used for model prediction,
+consists of observations which the training data does not include
+(\(N = 538\)).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\DataTypeTok{file =} \StringTok{"./data/housing.csv"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{TRUE}\NormalTok{,  }\DataTypeTok{sep =} \StringTok{","}\NormalTok{)}
+\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"Level"}\NormalTok{, }\StringTok{"lnPrice"}\NormalTok{, }\StringTok{"Top25"}\NormalTok{)]}
+\NormalTok{dt}\OperatorTok{$}\NormalTok{Level \textless{}{-}}\StringTok{ }\KeywordTok{factor}\NormalTok{(dt}\OperatorTok{$}\NormalTok{Level)}
+
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{120511}\NormalTok{)}
+\NormalTok{train\_id \textless{}{-}}\StringTok{ }\KeywordTok{sample}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\KeywordTok{nrow}\NormalTok{(dt), }\DataTypeTok{size =}\NormalTok{ (}\DecValTok{2}\OperatorTok{/}\DecValTok{3}\NormalTok{)}\OperatorTok{*}\KeywordTok{nrow}\NormalTok{(dt), }\DataTypeTok{replace =} \OtherTok{FALSE}\NormalTok{)}
+\NormalTok{train\_dt \textless{}{-}}\StringTok{ }\NormalTok{dt[train\_id,]; test\_dt \textless{}{-}}\StringTok{ }\NormalTok{dt[}\OperatorTok{{-}}\NormalTok{train\_id,]}
+
+\KeywordTok{summary}\NormalTok{(train\_dt)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  Level      lnPrice            Top25       
+##  1:404   Min.   : 0.6931   Min.   :0.0000  
+##  2:165   1st Qu.:11.2898   1st Qu.:0.0000  
+##  3:269   Median :11.8494   Median :0.0000  
+##  4:236   Mean   :11.6353   Mean   :0.2393  
+##          3rd Qu.:12.4292   3rd Qu.:0.0000  
+##          Max.   :14.0931   Max.   :1.0000
+\end{verbatim}
+
+\hypertarget{model}{%
+\subsection{Model}\label{model}}
+
+The outcome variable is \texttt{Level} taking \(\{1, 2, 3, 4\}\).
+Consider the following regression equation of a latent variable:
+\begin{equation*}
+  y_i^* = \mathbf{x}_i \beta + u_i,
+\end{equation*} where a vector of explanatory variables are
+\texttt{lnPrice} and \texttt{Top25}, and \(u_i\) is an error term. The
+relationship between the latent variable \(y_i^*\) and the observed
+outcome variable is \begin{equation*}
+  Level =
+  \begin{cases}
+    1 &\text{if}\quad -\infty < y_i^* \le a_1  \\
+    2 &\text{if}\quad a_1 < y_i^* \le a_2 \\
+    3 &\text{if}\quad a_2 < y_i^* \le a_3 \\
+    4 &\text{if}\quad a_3 < y_i^* < +\infty
+  \end{cases}.
+\end{equation*}
+
+Consider the probability of realization of \(y_i\), that is,
+\begin{equation*}
+  \begin{split}
+  \mathbb{P}(y_i = k | \mathbf{x}_i) 
+  &= \mathbb{P}(a_{k-1} - \mathbf{x}_i \beta < u_i \le a_k - \mathbf{x}_i \beta | \mathbf{x}_i)  \\
+  &= G(a_k - \mathbf{x}_i \beta) - G(a_{k-1} - \mathbf{x}_i \beta),
+  \end{split}
+\end{equation*} where \(a_{4} = +\infty\) and \(a_0 = -\infty\). Then,
+the likelihood function is defined by \begin{equation*}
+  p((y_i|\mathbf{x}_i), i = 1, \ldots, n; \beta, a_1, \ldots, a_3)
+  = \prod_{i=1}^n \prod_{k=1}^4 (G(a_k - \mathbf{x}_i \beta) - G(a_{k-1} - \mathbf{x}_i \beta))^{I_{ik}}.
+\end{equation*} where \(I_{ik}\) is a indicator variable taking 1 if
+\(y_i = k\). Finally, the log-likelihood function is \begin{equation*}
+  M(\beta, a_1, a_2, a_3) = \sum_{i=1}^n \sum_{k=1}^4 I_{ik} \log(G(a_k - \mathbf{x}_i \beta) - G(a_{k-1} - \mathbf{x}_i \beta)).
+\end{equation*} Usually, \(G(a)\) assumes the standard normal
+distribution, \(\Phi(a)\), or the logistic distribution,
+\(1/(1 + \exp(-a))\). We estimate \(\theta = (\beta, a_1, a_2, a_3)'\)
+to minimize the log-likelihood function, that is, \begin{equation*}
+  \hat{\theta} \in \mathop{\rm arg~min}\limits_{(\beta, a_1, a_2, a_3)} M(\beta, a_1, a_2, a_3).
+\end{equation*}
+
+In \texttt{R}, the library (package) \texttt{MASS} provides the
+\texttt{polr} function which estimates the ordered probit and logit
+model. Although we can use the \texttt{nlm} function when we define the
+log-likelihood function, we do not report this method.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(MASS)}
+
+\NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{Level }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{lnPrice }\OperatorTok{+}\StringTok{ }\NormalTok{Top25}
+\NormalTok{oprobit \textless{}{-}}\StringTok{ }\KeywordTok{polr}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ train\_dt, }\DataTypeTok{method =} \StringTok{"probit"}\NormalTok{)}
+\NormalTok{ologit \textless{}{-}}\StringTok{ }\KeywordTok{polr}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ train\_dt, }\DataTypeTok{method =} \StringTok{"logistic"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{interepretation-and-model-fitness}{%
+\subsection{Interepretation and Model
+Fitness}\label{interepretation-and-model-fitness}}
+
+Table \ref{housing} shows results. In both models, the latent variable
+\(y_i^*\) is increasing in \texttt{Top25}. This means that high-earners
+have higer value of latent variable \(y_i^*\). Since the cutoff values
+are increasing in the observed \(y_i\), we can conclude that
+high-earners are more likely to live on the upper floor.
+
+To evaluate model fitness, we use the \emph{percent correctly
+predicted}, which is the percentage of unit whose predicted \(y_i\)
+matches the actual \(y_i\). First, we calculate
+\(\mathbf{x}_i \hat{\beta}\). If this value is in
+\((-\infty, \hat{a}_1]\), \((\hat{a}_1, a_2]\),
+\((\hat{a}_2, \hat{a}_3]\), and \((\hat{a}_3, +\infty)\), then we take
+\(\hat{y}_i = 1\), \(\hat{y}_i = 2\), \(\hat{y}_i = 3\) and
+\(\hat{y}_i = 4\), respectively. Using the training data (in-sample) and
+the test data (out-of-sample), we calculate this index.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(tidyverse) }\CommentTok{\#use case\_when()}
+\CommentTok{\# coefficients}
+\NormalTok{bp \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\KeywordTok{coef}\NormalTok{(oprobit), }\DataTypeTok{nrow =} \DecValTok{2}\NormalTok{); bl \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ologit), }\DataTypeTok{nrow =} \DecValTok{2}\NormalTok{)}
+\CommentTok{\# cutoff value}
+\NormalTok{ap \textless{}{-}}\StringTok{ }\NormalTok{oprobit}\OperatorTok{$}\NormalTok{zeta; al \textless{}{-}}\StringTok{ }\NormalTok{ologit}\OperatorTok{$}\NormalTok{zeta}
+\NormalTok{seap \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{vcov}\NormalTok{(oprobit)))[}\DecValTok{3}\OperatorTok{:}\DecValTok{5}\NormalTok{]; seal \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{vcov}\NormalTok{(ologit)))[}\DecValTok{3}\OperatorTok{:}\DecValTok{5}\NormalTok{]}
+\CommentTok{\# in{-}sample prediction}
+\NormalTok{indt \textless{}{-}}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(train\_dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"lnPrice"}\NormalTok{, }\StringTok{"Top25"}\NormalTok{)])}
+\NormalTok{in\_xbp \textless{}{-}}\StringTok{ }\NormalTok{indt }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{bp; in\_xbl \textless{}{-}}\StringTok{ }\NormalTok{indt }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{bl}
+
+\NormalTok{in\_hatYp \textless{}{-}}\StringTok{ }\KeywordTok{case\_when}\NormalTok{(}
+\NormalTok{  in\_xbp }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{ap[}\DecValTok{1}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{1}\NormalTok{,}
+\NormalTok{  in\_xbp }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{ap[}\DecValTok{2}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{2}\NormalTok{,}
+\NormalTok{  in\_xbp }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{ap[}\DecValTok{3}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{3}\NormalTok{,}
+  \OtherTok{TRUE} \OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{4}
+\NormalTok{)}
+
+\NormalTok{in\_hatYl \textless{}{-}}\StringTok{ }\KeywordTok{case\_when}\NormalTok{(}
+\NormalTok{  in\_xbl }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{al[}\DecValTok{1}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{1}\NormalTok{,}
+\NormalTok{  in\_xbl }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{al[}\DecValTok{2}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{2}\NormalTok{,}
+\NormalTok{  in\_xbl }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{al[}\DecValTok{3}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{3}\NormalTok{,}
+  \OtherTok{TRUE} \OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{4}
+\NormalTok{)}
+
+\NormalTok{inpred\_p \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(train\_dt}\OperatorTok{$}\NormalTok{Level }\OperatorTok{==}\StringTok{ }\NormalTok{in\_hatYp)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(train\_dt), }\DecValTok{3}\NormalTok{)}
+\NormalTok{inpred\_l \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(train\_dt}\OperatorTok{$}\NormalTok{Level }\OperatorTok{==}\StringTok{ }\NormalTok{in\_hatYl)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(train\_dt), }\DecValTok{3}\NormalTok{)}
+
+\CommentTok{\# out{-}of{-}sample prediction}
+\NormalTok{outdt \textless{}{-}}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(test\_dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"lnPrice"}\NormalTok{, }\StringTok{"Top25"}\NormalTok{)])}
+\NormalTok{out\_xbp \textless{}{-}}\StringTok{ }\NormalTok{outdt }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{bp; out\_xbl \textless{}{-}}\StringTok{ }\NormalTok{outdt }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{bl}
+
+\NormalTok{out\_hatYp \textless{}{-}}\StringTok{ }\KeywordTok{case\_when}\NormalTok{(}
+\NormalTok{  out\_xbp }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{ap[}\DecValTok{1}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{1}\NormalTok{,}
+\NormalTok{  out\_xbp }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{ap[}\DecValTok{2}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{2}\NormalTok{,}
+\NormalTok{  out\_xbp }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{ap[}\DecValTok{3}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{3}\NormalTok{,}
+  \OtherTok{TRUE} \OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{4}
+\NormalTok{)}
+
+\NormalTok{out\_hatYl \textless{}{-}}\StringTok{ }\KeywordTok{case\_when}\NormalTok{(}
+\NormalTok{  out\_xbl }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{al[}\DecValTok{1}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{1}\NormalTok{,}
+\NormalTok{  out\_xbl }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{al[}\DecValTok{2}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{2}\NormalTok{,}
+\NormalTok{  out\_xbl }\OperatorTok{\textless{}=}\StringTok{ }\NormalTok{al[}\DecValTok{3}\NormalTok{] }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{3}\NormalTok{,}
+  \OtherTok{TRUE} \OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{4}
+\NormalTok{)}
+
+\NormalTok{outpred\_p \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(test\_dt}\OperatorTok{$}\NormalTok{Level }\OperatorTok{==}\StringTok{ }\NormalTok{out\_hatYp)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(test\_dt), }\DecValTok{3}\NormalTok{)}
+\NormalTok{outpred\_l \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(test\_dt}\OperatorTok{$}\NormalTok{Level }\OperatorTok{==}\StringTok{ }\NormalTok{out\_hatYl)}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(test\_dt), }\DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+As a result, the percent correctly predicted is almost 16\% when we use
+the in-sample data. When we use the test data, this index slightly
+increases. Overall, out model seems not to be good because the percent
+correctly predicted is low.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{seap \textless{}{-}}\StringTok{ }\KeywordTok{sprintf}\NormalTok{(}\StringTok{"(\%1.3f)"}\NormalTok{, seap); seal \textless{}{-}}\StringTok{ }\KeywordTok{sprintf}\NormalTok{(}\StringTok{"(\%1.3f)"}\NormalTok{, seal)}
+
+\KeywordTok{library}\NormalTok{(stargazer)}
+\KeywordTok{stargazer}\NormalTok{(}
+\NormalTok{  oprobit, ologit,}
+  \DataTypeTok{report =} \StringTok{"vcs"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+  \DataTypeTok{omit =} \KeywordTok{c}\NormalTok{(}\StringTok{"Constant"}\NormalTok{),}
+  \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Cutoff value at 1|2"}\NormalTok{, }\KeywordTok{round}\NormalTok{(ap[}\DecValTok{1}\NormalTok{], }\DecValTok{3}\NormalTok{), }\KeywordTok{round}\NormalTok{(al[}\DecValTok{1}\NormalTok{], }\DecValTok{3}\NormalTok{)),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{""}\NormalTok{, seap[}\DecValTok{1}\NormalTok{], seal[}\DecValTok{1}\NormalTok{]),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Cutoff value at 2|3"}\NormalTok{, }\KeywordTok{round}\NormalTok{(ap[}\DecValTok{2}\NormalTok{], }\DecValTok{3}\NormalTok{), }\KeywordTok{round}\NormalTok{(al[}\DecValTok{2}\NormalTok{], }\DecValTok{3}\NormalTok{)),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{""}\NormalTok{, seap[}\DecValTok{2}\NormalTok{], seal[}\DecValTok{2}\NormalTok{]),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Cutoff value at 3|4"}\NormalTok{, }\KeywordTok{round}\NormalTok{(ap[}\DecValTok{3}\NormalTok{], }\DecValTok{3}\NormalTok{), }\KeywordTok{round}\NormalTok{(al[}\DecValTok{3}\NormalTok{], }\DecValTok{3}\NormalTok{)),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{""}\NormalTok{, seap[}\DecValTok{3}\NormalTok{], seal[}\DecValTok{3}\NormalTok{]),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Percent correctly predicted (in{-}sample)"}\NormalTok{, inpred\_p, inpred\_l),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Percent correctly predicted (out{-}of{-}sample)"}\NormalTok{, outpred\_p, outpred\_l)}
+\NormalTok{  ),}
+  \DataTypeTok{omit.table.layout =} \StringTok{"n"}\NormalTok{, }\DataTypeTok{table.placement =} \StringTok{"t"}\NormalTok{,}
+  \DataTypeTok{title =} \StringTok{"Floor Level of House: Ordered Probit and Logit Model"}\NormalTok{,}
+  \DataTypeTok{label =} \StringTok{"housing"}\NormalTok{,}
+  \DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[t] \centering 
+  \caption{Floor Level of House: Ordered Probit and Logit Model} 
+  \label{housing} 
+\begin{tabular}{@{\extracolsep{5pt}}lcc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{2}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-3} 
+\\[-1.8ex] & \multicolumn{2}{c}{Level} \\ 
+\\[-1.8ex] & \textit{ordered} & \textit{ordered} \\ 
+ & \textit{probit} & \textit{logistic} \\ 
+\\[-1.8ex] & (1) & (2)\\ 
+\hline \\[-1.8ex] 
+ lnPrice & $-$0.007 & $-$0.013 \\ 
+  & (0.019) & (0.031) \\ 
+  & & \\ 
+ Top25 & 0.133 & 0.202 \\ 
+  & (0.080) & (0.132) \\ 
+  & & \\ 
+\hline \\[-1.8ex] 
+Cutoff value at 1|2 & -0.371 & -0.611 \\ 
+ & (0.227) & (0.363) \\ 
+Cutoff value at 2|3 & 0.02 & 0.014 \\ 
+ & (0.226) & (0.362) \\ 
+Cutoff value at 3|4 & 0.719 & 1.163 \\ 
+ & (0.227) & (0.365) \\ 
+Percent correctly predicted (in-sample) & 0.161 & 0.161 \\ 
+Percent correctly predicted (out-of-sample) & 0.175 & 0.175 \\ 
+Observations & 1,074 & 1,074 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+\hypertarget{empirical-application-of-multinomial-model-gender-discremination-in-job-position}{%
+\section{Empirical Application of Multinomial Model: Gender
+Discremination in Job
+Position}\label{empirical-application-of-multinomial-model-gender-discremination-in-job-position}}
+
+\hypertarget{background-and-data-1}{%
+\subsection{Background and Data}\label{background-and-data-1}}
+
+Recently, many developed countries move toward women's social
+advancement, for example, an increase of number of board member. In this
+application, we explore whether the gender discremination existed in the
+U.S. bank industry. Our hypothesis is that women are less likely to be
+given a higher position than male.
+
+We use a built-in dataset called \texttt{BankWages} in the library
+\texttt{AER}. This datase contains the following variables:
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{job}: three job position. The rank of position is
+  \texttt{custodial\ \textless{}\ admin\ \textless{}\ manage}.
+\item
+  \texttt{education}: years of education
+\item
+  \texttt{gender}: a dummy variable of female
+\end{itemize}
+
+Again, we split data into two subsets: the \emph{training} data and the
+\emph{test} data. The training data, which is used for estimation and
+model fitness, is randoly drawn from the original data. The sample size
+of this subset is two thirds of total observations of the original one
+(\(N = 316\)). The test data, which is used for model prediction,
+consists of observations which the training data does not include
+(\(N = 158\)).
+
+To use the multinomial logit model in \texttt{R}, we need to transform
+outcome variable into the form \texttt{factor}, which is special
+variable form in \texttt{R}. The variable form \texttt{factor} is
+similar to dummy variables. For example,
+\texttt{factor(dt\$job,\ levels\ =\ c("admin",\ "custodial",\ "manage"))}
+transforms the variable form \texttt{job} from the form
+\texttt{character} into the form \texttt{factor}. Moreover, when we use
+\texttt{job} as explanatory variables, \texttt{R} automatically makes
+two dummy variables of \texttt{custodial} and \texttt{manage}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(AER)}
+\KeywordTok{data}\NormalTok{(BankWages)}
+\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{BankWages}
+\NormalTok{dt}\OperatorTok{$}\NormalTok{job \textless{}{-}}\StringTok{ }\KeywordTok{as.character}\NormalTok{(dt}\OperatorTok{$}\NormalTok{job)}
+\NormalTok{dt}\OperatorTok{$}\NormalTok{job \textless{}{-}}\StringTok{ }\KeywordTok{factor}\NormalTok{(dt}\OperatorTok{$}\NormalTok{job, }\DataTypeTok{levels =} \KeywordTok{c}\NormalTok{(}\StringTok{"admin"}\NormalTok{, }\StringTok{"custodial"}\NormalTok{, }\StringTok{"manage"}\NormalTok{))}
+\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"job"}\NormalTok{, }\StringTok{"education"}\NormalTok{, }\StringTok{"gender"}\NormalTok{)]}
+
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{120511}\NormalTok{)}
+\NormalTok{train\_id \textless{}{-}}\StringTok{ }\KeywordTok{sample}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\KeywordTok{nrow}\NormalTok{(dt), }\DataTypeTok{size =}\NormalTok{ (}\DecValTok{2}\OperatorTok{/}\DecValTok{3}\NormalTok{)}\OperatorTok{*}\KeywordTok{nrow}\NormalTok{(dt), }\DataTypeTok{replace =} \OtherTok{FALSE}\NormalTok{)}
+\NormalTok{train\_dt \textless{}{-}}\StringTok{ }\NormalTok{dt[train\_id,]; test\_dt \textless{}{-}}\StringTok{ }\NormalTok{dt[}\OperatorTok{{-}}\NormalTok{train\_id,]}
+
+\KeywordTok{summary}\NormalTok{(train\_dt)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         job        education        gender   
+##  admin    :240   Min.   : 8.00   male  :178  
+##  custodial: 18   1st Qu.:12.00   female:138  
+##  manage   : 58   Median :12.00               
+##                  Mean   :13.52               
+##                  3rd Qu.:15.00               
+##                  Max.   :21.00
+\end{verbatim}
+
+\hypertarget{model-1}{%
+\subsection{Model}\label{model-1}}
+
+The outcome variable \(y_i\) takes three values \(\{0, 1, 2\}\). Note
+that the labelling of the choices is arbitrary. Then, the multinomial
+logit model has the following response probabilities \begin{equation*}
+  P_{ij} = \mathbb{P}(y_i = j | \mathbf{x}_i) =
+  \begin{cases}
+    \frac{\exp(\mathbf{x}_i \beta_j)}{1 + \sum_{k=1}^2 \exp(\mathbf{x}_i \beta_k)} &\text{if}\quad j = 1, 2  \\
+    \frac{1}{1 + \sum_{k=1}^2 \exp(\mathbf{x}_i \beta_k)}  &\text{if}\quad j = 0
+  \end{cases}.
+\end{equation*} The log-likelihood function is \begin{equation*}
+  M_n(\beta_1, \beta_2) = \sum_{i=1}^n \sum_{j=0}^3 d_{ij} \log (P_{ij}),
+\end{equation*} where \(d_{ij}\) is a dummy variable taking 1 if
+\(y_i = j\).
+
+In \texttt{R}, some packages provide the multinomial logit model. In
+this application, we use the \texttt{multinom} function in the library
+\texttt{nnet}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(nnet)}
+\NormalTok{est\_mlogit \textless{}{-}}\StringTok{ }\KeywordTok{multinom}\NormalTok{(job }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{education }\OperatorTok{+}\StringTok{ }\NormalTok{gender, }\DataTypeTok{data =}\NormalTok{ train\_dt)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{interpretations-and-model-fitness}{%
+\subsection{Interpretations and Model
+Fitness}\label{interpretations-and-model-fitness}}
+
+Table \ref{job} summarizes the result of multinomial logit model. The
+coefficient represents the change of \(\log(P_{ij}/P_{i0})\) in
+corresponding covariate beucase the response probabilities yields
+\begin{equation*}
+    \frac{P_{ij}}{P_{i0}} = \exp(\mathbf{x}_i \beta_j)  \Leftrightarrow
+    \log \left( \frac{P_{ij}}{P_{i0}} \right) = \mathbf{x}_i \beta_j.
+\end{equation*} For example, eduction decreases the log-odds between
+\texttt{custodial} and \texttt{admin} by -0.562. This implies that those
+who received higher education are more likely to obtain the position
+\texttt{admin}. Highly-educated workers are also more likely to obtain
+the position \texttt{manage}. Moreover, a female dummy decrease the
+log-odds between \texttt{manage} and \texttt{admin} by -0.748, which
+implies that females are less likely to obtain higher position
+\texttt{manage}. From this result, we conclude that the U.S. bank
+disencouraged females to assign higher job position.
+
+To evalue model fitness and prediction, we use two indices: the
+\emph{pseudo R-squared} and \emph{percent correctly predicted}. The
+\emph{preudo R-sqaured} is calculated by \(1 - L_1/L_0\) where \(L_1\)
+is the value of log-likelihood for estimated model and \(L_0\) is the
+value of log-likelihood in the model with only an intercept. \texttt{R}
+snippet for calculation of pseudo R-sqaured is as follows: Note that
+\texttt{nnet:::logLik.multinom()} returns the value of log-likelihood.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{loglik1 \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(nnet}\OperatorTok{:::}\KeywordTok{logLik.multinom}\NormalTok{(est\_mlogit))}
+\NormalTok{est\_mlogit0 \textless{}{-}}\StringTok{ }\KeywordTok{multinom}\NormalTok{(job }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{1}\NormalTok{, }\DataTypeTok{data =}\NormalTok{ train\_dt)}
+\NormalTok{loglik0 \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(nnet}\OperatorTok{:::}\KeywordTok{logLik.multinom}\NormalTok{(est\_mlogit0))}
+\NormalTok{pr2 \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\NormalTok{loglik1}\OperatorTok{/}\NormalTok{loglik0, }\DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+The second index is the \emph{precent correctly predicted}. The
+predicted outcome is the outcome with the highest estimated probability.
+Using the training data (in-sample) and the test data (out-of-sample),
+we calculate this index. \texttt{R} snippet for calculation of this
+index is as follows.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# in{-}sample prediction}
+\NormalTok{inpred \textless{}{-}}\StringTok{ }\KeywordTok{predict}\NormalTok{(est\_mlogit, }\DataTypeTok{newdata =}\NormalTok{ train\_dt, }\StringTok{"probs"}\NormalTok{)}
+\NormalTok{inpred \textless{}{-}}\StringTok{ }\KeywordTok{colnames}\NormalTok{(inpred)[}\KeywordTok{apply}\NormalTok{(inpred, }\DecValTok{1}\NormalTok{, which.max)]}
+\NormalTok{inpcp \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(inpred }\OperatorTok{==}\StringTok{ }\NormalTok{train\_dt}\OperatorTok{$}\NormalTok{job)}\OperatorTok{/}\KeywordTok{length}\NormalTok{(inpred), }\DecValTok{3}\NormalTok{)}
+\CommentTok{\# out{-}of{-}sample prediction}
+\NormalTok{outpred \textless{}{-}}\StringTok{ }\KeywordTok{predict}\NormalTok{(est\_mlogit, }\DataTypeTok{newdata =}\NormalTok{ test\_dt, }\StringTok{"probs"}\NormalTok{)}
+\NormalTok{outpred \textless{}{-}}\StringTok{ }\KeywordTok{colnames}\NormalTok{(outpred)[}\KeywordTok{apply}\NormalTok{(outpred, }\DecValTok{1}\NormalTok{, which.max)]}
+\NormalTok{outpcp \textless{}{-}}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{sum}\NormalTok{(outpred }\OperatorTok{==}\StringTok{ }\NormalTok{test\_dt}\OperatorTok{$}\NormalTok{job)}\OperatorTok{/}\KeywordTok{length}\NormalTok{(outpred), }\DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+As a result, our model is good in terms of fitness and prediction
+because the percent correctly predicted is high (83.9\% of in-sample
+data and 88.0\% of out-of-sample data), and the pseudo R-sqaured is
+0.523.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{stargazer}\NormalTok{(}
+\NormalTok{  est\_mlogit,}
+  \DataTypeTok{covariate.labels =} \KeywordTok{c}\NormalTok{(}\StringTok{"Education"}\NormalTok{, }\StringTok{"Female = 1"}\NormalTok{),}
+  \DataTypeTok{report =} \StringTok{"vcs"}\NormalTok{, }\DataTypeTok{omit.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"aic"}\NormalTok{),}
+  \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Observations"}\NormalTok{, }\KeywordTok{length}\NormalTok{(inpred), }\StringTok{""}\NormalTok{),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Percent correctly predicted (in{-}sample)"}\NormalTok{, inpcp, }\StringTok{""}\NormalTok{),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Percent correctly predicted (out{-}of{-}sample)"}\NormalTok{, outpcp, }\StringTok{""}\NormalTok{),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Log{-}likelihood"}\NormalTok{, }\KeywordTok{round}\NormalTok{(loglik1, }\DecValTok{3}\NormalTok{), }\StringTok{""}\NormalTok{),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Pseudo R{-}sq"}\NormalTok{, pr2, }\StringTok{""}\NormalTok{)}
+\NormalTok{  ),}
+  \DataTypeTok{omit.table.layout =} \StringTok{"n"}\NormalTok{, }\DataTypeTok{table.placement =} \StringTok{"t"}\NormalTok{,}
+  \DataTypeTok{title =} \StringTok{"Multinomial Logit Model of Job Position"}\NormalTok{,}
+  \DataTypeTok{label =} \StringTok{"job"}\NormalTok{,}
+  \DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}  
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[t] \centering 
+  \caption{Multinomial Logit Model of Job Position} 
+  \label{job} 
+\begin{tabular}{@{\extracolsep{5pt}}lcc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{2}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-3} 
+\\[-1.8ex] & custodial & manage \\ 
+\\[-1.8ex] & (1) & (2)\\ 
+\hline \\[-1.8ex] 
+ Education & $-$0.547 & 1.322 \\ 
+  & (0.116) & (0.229) \\ 
+  & & \\ 
+ Female = 1 & $-$10.507 & $-$0.891 \\ 
+  & (31.352) & (0.524) \\ 
+  & & \\ 
+ Constant & 4.634 & $-$21.448 \\ 
+  & (1.269) & (3.605) \\ 
+  & & \\ 
+\hline \\[-1.8ex] 
+Observations & 316 &  \\ 
+Percent correctly predicted (in-sample) & 0.839 &  \\ 
+Percent correctly predicted (out-of-sample) & 0.88 &  \\ 
+Log-likelihood & -102.964 &  \\ 
+Pseudo R-sq & 0.523 &  \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+\end{document}

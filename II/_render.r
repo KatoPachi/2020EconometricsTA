@@ -8,16 +8,16 @@ options(repo = "https://cran.rstudio.com/")
 
 #' from Rmd to pdf
 rmarkdown::render(
-  input = "II/TAsession_3/handout.rmd",
+  input = "II/TAsession_4/handout.rmd",
   output_file = "handout.pdf",
-  output_dir = "II/TAsession_3", #いじらない
+  output_dir = "II/TAsession_4", #いじらない
   clean = TRUE, #いじらない
   encoding = "utf8" #いじらない
 )
 
 #' from Rmd to R
 knitr::purl(
-    input = "II/TAsession_3/handout.rmd",
-    output = "R/script/TASession_3.r",  
+    input = "II/TAsession_4/handout.rmd",
+    output = "R/script/TASession_4.r",  
     documentation = 1
 )
