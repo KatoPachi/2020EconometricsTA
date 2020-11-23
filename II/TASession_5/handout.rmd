@@ -1,0 +1,499 @@
+---
+title: "Econometrics II TA Session #4"
+author: "Hiroki Kato"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    md_extensions: +raw_attribute
+    number_sections: true
+    extra_dependencies: ["xcolor"]
+    keep_tex: yes
+fontsize: 12pt
+header-includes:
+  - \usepackage{zxjatype}
+  - \setCJKmainfont[BoldFont = IPAゴシック]{IPA明朝}
+  - \setCJKsansfont{IPAゴシック}
+  - \setCJKmonofont{IPAゴシック}
+  - \parindent = 1em
+  - \newcommand{\argmax}{\mathop{\rm arg~max}\limits}
+  - \newcommand{\argmin}{\mathop{\rm arg~min}\limits}
+  - \DeclareMathOperator*{\plim}{plim}
+---
+
+```{r setup, include = FALSE, echo = FALSE, purl = FALSE}
+# This is options to make pdf file. You should ignore
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  echo = TRUE, 
+  cache = FALSE,
+  fig.pos = "h")
+knitr::opts_knit$set(root.dir = "C:/Users/katoo/Desktop/2020EconometricsTA/R")
+```
+
+# Empirical Application of Ordered Probit and Logit Model: Housing as Status Goods 
+
+## Background and Data
+
+A desire to signal high income or wealth may cause consumers to purchase status goods such as luxury cars.
+In this application, we explore whether housing serves as status goods, using the case of apartment building.
+We investigate the relationship between living in a high floor and income, controlling the quality of housing.
+Our hypothesis is that high-earners are more likely to live on the upper floor.
+
+We use the housing data originally coming from the American Housing Survey conducted in 2013 [^source2].
+This dataset (hereafter `housing`) contains the following variables:
+
+- `Level`: ordered value of floor where respondent lives (1:Low - 4:High)
+- `lnPrice`: logged price of housing (proxy for quality of house)
+- `Top25`: a dummy variable taking one if household income is in the top 25 percentile in sample.
+
+We split data into two subsets: the *training* data and the *test* data.
+The training data, which is used for estimation and model fitness, is randoly drawn from the original data.
+The sample size of this subset is two thirds of total observations of the original one ($N = 1,074$).
+The test data, which is used for model prediction, consists of observations which the training data does not include ($N = 538$).
+
+[^source2]: <https://www.census.gov/programs-surveys/ahs.html>. This is a repeated cross-section survey. We use the data at one time.
+
+```{r houseData}
+dt <- read.csv(file = "./data/housing.csv", header = TRUE,  sep = ",")
+dt <- dt[,c("Level", "lnPrice", "Top25")]
+dt$Level <- factor(dt$Level)
+
+set.seed(120511)
+train_id <- sample(1:nrow(dt), size = (2/3)*nrow(dt), replace = FALSE)
+train_dt <- dt[train_id,]; test_dt <- dt[-train_id,]
+
+summary(train_dt)
+```
+
+## Model
+
+The outcome variable is `Level` taking $\{1, 2, 3, 4\}$.
+Consider the following regression equation of a latent variable:
+\begin{equation*}
+  y_i^* = \mathbf{x}_i \beta + u_i,
+\end{equation*}
+where a vector of explanatory variables are `lnPrice` and `Top25`, and $u_i$ is an error term.
+The relationship between the latent variable $y_i^*$ and the observed outcome variable is 
+\begin{equation*}
+  Level =
+  \begin{cases}
+    1 &\text{if}\quad -\infty < y_i^* \le a_1  \\
+    2 &\text{if}\quad a_1 < y_i^* \le a_2 \\
+    3 &\text{if}\quad a_2 < y_i^* \le a_3 \\
+    4 &\text{if}\quad a_3 < y_i^* < +\infty
+  \end{cases}.
+\end{equation*}
+
+Consider the probability of realization of $y_i$, that is,
+\begin{equation*}
+  \begin{split}
+  \mathbb{P}(y_i = k | \mathbf{x}_i) 
+  &= \mathbb{P}(a_{k-1} - \mathbf{x}_i \beta < u_i \le a_k - \mathbf{x}_i \beta | \mathbf{x}_i)  \\
+  &= G(a_k - \mathbf{x}_i \beta) - G(a_{k-1} - \mathbf{x}_i \beta),
+  \end{split}
+\end{equation*}
+where $a_{4} = +\infty$ and $a_0 = -\infty$.
+Then, the likelihood function is defined by 
+\begin{equation*}
+  p((y_i|\mathbf{x}_i), i = 1, \ldots, n; \beta, a_1, \ldots, a_3)
+  = \prod_{i=1}^n \prod_{k=1}^4 (G(a_k - \mathbf{x}_i \beta) - G(a_{k-1} - \mathbf{x}_i \beta))^{I_{ik}}.
+\end{equation*}
+where $I_{ik}$ is a indicator variable taking 1 if $y_i = k$.
+Finally, the log-likelihood function is 
+\begin{equation*}
+  M(\beta, a_1, a_2, a_3) = \sum_{i=1}^n \sum_{k=1}^4 I_{ik} \log(G(a_k - \mathbf{x}_i \beta) - G(a_{k-1} - \mathbf{x}_i \beta)).
+\end{equation*}
+Usually, $G(a)$ assumes the standard normal distribution, $\Phi(a)$, or the logistic distribution, $1/(1 + \exp(-a))$.
+We estimate $\theta = (\beta, a_1, a_2, a_3)'$ to minimize the log-likelihood function, that is,
+\begin{equation*}
+  \hat{\theta} \in \argmin_{(\beta, a_1, a_2, a_3)} M(\beta, a_1, a_2, a_3).
+\end{equation*}
+
+In `R`, the library (package) `MASS` provides the `polr` function which estimates the ordered probit and logit model.
+Although we can use the `nlm` function when we define the log-likelihood function, we do not report this method.
+
+```{r orderModel}
+library(MASS)
+
+model <- Level ~ lnPrice + Top25
+oprobit <- polr(model, data = train_dt, method = "probit")
+ologit <- polr(model, data = train_dt, method = "logistic")
+```
+
+## Interepretation and Model Fitness
+
+Table \ref{housing} shows results.
+In both models, the latent variable $y_i^*$ is increasing in `Top25`.
+This means that high-earners have higer value of latent variable $y_i^*$.
+Since the cutoff values are increasing in the observed $y_i$,
+we can conclude that high-earners are more likely to live on the upper floor.
+
+To evaluate model fitness, 
+we use the *percent correctly predicted*, which is the percentage of unit whose predicted $y_i$ matches the actual $y_i$.
+First, we calculate $\mathbf{x}_i \hat{\beta}$.
+If this value is in $(-\infty, \hat{a}_1]$, $(\hat{a}_1, a_2]$, $(\hat{a}_2, \hat{a}_3]$, and $(\hat{a}_3, +\infty)$,
+then we take $\hat{y}_i = 1$, $\hat{y}_i = 2$, $\hat{y}_i = 3$ and $\hat{y}_i = 4$, respectively.
+Using the training data (in-sample) and the test data (out-of-sample), 
+we calculate this index.
+
+```{r fitness}
+library(tidyverse) #use case_when()
+# coefficients
+bp <- matrix(coef(oprobit), nrow = 2); bl <- matrix(coef(ologit), nrow = 2)
+# cutoff value
+ap <- oprobit$zeta; al <- ologit$zeta
+seap <- sqrt(diag(vcov(oprobit)))[3:5]; seal <- sqrt(diag(vcov(ologit)))[3:5]
+# in-sample prediction
+indt <- as.matrix(train_dt[,c("lnPrice", "Top25")])
+in_xbp <- indt %*% bp; in_xbl <- indt %*% bl
+
+in_hatYp <- case_when(
+  in_xbp <= ap[1] ~ 1,
+  in_xbp <= ap[2] ~ 2,
+  in_xbp <= ap[3] ~ 3,
+  TRUE ~ 4
+)
+
+in_hatYl <- case_when(
+  in_xbl <= al[1] ~ 1,
+  in_xbl <= al[2] ~ 2,
+  in_xbl <= al[3] ~ 3,
+  TRUE ~ 4
+)
+
+inpred_p <- round(sum(train_dt$Level == in_hatYp)/nrow(train_dt), 3)
+inpred_l <- round(sum(train_dt$Level == in_hatYl)/nrow(train_dt), 3)
+
+# out-of-sample prediction
+outdt <- as.matrix(test_dt[,c("lnPrice", "Top25")])
+out_xbp <- outdt %*% bp; out_xbl <- outdt %*% bl
+
+out_hatYp <- case_when(
+  out_xbp <= ap[1] ~ 1,
+  out_xbp <= ap[2] ~ 2,
+  out_xbp <= ap[3] ~ 3,
+  TRUE ~ 4
+)
+
+out_hatYl <- case_when(
+  out_xbl <= al[1] ~ 1,
+  out_xbl <= al[2] ~ 2,
+  out_xbl <= al[3] ~ 3,
+  TRUE ~ 4
+)
+
+outpred_p <- round(sum(test_dt$Level == out_hatYp)/nrow(test_dt), 3)
+outpred_l <- round(sum(test_dt$Level == out_hatYl)/nrow(test_dt), 3)
+```
+
+As a result, the percent correctly predicted is almost 16\% when we use the in-sample data.
+When we use the test data, this index slightly increases.
+Overall, out model seems not to be good because the percent correctly predicted is low.
+
+```{r tab_orderModel, results = "asis"}
+seap <- sprintf("(%1.3f)", seap); seal <- sprintf("(%1.3f)", seal)
+
+library(stargazer)
+stargazer(
+  oprobit, ologit,
+  report = "vcs", keep.stat = c("n"),
+  omit = c("Constant"),
+  add.lines = list(
+    c("Cutoff value at 1|2", round(ap[1], 3), round(al[1], 3)),
+    c("", seap[1], seal[1]),
+    c("Cutoff value at 2|3", round(ap[2], 3), round(al[2], 3)),
+    c("", seap[2], seal[2]),
+    c("Cutoff value at 3|4", round(ap[3], 3), round(al[3], 3)),
+    c("", seap[3], seal[3]),
+    c("Percent correctly predicted (in-sample)", inpred_p, inpred_l),
+    c("Percent correctly predicted (out-of-sample)", outpred_p, outpred_l)
+  ),
+  omit.table.layout = "n", table.placement = "t",
+  title = "Floor Level of House: Ordered Probit and Logit Model",
+  label = "housing",
+  type = "latex", header = FALSE
+)
+```
+
+# Empirical Application of Multinomial Model: Gender Discremination in Job Position 
+
+## Background and Data
+
+Recently, many developed countries move toward women's social advancement, for example, an increase of number of board member.
+In this application, we explore whether the gender discremination existed in the U.S. bank industry.
+Our hypothesis is that women are less likely to be given a higher position than male.
+
+We use a built-in dataset called `BankWages` in the library `AER`.
+This datase contains the following variables:
+
+- `job`: three job position. The rank of position is `custodial < admin < manage`.
+- `education`: years of education
+- `gender`: a dummy variable of female
+
+Again, we split data into two subsets: the *training* data and the *test* data.
+The training data, which is used for estimation and model fitness, is randoly drawn from the original data.
+The sample size of this subset is two thirds of total observations of the original one ($N = 316$).
+The test data, which is used for model prediction, consists of observations which the training data does not include ($N = 158$).
+
+To use the multinomial logit model in `R`, 
+we need to transform outcome variable into the form `factor`, which is special variable form in `R`.
+The variable form `factor` is similar to dummy variables.
+For example, `factor(dt$job, levels = c("admin", "custodial", "manage"))` 
+transforms the variable form `job` from the form `character` into the form `factor`.
+Moreover, when we use `job` as explanatory variables, 
+`R` automatically makes two dummy variables of `custodial` and `manage`.
+
+```{r bankData}
+library(AER)
+data(BankWages)
+dt <- BankWages
+dt$job <- as.character(dt$job)
+dt$job <- factor(dt$job, levels = c("admin", "custodial", "manage"))
+dt <- dt[,c("job", "education", "gender")]
+
+set.seed(120511)
+train_id <- sample(1:nrow(dt), size = (2/3)*nrow(dt), replace = FALSE)
+train_dt <- dt[train_id,]; test_dt <- dt[-train_id,]
+
+summary(train_dt)
+```
+
+## Model
+
+The outcome variable $y_i$ takes three values $\{0, 1, 2\}$.
+Note that the labelling of the choices is arbitrary.
+Then, the multinomial logit model has the following response probabilities 
+\begin{equation*}
+  P_{ij} = \mathbb{P}(y_i = j | \mathbf{x}_i) =
+  \begin{cases}
+    \frac{\exp(\mathbf{x}_i \beta_j)}{1 + \sum_{k=1}^2 \exp(\mathbf{x}_i \beta_k)} &\text{if}\quad j = 1, 2  \\
+    \frac{1}{1 + \sum_{k=1}^2 \exp(\mathbf{x}_i \beta_k)}  &\text{if}\quad j = 0
+  \end{cases}.
+\end{equation*}
+The log-likelihood function is 
+\begin{equation*}
+  M_n(\beta_1, \beta_2) = \sum_{i=1}^n \sum_{j=0}^3 d_{ij} \log (P_{ij}),
+\end{equation*}
+where $d_{ij}$ is a dummy variable taking 1 if $y_i = j$.
+
+In `R`, some packages provide the multinomial logit model.
+In this application, we use the `multinom` function in the library `nnet`.
+
+```{r multinomial, results = "hide"}
+library(nnet)
+est_mlogit <- multinom(job ~ education + gender, data = train_dt)
+```
+
+## Interpretations and Model Fitness
+
+Table \ref{job} summarizes the result of multinomial logit model.
+The coefficient represents the change of $\log(P_{ij}/P_{i0})$ in corresponding covariate
+beucase the response probabilities yields
+\begin{equation*}
+    \frac{P_{ij}}{P_{i0}} = \exp(\mathbf{x}_i \beta_j)  \Leftrightarrow
+    \log \left( \frac{P_{ij}}{P_{i0}} \right) = \mathbf{x}_i \beta_j.
+\end{equation*}
+For example, eduction decreases the log-odds between `custodial` and `admin` by -0.562.
+This implies that those who received higher education are more likely to obtain the position `admin`.
+Highly-educated workers are also more likely to obtain the position `manage`.
+Moreover, a female dummy decrease the log-odds between `manage` and `admin` by -0.748,
+which implies that females are less likely to obtain higher position `manage`.
+From this result, we conclude that the U.S. bank disencouraged females to assign higher job position.
+
+To evalue model fitness and prediction, 
+we use two indices: the *pseudo R-squared* and *percent correctly predicted*.
+The *preudo R-sqaured* is calculated by $1 - L_1/L_0$ where 
+$L_1$ is the value of log-likelihood for estimated model 
+and $L_0$ is the value of log-likelihood in the model with only an intercept.
+`R` snippet for calculation of pseudo R-sqaured is as follows:
+Note that `nnet:::logLik.multinom()` returns the value of log-likelihood.
+
+```{r puseudoR, results = "hide"}
+loglik1 <- as.numeric(nnet:::logLik.multinom(est_mlogit))
+est_mlogit0 <- multinom(job ~ 1, data = train_dt)
+loglik0 <- as.numeric(nnet:::logLik.multinom(est_mlogit0))
+pr2 <- round(1 - loglik1/loglik0, 3)
+```
+
+The second index is the *precent correctly predicted*.
+The predicted outcome is the outcome with the highest estimated probability.
+Using the training data (in-sample) and the test data (out-of-sample), 
+we calculate this index.
+`R` snippet for calculation of this index is as follows.
+
+```{r prediction}
+# in-sample prediction
+inpred <- predict(est_mlogit, newdata = train_dt, "probs")
+inpred <- colnames(inpred)[apply(inpred, 1, which.max)]
+inpcp <- round(sum(inpred == train_dt$job)/length(inpred), 3)
+# out-of-sample prediction
+outpred <- predict(est_mlogit, newdata = test_dt, "probs")
+outpred <- colnames(outpred)[apply(outpred, 1, which.max)]
+outpcp <- round(sum(outpred == test_dt$job)/length(outpred), 3)
+```
+
+As a result, our model is good in terms of fitness and prediction
+because the percent correctly predicted is high (83.9\% of in-sample data and 88.0\% of out-of-sample data),
+and the pseudo R-sqaured is 0.523.
+
+```{r tab_multinomial, results = "asis"}
+stargazer(
+  est_mlogit,
+  covariate.labels = c("Education", "Female = 1"),
+  report = "vcs", omit.stat = c("aic"),
+  add.lines = list(
+    c("Observations", length(inpred), ""),
+    c("Percent correctly predicted (in-sample)", inpcp, ""),
+    c("Percent correctly predicted (out-of-sample)", outpcp, ""),
+    c("Log-likelihood", round(loglik1, 3), ""),
+    c("Pseudo R-sq", pr2, "")
+  ),
+  omit.table.layout = "n", table.placement = "t",
+  title = "Multinomial Logit Model of Job Position",
+  label = "job",
+  type = "latex", header = FALSE  
+)
+```
+
+<!--
+# Empirical Application of Truncated Regression: Labor Participation of Married Women
+
+## Background and Data
+
+To develop women's social advancement,
+we should create environment to keep a good balance between work and childcare after marriage.
+In this application, using the dataset of married women, 
+we explore how much childcare prevents married women to participate in labor market.
+
+Our dataset originally comes from Stata sample data. [^source3]
+This dataset contains the following variables:
+
+- `whrs`: Hours of work. This outcome variable is truncated from below at zero.
+- `kl6`: the number of preschool children
+- `k618`: The number of school‐aged children
+- `wa`: age
+- `we`: The number of years of education
+
+[^source3]: <http://www.stata-press.com/data/r13/laborsub.dt>. Because this is dta file, we need to import it, using the `read.dta` function in the library `foreign`. I intentionally remove married women who could not participate in the labor market.
+
+```{r laborData, eval = FALSE, purl = FALSE, echo = FALSE}
+dt <- read.csv(file = "./data/labor.csv", header = TRUE,  sep = ",")
+summary(dt)
+```
+
+## Model 
+
+Since we cannot observe those who could not partiapte in the labor market (`whrs = 0`),
+we use the truncated regression model.
+Thus, the selection rule is as follows:
+
+\begin{equation*}
+  \begin{cases}
+    y_i = x_i \beta + u_i &\text{if}\:\: s_i = 1  \\
+    s_i = 1 &\text{if}\:\: a_1 < y_i < a_2
+  \end{cases}.
+\end{equation*}
+where $u_i \sim N(0, \sigma^2)$.
+In this case, $a_1 = 0$ and $a_2 = +\infty$.
+
+Since we are interested in estimating $\beta$, we must condition on $s_i = 1$.
+The probability density function of $y_i$ conditional on $(x_i, s_i = 1)$ is 
+
+\begin{equation*}
+  p_{\theta}(y_i | x_i, s_i = 1) = \frac{f(y_i | x_i)}{\int_0^{+\infty} f(y_i | x_i) dy_i}.
+\end{equation*}
+where $\theta = (\beta, \sigma^2)'$.
+Because the distribution of $y_i$ depends on the distribution of $u_i$,
+using $u_i = y_i - x_i \beta$, we obtain 
+
+\begin{equation*}
+  p_{\theta}(u_i | x_i, -x_i \beta < u_i) 
+  = \frac{1}{\sigma} \frac{\phi(\frac{y_i - x_i \beta}{\sigma})}{1 - \Phi(\frac{- x_i \beta}{\sigma})}.
+\end{equation*}
+Thus, the log-likelihood function is 
+
+\begin{equation*}
+  M_n(\theta) 
+  = \sum_{i=1}^n \log \left( \frac{1}{\sigma} \frac{\phi(\frac{y_i - x_i \beta}{\sigma})}{1 - \Phi(\frac{- x_i \beta}{\sigma})} \right).
+\end{equation*}
+
+We provide two ways to estimate truncated regression, using `R`.
+First way is to define the log-likelihood function directly and minimize its function by `nlm` function.
+Recall that `nlm` function provides the Newton method to minimize the function.
+We need to give intial values in argument of this function.
+Coefficients of explanatory variables, `b[3:6]`, are zero, 
+and intercept, `b[2]`, and $\sigma$, `b[1]`, are given by mean and standard deviation of `whrs`, respectively.
+
+```{r truncMle, eval = FALSE, purl = FALSE, echo = FALSE}
+whrs <- dt$whrs
+kl6 <- dt$kl6; k618 <- dt$k618
+wa <- dt$wa; we <- dt$we
+
+LnLik <- function(b) {
+  sigma <- b[1]
+  xb <- b[2] + b[3]*kl6 + b[4]*k618 + b[5]*wa + b[6]*we
+  condp <- dnorm((whrs - xb)/sigma)/(1 - pnorm(-xb/sigma))
+  LL_i <- log(condp/sigma)
+  LL <- -sum(LL_i)
+  return(LL)
+}
+
+init <- c(sd(whrs), mean(whrs), 0, 0, 0, 0)
+est.LnLik <- nlm(LnLik, init, hessian = TRUE)
+```
+
+Second way is to use the function `truncreg` in the library `truncreg`.
+This function must specify the trucated point in arguments `point` and `direction`.
+If `direction = "left"`, the outcome variable is truncated from below at `point`, that is, `point < y`.
+On the other hand, if `direction = "right"`, the outcome variable is truncated from above at `point`, that is, `y < point`.
+
+```{r truncreg, eval = FALSE, purl = FALSE, echo = FALSE}
+library(truncreg)
+model <- whrs ~ kl6 + k618 + wa + we
+est.trunc <- truncreg(model, data = dt, point = 0, direction = "left")
+se.trunc <- sqrt(diag(vcov(est.trunc)))
+```
+
+
+## Interpretations
+
+Table \ref{lfp} shows results of truncated regression estimated by two methods.
+As a comparison, we also show the OLS result in column (3).
+All specifications show that the number of preschool and school-aged children reduces the hours of work.
+The size of coefficient of the number of preschool and school-aged children become stronger
+when we apply the truncated regression.
+Although the relationship between labor participation and women's characteristics is statistically insignificant,
+size of coefficients largely differs among three specifications.
+
+```{r tab_truncate, results = "asis", eval = FALSE, purl = FALSE, echo = FALSE}
+ols <- lm(model, data = dt)
+coef.LnLik <- est.LnLik$estimate
+se.LnLik <- sqrt(diag(solve(est.LnLik$hessian)))
+names(coef.LnLik) <- c("sigma", names(coef(ols)))
+names(se.LnLik) <- c("sigma", names(coef(ols)))
+
+stargazer(
+  ols, ols, ols,
+  column.labels = c("Truncated (truncreg)", "Truncated (nlm)", "OLS"),
+  coef = list(coef(est.trunc), coef.LnLik[2:6]),
+  se = list(se.trunc, se.LnLik[2:6]),
+  report = "vcs", keep.stat = c("n"),
+  covariate.labels = c(
+    "\\#.Preschool Children",
+    "\\#.School-aged Children",
+    "Age", "Education Years"
+  ),
+  add.lines = list(
+    c("Estimated Sigma", 
+      round(coef(est.trunc)[6], 3), round(coef.LnLik[1], 3)),
+    c("Log-Likelihood", 
+      round(est.trunc$logLik, 3), round(-est.LnLik$minimum, 3))
+  ),
+  omit.table.layout = "n", table.placement = "t",
+  title = "Truncated Regression: Labor Market Participation of Married Women",
+  label = "lfp",
+  type = "latex", header = FALSE  
+)
+```
+-->
