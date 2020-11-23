@@ -96,8 +96,11 @@ We provide two ways to estimate truncated regression, using `R`.
 First way is to define the log-likelihood function directly and minimize its function by `nlm` function.
 Recall that `nlm` function provides the Newton method to minimize the function.
 We need to give intial values in argument of this function.
-Coefficients of explanatory variables, `b[3:6]`, are zero, 
-and intercept, `b[2]`, and $\sigma$, `b[1]`, are given by mean and standard deviation of `whrs`, respectively.
+To set initial values, we assume that coefficients of explanatory variables are zero.
+Then, we obtain $y_i | \mathbf{x}_i \sim N(\beta_1, \sigma^2)$.
+Thus, the initial value of $\sigma$, `b[1]` is the standard deviation of `whrs`,
+and the initial value of $\beta_1$, `b[2]` is the mean of `whrs`.
+Note that these initial values are not unbised estimator.
 
 ```{r truncMle}
 whrs <- dt$whrs
@@ -246,9 +249,11 @@ We estimate $\log p_{\beta, \sigma^2}((y_i | x_i), i = 1, \ldots, n)$, using the
 In `R`, there are two ways to implement the tobit regression.
 First way is to define the log-likelihood function directly and minimize its function by `nlm` function.
 We need to give intial values in argument of this function.
-As intial values, coefficients of explanatory variables, `b[3:6]`, are zero, 
-and intercept, denoted by `b[2]`, and $\sigma$, denoted by `b[1]`, 
-are given by mean and standard deviation of `whrs`, respectively.
+To set initial values, we assume coefficients of explanatory variables are zero.
+Then, we obtain $y_i | \mathbf{x}_i \sim N(\beta_1, \sigma^2)$
+where $\beta_1$ is intercept of regression equation.
+Thus, the initial value of $\sigma$, `b[1]` is the standard deviation of `whrs`,
+and the initial value of $\beta_1$, `b[2]` is the mean of `whrs`.
 
 ```{r tobitMLE}
 whrs <- dt$whrs
@@ -391,8 +396,10 @@ we apply the Newton-Raphson method to obtain MLE.
 In `R`, there are two way to implement the Poisson regression.
 First way is to define the log-likelihood function directly and minimize its function by `nlm` function.
 We need to give intial values in argument of this function.
-As intial values, coefficients of explanatory variables, `b[2:4]`, are zero, 
-and intercept, denoted by `b[2]`, are given by mean of `trips`.
+To set initial values, we assume that coefficients of explanatory variables are zero.
+Then, we have $E[y_i | \mathbf{x}_i] = \exp(\beta_1) = E[y_i]$ where $\beta_1$ is intercept of regression equation.
+Thus, the initial value of $\beta_1$, `b[1]` is $\log E[y_i]$.
+We replace the expectation of $y_i$ by the mathematical mean of $y_i$.
 
 ```{r PoissonMLE}
 trips <- RecreationDemand$trips; income <- RecreationDemand$income
@@ -406,7 +413,7 @@ LnLik <- function(b) {
   return(LL)
 }
 
-init <- c(mean(trips), 0, 0, 0)
+init <- c(log(mean(trips)), 0, 0, 0)
 poissonMLE <- nlm(LnLik, init, hessian = TRUE)
 coef.poissonMLE <- poissonMLE$estimate
 se.poissonMLE <- sqrt(diag(solve(poissonMLE$hessian)))
