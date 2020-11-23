@@ -329,3 +329,133 @@ stargazer(
   type = "latex", header = FALSE  
 )
 ```
+
+# Empirical Application of Poisson Regression: Demand of Recreation
+
+## Background and Data
+
+The Poisson distribution is used for drawing purchasing behavior.
+Especially, the parameter $\lambda$ means that preference for goods because 
+the expectation of frequency of purchasing, E(X), is equal to $\lambda$ (we omit proof here).
+For example, Tsuyoshi Morioka, a famous marketer contributing the v-shaped recovery of Universal Studio Japan,
+insists that marketers try to increase the parameter $\lambda$. 
+
+In this application, using cross-section data about recreational boating trips to Lake Somerville, Texas, in 1980,
+we investigates who has a high preference for this area.
+We use the built-in dataset called `RecreationDemand` in the library `AER`.
+This dataset is based on a survey administered to 2,000 registered leisure boat owners in 23 counties in eastern Texas.
+We use following four variables:
+
+- `trips`: Number of recreational boating trips.
+- `income`: Annual household income of the respondent (in 1,000 USD).
+- `ski`: Dummy variable taking 1 if the individual was engaged in water-skiing at the lake
+- `userfee`: Dummy variable taking 1 if the individual payed an annual user fee at Lake Somerville?
+
+```{r RecreationDemandData}
+library(AER)
+data("RecreationDemand")
+summary(RecreationDemand)
+```
+
+## Model
+
+Let $y_i$ be the number of recreational boating trips.
+We assume that this variable follows the Poisson distribution conditional co covariates $\mathbf{x}_i$.
+That is,
+
+\begin{equation*}
+  p_{\beta}(y_i | \mathbf{x}_i) = \frac{\exp(-\lambda_i) \lambda_i^{y_i}}{y_i !},
+\end{equation*}
+where $\lambda_i = \exp(\mathbf{x}_i \beta)$.
+Importantly, $\lambda_i$ represents the preference for boating trips because
+
+\begin{equation*}
+  E[y_i | \mathbf{x}_i] = \lambda_i = \exp(\mathbf{x}_i \beta).
+\end{equation*}
+
+Assuming iid sample, the joint density function is defined by 
+
+\begin{equation*}
+  p_{\beta}((y_i|\mathbf{x}_i), i = 1, \ldots, n) = \prod_{i=1}^n \frac{\exp(-\lambda_i) \lambda_i^{y_i}}{y_i !}.
+\end{equation*}
+Thus, the log-likelihood function is 
+
+\begin{equation*}
+  M_n(\beta) 
+  = \sum_{i=1}^n (-\lambda_i + y_i \log \lambda_i - \log y_i !)  
+  = \sum_{i=1}^n (- \exp(\mathbf{x}_i \beta) + y_i \mathbf{x}_i \beta - \log y_i !).
+\end{equation*}
+
+Since the first-order condition (orthogonality condition) is non-linear with respect to $\beta$,
+we apply the Newton-Raphson method to obtain MLE.
+In `R`, there are two way to implement the Poisson regression.
+First way is to define the log-likelihood function directly and minimize its function by `nlm` function.
+We need to give intial values in argument of this function.
+As intial values, coefficients of explanatory variables, `b[2:4]`, are zero, 
+and intercept, denoted by `b[2]`, are given by mean of `trips`.
+
+```{r PoissonMLE}
+trips <- RecreationDemand$trips; income <- RecreationDemand$income
+ski <- as.integer(RecreationDemand$ski) - 1 
+userfee <- as.integer(RecreationDemand$userfee) - 1
+
+LnLik <- function(b) {
+  xb <- b[1] + b[2]*income + b[3]*ski + b[4]*userfee
+  LL_i <- -exp(xb) + trips*xb - log(gamma(trips+1))
+  LL <- -sum(LL_i)
+  return(LL)
+}
+
+init <- c(mean(trips), 0, 0, 0)
+poissonMLE <- nlm(LnLik, init, hessian = TRUE)
+coef.poissonMLE <- poissonMLE$estimate
+se.poissonMLE <- sqrt(diag(solve(poissonMLE$hessian)))
+logLik.poissonMLE <- -poissonMLE$minimum
+```
+
+The second way is to use `glm` function.
+To implement this function, we need to specify the Poisson distribution, `poisson()` in the `family` augment.
+We can obtain the value of log-likelihood function, using the `logLik` function.
+
+```{r PoissonGLM}
+model <- trips ~ income + ski + userfee
+poissonGLM <- glm(model, family = poisson(), data = RecreationDemand)
+logLik.poissonGLM <- as.numeric(logLik(poissonGLM))
+```
+
+## Interpretations
+
+Table \ref{recreation} shows results of the Poisson regression estimated by two methods, `nlm` and `glm`.
+As a comparison, we also show the result of OLS estimation.
+Clearly, the `nlm` methods (column 1) returns quite similar results to the `glm` method (column 2).
+Alotough the size of coeffcients of OLSE is farther away from zero than coefficients of the Poisson regression,
+the sign of coeffcients of OLSE is same as coefficients of the Poisson regression.
+Surprisingly, we obtain the negative relationship between annual income and preference for boating trips.
+This implies that high-earners are less likely to go to Lake Somerville.
+
+```{r tab_PoissonReg, results = "asis"}
+names(coef.poissonMLE) <- names(coef(poissonGLM))
+names(se.poissonMLE) <- names(coef(poissonGLM))
+ols <- lm(model, data = RecreationDemand)
+
+stargazer(
+  poissonGLM, poissonGLM, ols,
+  coef = list(coef.poissonMLE),
+  se = list(se.poissonMLE),
+  report = "vcs", keep.stat = c("n"),
+  covariate.labels = c(
+    "Income",
+    "1 = Playing water-skiing",
+    "1 = Paying annual fee"
+  ),
+  add.lines = list(
+    c("Method", "nlm", "glm", ""),
+    c("Log-Likelihood", 
+      round(logLik.poissonMLE, 3), round(logLik.poissonGLM, 3), "")
+  ),
+  omit.table.layout = "n", table.placement = "t",
+  title = "Poisson Regression: Recreation Demand",
+  label = "recreation", 
+  type = "latex", header = FALSE  
+)
+```
