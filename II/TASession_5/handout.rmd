@@ -64,27 +64,39 @@ Thus, the selection rule is as follows:
 
 \begin{equation*}
   \begin{cases}
-    y_i = x_i \beta + u_i &\text{if}\:\: s_i = 1  \\
+    y_i = \mathbf{x}_i \beta + u_i &\text{if}\:\: s_i = 1  \\
     s_i = 1 &\text{if}\:\: a_1 < y_i < a_2
   \end{cases}.
 \end{equation*}
 where $u_i \sim N(0, \sigma^2)$.
-In this case, $a_1 = 0$ and $a_2 = +\infty$.
+By the distributional assumption, we have $y_i | \mathbf{x}_i \sim N(\mathbf{x}_i \beta, \sigma^2)$.
+In this application, we set $a_1 = 0$ and $a_2 = +\infty$.
 
 Since we are interested in estimating $\beta$, we must condition on $s_i = 1$.
 The probability density function of $y_i$ conditional on $(x_i, s_i = 1)$ is 
 
 \begin{equation*}
-  p_{\theta}(y_i | x_i, s_i = 1) = \frac{f(y_i | x_i)}{\int_0^{+\infty} f(y_i | x_i) dy_i}.
+  p_{\theta}(y_i | \mathbf{x}_i, s_i = 1) = \frac{f(y_i | \mathbf{x}_i)}{\mathbb{P}(s_i = 1 | \mathbf{x}_i)}.
 \end{equation*}
 where $\theta = (\beta, \sigma^2)'$.
-Because the distribution of $y_i$ depends on the distribution of $u_i$,
-using $u_i = y_i - x_i \beta$, we obtain 
+By the distributional assumption, the conditional distribution of $y_i$ is given by 
 
 \begin{equation*}
-  p_{\theta}(u_i | x_i, -x_i \beta < u_i) 
-  = \frac{1}{\sigma} \frac{\phi(\frac{y_i - x_i \beta}{\sigma})}{1 - \Phi(\frac{- x_i \beta}{\sigma})}.
+  f(y_i | \mathbf{x}_i) 
+  = \frac{1}{\sqrt{2\pi\sigma^2}} \exp \left( -\frac{1}{2} \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right)^2 \right)
+  = \frac{1}{\sigma} \phi \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right),
 \end{equation*}
+where $\phi(\cdot)$ is the standard normal density function.
+Moreover, the probability of observation ($s_i = 1$) is given by 
+
+\begin{align*}
+  \mathbb{P}(s_i = 1 | \mathbf{x}_i) 
+  &= \mathbb{P}(\mathbf{x}_i \beta + u_i > 0| \mathbf{x}_i)  \\
+  &= \mathbb{P}(u_i/\sigma > -\mathbf{x}_i \beta/\sigma| \mathbf{x}_i)  \\
+  &= 1 - \Phi \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right),
+\end{align*}
+where $\Phi(\cdot)$ is the standard normal cumulative density function.
+
 Thus, the log-likelihood function is 
 
 \begin{equation*}
@@ -121,7 +133,7 @@ est.LnLik <- nlm(LnLik, init, hessian = TRUE)
 ```
 
 Second way is to use the function `truncreg` in the library `truncreg`.
-This function must specify the trucated point in arguments `point` and `direction`.
+We must specify the trucated point, using arguments `point` and `direction`.
 If `direction = "left"`, the outcome variable is truncated from below at `point`, that is, `point < y`.
 On the other hand, if `direction = "right"`, the outcome variable is truncated from above at `point`, that is, `y < point`.
 
@@ -139,9 +151,9 @@ Table \ref{lfp} shows results of truncated regression estimated by two methods.
 As a comparison, we also show the OLS result in column (3).
 All specifications show that the number of preschool and school-aged children reduces the hours of work.
 The size of coefficient of the number of preschool and school-aged children become stronger
-when we apply the truncated regression.
-Although the relationship between labor participation and women's characteristics is statistically insignificant,
-size of coefficients largely differs among three specifications.
+when we use the truncated regression.
+Note that the size of coeffieient of `#.Preschool Children` estimated by `truncreg` is different from 
+the coefficient estimated by `nlm`.
 
 ```{r tab_truncate, results = "asis"}
 ols <- lm(model, data = dt)
@@ -180,14 +192,15 @@ stargazer(
 ## Background and Data
 
 We continue to investigate the previous research question.
-Our dataset comes from Stata sample data, which is same as the previous dataset.
-Unlike the previous dataset, we now observe married woment who do not participate in the labor market.
+We use dataset coming from same source as the previous one.
+Unlike the previous dataset,
+ we now observe married woment who do not participate in the labor market (`whrs = 0`).
 Additionally, we introduce the new variable:
 
 - `lfp`: a dummy variable taking 1 if observed unit works.
 
 The previous dataset contains observations with `lfp = 1`.
-In this application, we also use observations with `lfp = 0` to estimate tobit model.
+In this application, we use observations with `lfp = 0` to estimate the tobit model.
 
 ```{r labor2Data}
 dt <- read.csv(file = "./data/labor2.csv", header = TRUE,  sep = ",")
@@ -197,8 +210,9 @@ summary(dt)
 ## Model
 
 Our dependent variable is censored from below at zero.
-This is because married women chooses zero labor time 
-if, without any constraint, the optimal labor time is negative (corner solution).
+The censored data is caused by the corner solution problem.
+Married women chooses zero labor time 
+if, without any constraint, their optimal labor time is negative.
 In this case, we should use the tobit model.
 The tobit model is 
 
@@ -217,7 +231,6 @@ Using this model, the probability of $y_i$ conditional on $x_i$ is defined by
 \begin{equation*}
   p_{\beta, \sigma^2}(y_i | x_i) = \mathbb{P}(y_i \le 0)^{1[y_i = 0]} f(y_i | \mathbf{x}_i)^{1 - 1[y_i = 0]}
 \end{equation*}
-
 where $f(y_i|x_i)$ is the probability density function conditional on $\mathbf{x}_i$,
 $1[y_i = 0]$ is an indicator function returing 1 if $y_i = 0$.
 Now, we assume the distribution $u_i | \mathbf{x}_i \sim N(0, \sigma^2)$.
@@ -287,7 +300,8 @@ In this application, we set `Lower = 0`.
 
 ```{r tobit}
 library(VGAM)
-tobitVGAM <- vglm(whrs ~ kl6 + k618 + wa + we, family = tobit(Lower = 0), data = dt)
+model <- whrs ~ kl6 + k618 + wa + we
+tobitVGAM <- vglm(model, family = tobit(Lower = 0), data = dt)
 coef.tobitVGAM <- coef(tobitVGAM)
 coef.tobitVGAM[2] <- exp(coef.tobitVGAM[2])
 se.tobitVGAM <- sqrt(diag(vcov(tobitVGAM)))[-2]
@@ -298,11 +312,13 @@ se.tobitVGAM <- sqrt(diag(vcov(tobitVGAM)))[-2]
 
 Table \ref{lfp_tobit} shows results of tobit regression estimated by two methods.
 As a comparison, we also show the OLS result in column (3).
-Althourgh all specifications show the same sign of coefficients,
-size of coefficients of censored regression becomes stronger than of OLS.
-For example, the number of preschool and school-aged children reduces the hours of work.
-The size of coefficient of the number of preschool and school-aged children become stronger
-when we apply the censored regression.
+Although all specifications show the same sign of coefficients,
+size of coefficients of censored regression becomes stronger than of OLSE.
+As with the truncated regression,
+the number of preschool and school-aged children reduces the hours of work.
+Unlike the truncated regression,
+the relationship between married women's characteristics and labor participation is statistically significant.
+For example, high educated women increases labor time.
 
 ```{r output_tobit, results = "asis"}
 ols <- lm(whrs ~ kl6 + k618 + wa + we, data =dt)
@@ -341,7 +357,7 @@ stargazer(
 
 The Poisson distribution is used for drawing purchasing behavior.
 Especially, the parameter $\lambda$ means that preference for goods because 
-the expectation of frequency of purchasing, E(X), is equal to $\lambda$ (we omit proof here).
+the expectation of frequency of purchasing, $E(X)$, is equal to $\lambda$ (we omit proof here).
 For example, Tsuyoshi Morioka, a famous marketer contributing the v-shaped recovery of Universal Studio Japan,
 insists that marketers try to increase the parameter $\lambda$. 
 
@@ -435,8 +451,8 @@ logLik.poissonGLM <- as.numeric(logLik(poissonGLM))
 Table \ref{recreation} shows results of the Poisson regression estimated by two methods, `nlm` and `glm`.
 As a comparison, we also show the result of OLS estimation.
 Clearly, the `nlm` methods (column 1) returns quite similar results to the `glm` method (column 2).
-Alotough the size of coeffcients of OLSE is farther away from zero than coefficients of the Poisson regression,
-the sign of coeffcients of OLSE is same as coefficients of the Poisson regression.
+Alotough the size of OLSE is farther away from zero than coefficients of the Poisson regression,
+the sign of OLSE is same as coefficients of the Poisson regression.
 Surprisingly, we obtain the negative relationship between annual income and preference for boating trips.
 This implies that high-earners are less likely to go to Lake Somerville.
 
