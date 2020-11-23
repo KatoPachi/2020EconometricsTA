@@ -578,4 +578,214 @@ Observations & 250 & 250 & 250 \\
 \end{tabular} 
 \end{table}
 
+\hypertarget{empirical-application-of-poisson-regression-demand-of-recreation}{%
+\section{Empirical Application of Poisson Regression: Demand of
+Recreation}\label{empirical-application-of-poisson-regression-demand-of-recreation}}
+
+\hypertarget{background-and-data-2}{%
+\subsection{Background and Data}\label{background-and-data-2}}
+
+The Poisson distribution is used for drawing purchasing behavior.
+Especially, the parameter \(\lambda\) means that preference for goods
+because the expectation of frequency of purchasing, E(X), is equal to
+\(\lambda\) (we omit proof here). For example, Tsuyoshi Morioka, a
+famous marketer contributing the v-shaped recovery of Universal Studio
+Japan, insists that marketers try to increase the parameter \(\lambda\).
+
+In this application, using cross-section data about recreational boating
+trips to Lake Somerville, Texas, in 1980, we investigates who has a high
+preference for this area. We use the built-in dataset called
+\texttt{RecreationDemand} in the library \texttt{AER}. This dataset is
+based on a survey administered to 2,000 registered leisure boat owners
+in 23 counties in eastern Texas. We use following four variables:
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{trips}: Number of recreational boating trips.
+\item
+  \texttt{income}: Annual household income of the respondent (in 1,000
+  USD).
+\item
+  \texttt{ski}: Dummy variable taking 1 if the individual was engaged in
+  water-skiing at the lake
+\item
+  \texttt{userfee}: Dummy variable taking 1 if the individual payed an
+  annual user fee at Lake Somerville?
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(AER)}
+\KeywordTok{data}\NormalTok{(}\StringTok{"RecreationDemand"}\NormalTok{)}
+\KeywordTok{summary}\NormalTok{(RecreationDemand)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      trips           quality       ski          income      userfee  
+##  Min.   : 0.000   Min.   :0.000   no :417   Min.   :1.000   no :646  
+##  1st Qu.: 0.000   1st Qu.:0.000   yes:242   1st Qu.:3.000   yes: 13  
+##  Median : 0.000   Median :0.000             Median :3.000            
+##  Mean   : 2.244   Mean   :1.419             Mean   :3.853            
+##  3rd Qu.: 2.000   3rd Qu.:3.000             3rd Qu.:5.000            
+##  Max.   :88.000   Max.   :5.000             Max.   :9.000            
+##      costC            costS             costH       
+##  Min.   :  4.34   Min.   :  4.767   Min.   :  5.70  
+##  1st Qu.: 28.24   1st Qu.: 33.312   1st Qu.: 28.96  
+##  Median : 41.19   Median : 47.000   Median : 42.38  
+##  Mean   : 55.42   Mean   : 59.928   Mean   : 55.99  
+##  3rd Qu.: 69.67   3rd Qu.: 72.573   3rd Qu.: 68.56  
+##  Max.   :493.77   Max.   :491.547   Max.   :491.05
+\end{verbatim}
+
+\hypertarget{model-2}{%
+\subsection{Model}\label{model-2}}
+
+Let \(y_i\) be the number of recreational boating trips. We assume that
+this variable follows the Poisson distribution conditional co covariates
+\(\mathbf{x}_i\). That is,
+
+\begin{equation*}
+  p_{\beta}(y_i | \mathbf{x}_i) = \frac{\exp(-\lambda_i) \lambda_i^{y_i}}{y_i !},
+\end{equation*} where \(\lambda_i = \exp(\mathbf{x}_i \beta)\).
+Importantly, \(\lambda_i\) represents the preference for boating trips
+because
+
+\begin{equation*}
+  E[y_i | \mathbf{x}_i] = \lambda_i = \exp(\mathbf{x}_i \beta).
+\end{equation*}
+
+Assuming iid sample, the joint density function is defined by
+
+\begin{equation*}
+  p_{\beta}((y_i|\mathbf{x}_i), i = 1, \ldots, n) = \prod_{i=1}^n \frac{\exp(-\lambda_i) \lambda_i^{y_i}}{y_i !}.
+\end{equation*} Thus, the log-likelihood function is
+
+\begin{equation*}
+  M_n(\beta) 
+  = \sum_{i=1}^n (-\lambda_i + y_i \log \lambda_i - \log y_i !)  
+  = \sum_{i=1}^n (- \exp(\mathbf{x}_i \beta) + y_i \mathbf{x}_i \beta - \log y_i !).
+\end{equation*}
+
+Since the first-order condition (orthogonality condition) is non-linear
+with respect to \(\beta\), we apply the Newton-Raphson method to obtain
+MLE. In \texttt{R}, there are two way to implement the Poisson
+regression. First way is to define the log-likelihood function directly
+and minimize its function by \texttt{nlm} function. We need to give
+intial values in argument of this function. As intial values,
+coefficients of explanatory variables, \texttt{b{[}2:4{]}}, are zero,
+and intercept, denoted by \texttt{b{[}2{]}}, are given by mean of
+\texttt{trips}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{trips \textless{}{-}}\StringTok{ }\NormalTok{RecreationDemand}\OperatorTok{$}\NormalTok{trips; income \textless{}{-}}\StringTok{ }\NormalTok{RecreationDemand}\OperatorTok{$}\NormalTok{income}
+\NormalTok{ski \textless{}{-}}\StringTok{ }\KeywordTok{as.integer}\NormalTok{(RecreationDemand}\OperatorTok{$}\NormalTok{ski) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1} 
+\NormalTok{userfee \textless{}{-}}\StringTok{ }\KeywordTok{as.integer}\NormalTok{(RecreationDemand}\OperatorTok{$}\NormalTok{userfee) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
+
+\NormalTok{LnLik \textless{}{-}}\StringTok{ }\ControlFlowTok{function}\NormalTok{(b) \{}
+\NormalTok{  xb \textless{}{-}}\StringTok{ }\NormalTok{b[}\DecValTok{1}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{2}\NormalTok{]}\OperatorTok{*}\NormalTok{income }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{3}\NormalTok{]}\OperatorTok{*}\NormalTok{ski }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{4}\NormalTok{]}\OperatorTok{*}\NormalTok{userfee}
+\NormalTok{  LL\_i \textless{}{-}}\StringTok{ }\OperatorTok{{-}}\KeywordTok{exp}\NormalTok{(xb) }\OperatorTok{+}\StringTok{ }\NormalTok{trips}\OperatorTok{*}\NormalTok{xb }\OperatorTok{{-}}\StringTok{ }\KeywordTok{log}\NormalTok{(}\KeywordTok{gamma}\NormalTok{(trips}\OperatorTok{+}\DecValTok{1}\NormalTok{))}
+\NormalTok{  LL \textless{}{-}}\StringTok{ }\OperatorTok{{-}}\KeywordTok{sum}\NormalTok{(LL\_i)}
+  \KeywordTok{return}\NormalTok{(LL)}
+\NormalTok{\}}
+
+\NormalTok{init \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\KeywordTok{mean}\NormalTok{(trips), }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{poissonMLE \textless{}{-}}\StringTok{ }\KeywordTok{nlm}\NormalTok{(LnLik, init, }\DataTypeTok{hessian =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{coef.poissonMLE \textless{}{-}}\StringTok{ }\NormalTok{poissonMLE}\OperatorTok{$}\NormalTok{estimate}
+\NormalTok{se.poissonMLE \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{solve}\NormalTok{(poissonMLE}\OperatorTok{$}\NormalTok{hessian)))}
+\NormalTok{logLik.poissonMLE \textless{}{-}}\StringTok{ }\OperatorTok{{-}}\NormalTok{poissonMLE}\OperatorTok{$}\NormalTok{minimum}
+\end{Highlighting}
+\end{Shaded}
+
+The second way is to use \texttt{glm} function. To implement this
+function, we need to specify the Poisson distribution,
+\texttt{poisson()} in the \texttt{family} augment. We can obtain the
+value of log-likelihood function, using the \texttt{logLik} function.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{trips }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{income }\OperatorTok{+}\StringTok{ }\NormalTok{ski }\OperatorTok{+}\StringTok{ }\NormalTok{userfee}
+\NormalTok{poissonGLM \textless{}{-}}\StringTok{ }\KeywordTok{glm}\NormalTok{(model, }\DataTypeTok{family =} \KeywordTok{poisson}\NormalTok{(), }\DataTypeTok{data =}\NormalTok{ RecreationDemand)}
+\NormalTok{logLik.poissonGLM \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{logLik}\NormalTok{(poissonGLM))}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{interpretations-2}{%
+\subsection{Interpretations}\label{interpretations-2}}
+
+Table \ref{recreation} shows results of the Poisson regression estimated
+by two methods, \texttt{nlm} and \texttt{glm}. As a comparison, we also
+show the result of OLS estimation. Clearly, the \texttt{nlm} methods
+(column 1) returns quite similar results to the \texttt{glm} method
+(column 2). Alotough the size of coeffcients of OLSE is farther away
+from zero than coefficients of the Poisson regression, the sign of
+coeffcients of OLSE is same as coefficients of the Poisson regression.
+Surprisingly, we obtain the negative relationship between annual income
+and preference for boating trips. This implies that high-earners are
+less likely to go to Lake Somerville.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{names}\NormalTok{(coef.poissonMLE) \textless{}{-}}\StringTok{ }\KeywordTok{names}\NormalTok{(}\KeywordTok{coef}\NormalTok{(poissonGLM))}
+\KeywordTok{names}\NormalTok{(se.poissonMLE) \textless{}{-}}\StringTok{ }\KeywordTok{names}\NormalTok{(}\KeywordTok{coef}\NormalTok{(poissonGLM))}
+\NormalTok{ols \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ RecreationDemand)}
+
+\KeywordTok{stargazer}\NormalTok{(}
+\NormalTok{  poissonGLM, poissonGLM, ols,}
+  \DataTypeTok{coef =} \KeywordTok{list}\NormalTok{(coef.poissonMLE),}
+  \DataTypeTok{se =} \KeywordTok{list}\NormalTok{(se.poissonMLE),}
+  \DataTypeTok{report =} \StringTok{"vcs"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+  \DataTypeTok{covariate.labels =} \KeywordTok{c}\NormalTok{(}
+    \StringTok{"Income"}\NormalTok{,}
+    \StringTok{"1 = Playing water{-}skiing"}\NormalTok{,}
+    \StringTok{"1 = Paying annual fee"}
+\NormalTok{  ),}
+  \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Method"}\NormalTok{, }\StringTok{"nlm"}\NormalTok{, }\StringTok{"glm"}\NormalTok{, }\StringTok{""}\NormalTok{),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Log{-}Likelihood"}\NormalTok{, }
+      \KeywordTok{round}\NormalTok{(logLik.poissonMLE, }\DecValTok{3}\NormalTok{), }\KeywordTok{round}\NormalTok{(logLik.poissonGLM, }\DecValTok{3}\NormalTok{), }\StringTok{""}\NormalTok{)}
+\NormalTok{  ),}
+  \DataTypeTok{omit.table.layout =} \StringTok{"n"}\NormalTok{, }\DataTypeTok{table.placement =} \StringTok{"t"}\NormalTok{,}
+  \DataTypeTok{title =} \StringTok{"Poisson Regression: Recreation Demand"}\NormalTok{,}
+  \DataTypeTok{label =} \StringTok{"recreation"}\NormalTok{, }
+  \DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}  
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[t] \centering 
+  \caption{Poisson Regression: Recreation Demand} 
+  \label{recreation} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-4} 
+\\[-1.8ex] & \multicolumn{3}{c}{trips} \\ 
+\\[-1.8ex] & \multicolumn{2}{c}{\textit{Poisson}} & \textit{OLS} \\ 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
+\hline \\[-1.8ex] 
+ Income & $-$0.146 & $-$0.146 & $-$0.277 \\ 
+  & (0.017) & (0.017) & (0.133) \\ 
+  & & & \\ 
+ 1 = Playing water-skiing & 0.547 & 0.547 & 1.243 \\ 
+  & (0.055) & (0.055) & (0.509) \\ 
+  & & & \\ 
+ 1 = Paying annual fee & 1.904 & 1.904 & 12.412 \\ 
+  & (0.078) & (0.078) & (1.688) \\ 
+  & & & \\ 
+ Constant & 1.006 & 1.006 & 2.609 \\ 
+  & (0.065) & (0.065) & (0.545) \\ 
+  & & & \\ 
+\hline \\[-1.8ex] 
+Method & nlm & glm &  \\ 
+Log-Likelihood & -2529.256 & -2529.256 &  \\ 
+Observations & 659 & 659 & 659 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
 \end{document}
