@@ -31,7 +31,7 @@ knitr::opts_chunk$set(
 knitr::opts_knit$set(root.dir = "C:/Users/katoo/Desktop/2020EconometricsTA/R")
 ```
 
-# Empirical Application of Truncated Regression: Labor Participation of Married Women
+# Empirical Application of Truncated Regression: Labor Participation of Married Women (1)
 
 ## Background and Data
 
@@ -172,3 +172,160 @@ stargazer(
 )
 ```
 
+# Empirical Application of Tobit Regression: Labor Participation of Married Women (2)
+
+## Background and Data
+
+We continue to investigate the previous research question.
+Our dataset comes from Stata sample data, which is same as the previous dataset.
+Unlike the previous dataset, we now observe married woment who do not participate in the labor market.
+Additionally, we introduce the new variable:
+
+- `lfp`: a dummy variable taking 1 if observed unit works.
+
+The previous dataset contains observations with `lfp = 1`.
+In this application, we also use observations with `lfp = 0` to estimate tobit model.
+
+```{r labor2Data}
+dt <- read.csv(file = "./data/labor2.csv", header = TRUE,  sep = ",")
+summary(dt)
+```
+
+## Model
+
+Our dependent variable is censored from below at zero.
+This is because married women chooses zero labor time 
+if, without any constraint, the optimal labor time is negative (corner solution).
+In this case, we should use the tobit model.
+The tobit model is 
+
+\begin{equation*}
+  y_i = 
+  \begin{cases}
+    \mathbf{x}_i \beta + u_i &\mathrm{if}\:\: y_i > a  \\
+    a                        &\mathrm{otherwise}
+  \end{cases},
+\end{equation*}
+where $E(u_i) = 0$ and $\mathrm{Var}(u_i) = 0$.
+In this application, we set $a = 0$.
+
+Using this model, the probability of $y_i$ conditional on $x_i$ is defined by 
+
+\begin{equation*}
+  p_{\beta, \sigma^2}(y_i | x_i) = \mathbb{P}(y_i \le 0)^{1[y_i = 0]} f(y_i | \mathbf{x}_i)^{1 - 1[y_i = 0]}
+\end{equation*}
+
+where $f(y_i|x_i)$ is the probability density function conditional on $\mathbf{x}_i$,
+$1[y_i = 0]$ is an indicator function returing 1 if $y_i = 0$.
+Now, we assume the distribution $u_i | \mathbf{x}_i \sim N(0, \sigma^2)$.
+Then, we can reformulate $\mathbb{P}(y_i \le 0)$ as follows:
+
+\begin{equation*}
+  \mathbb{P}(y_i \le 0) 
+  = \mathbb{P}(-\mathbf{x}_i \beta \le u_i) 
+  = \Phi \left( -\frac{\mathbf{x}_i \beta}{\sigma} \right)  
+  = 1 - \Phi \left( \frac{\mathbf{x}_i \beta}{\sigma} \right),
+\end{equation*}
+where $\Phi(\cdot)$ is the cumulative distribution function of the stadnard normal distribution.
+Note that the last equatility comes from symmetric property of the standard normal distribution.
+Moreover, the density function $f$ is reformulated as follows:
+
+\begin{equation*}
+  f(y_i | \mathbf{x}_i) = \frac{1}{\sigma} \phi \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right).
+\end{equation*}
+
+Assuming iid sample, we obtain the join probability function as follows:
+
+\begin{equation*}
+  p_{\beta, \sigma^2}((y_i | x_i), i = 1, \ldots, n) 
+  = \prod_{i=1}^n \left(1 - \Phi \left( \frac{\mathbf{x}_i \beta}{\sigma} \right) \right)^{1[y_i = 0]} 
+  \left( \frac{1}{\sigma} \phi \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right) \right)^{1 - 1[y_i = 0]}.
+\end{equation*}
+
+We estimate $\log p_{\beta, \sigma^2}((y_i | x_i), i = 1, \ldots, n)$, using the maximum likelihood method.
+In `R`, there are two ways to implement the tobit regression.
+First way is to define the log-likelihood function directly and minimize its function by `nlm` function.
+We need to give intial values in argument of this function.
+As intial values, coefficients of explanatory variables, `b[3:6]`, are zero, 
+and intercept, denoted by `b[2]`, and $\sigma$, denoted by `b[1]`, 
+are given by mean and standard deviation of `whrs`, respectively.
+
+```{r tobitMLE}
+whrs <- dt$whrs
+kl6 <- dt$kl6; k618 <- dt$k618
+wa <- dt$wa; we <- dt$we
+
+LnLik <- function(b) {
+  sigma <- b[1]
+  xb <- b[2] + b[3]*kl6 + b[4]*k618 + b[5]*wa + b[6]*we
+  Ia <- ifelse(whrs == 0, 1, 0)
+  F0 <- 1 - pnorm(xb/sigma)
+  fa <- dnorm((whrs - xb)/sigma)/sigma
+  LL_i <- Ia * log(F0) + (1 - Ia) * log(fa)
+  LL <- -sum(LL_i)
+  return(LL)
+}
+
+init <- c(sd(whrs), mean(whrs), 0, 0, 0, 0)
+est.LnLik <- nlm(LnLik, init, hessian = TRUE)
+coef.tobitNLM <- est.LnLik$estimate
+se.tobitNLM <- sqrt(diag(solve(est.LnLik$hessian)))
+```
+
+
+Second way is to use the function `vglm` in the library `VGAM`.
+First, we need to declare the tobit distribution (`tobit`), using the `family` augment.
+The `tobit` function needs the censored point (the value of $a$) in arguments `Lower` and `Upper`.
+When you specify `Lower`, the observed outcome is left-censored.
+On the other hand, when you specify `Upper`, the observed outcome is right-censored.
+In this application, we set `Lower = 0`.
+
+```{r tobit}
+library(VGAM)
+tobitVGAM <- vglm(whrs ~ kl6 + k618 + wa + we, family = tobit(Lower = 0), data = dt)
+coef.tobitVGAM <- coef(tobitVGAM)
+coef.tobitVGAM[2] <- exp(coef.tobitVGAM[2])
+se.tobitVGAM <- sqrt(diag(vcov(tobitVGAM)))[-2]
+```
+
+
+## Interpretations
+
+Table \ref{lfp_tobit} shows results of tobit regression estimated by two methods.
+As a comparison, we also show the OLS result in column (3).
+Althourgh all specifications show the same sign of coefficients,
+size of coefficients of censored regression becomes stronger than of OLS.
+For example, the number of preschool and school-aged children reduces the hours of work.
+The size of coefficient of the number of preschool and school-aged children become stronger
+when we apply the censored regression.
+
+```{r output_tobit, results = "asis"}
+ols <- lm(whrs ~ kl6 + k618 + wa + we, data =dt)
+names(coef.tobitNLM) <- c("sigma", names(coef(ols)))
+names(se.tobitNLM) <- c("sigma", names(coef(ols)))
+names(coef.tobitVGAM) <- c(names(coef(ols))[1], "sigma", names(coef(ols))[-1])
+names(se.tobitVGAM) <- names(coef(ols))
+
+stargazer(
+  ols, ols, ols,
+  column.labels = c("Tobit (vglm)", "Tobit (nlm)", "OLS"),
+  coef = list(coef.tobitVGAM[-2], coef.tobitNLM[-1]),
+  se = list(se.tobitVGAM, se.tobitNLM[-1]),
+  report = "vcs", keep.stat = c("n"),
+  covariate.labels = c(
+    "\\#.Preschool Children",
+    "\\#.School-aged Children",
+    "Age", "Education Years"
+  ),
+  add.lines = list(
+    c("Estimated Sigma", 
+      round(coef.tobitVGAM[2], 3), round(coef.tobitNLM[1], 3)),
+    c("Log-Likelihood", 
+      round(logLik(tobitVGAM), 3), round(-est.LnLik$minimum, 3))
+  ),
+  omit.table.layout = "n", table.placement = "t",
+  title = "Tobit Regression: Labor Market Participation of Married Women",
+  label = "lfp_tobit",
+  type = "latex", header = FALSE  
+)
+```
