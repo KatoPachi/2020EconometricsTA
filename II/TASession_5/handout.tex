@@ -120,10 +120,10 @@
 \begin{document}
 \maketitle
 
-\hypertarget{empirical-application-of-truncated-regression-labor-participation-of-married-women}{%
+\hypertarget{empirical-application-of-truncated-regression-labor-participation-of-married-women-1}{%
 \section{Empirical Application of Truncated Regression: Labor
-Participation of Married
-Women}\label{empirical-application-of-truncated-regression-labor-participation-of-married-women}}
+Participation of Married Women
+(1)}\label{empirical-application-of-truncated-regression-labor-participation-of-married-women-1}}
 
 \hypertarget{background-and-data}{%
 \subsection{Background and Data}\label{background-and-data}}
@@ -338,6 +338,241 @@ specifications.
 Estimated Sigma & 941.464 & 983.736 &  \\ 
 Log-Likelihood & -1201.698 & -1200.916 &  \\ 
 Observations & 150 & 150 & 150 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+\hypertarget{empirical-application-of-tobit-regression-labor-participation-of-married-women-2}{%
+\section{Empirical Application of Tobit Regression: Labor Participation
+of Married Women
+(2)}\label{empirical-application-of-tobit-regression-labor-participation-of-married-women-2}}
+
+\hypertarget{background-and-data-1}{%
+\subsection{Background and Data}\label{background-and-data-1}}
+
+We continue to investigate the previous research question. Our dataset
+comes from Stata sample data, which is same as the previous dataset.
+Unlike the previous dataset, we now observe married woment who do not
+participate in the labor market. Additionally, we introduce the new
+variable:
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{lfp}: a dummy variable taking 1 if observed unit works.
+\end{itemize}
+
+The previous dataset contains observations with \texttt{lfp\ =\ 1}. In
+this application, we also use observations with \texttt{lfp\ =\ 0} to
+estimate tobit model.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\DataTypeTok{file =} \StringTok{"./data/labor2.csv"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{TRUE}\NormalTok{,  }\DataTypeTok{sep =} \StringTok{","}\NormalTok{)}
+\KeywordTok{summary}\NormalTok{(dt)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       lfp           whrs             kl6             k618             wa       
+##  Min.   :0.0   Min.   :   0.0   Min.   :0.000   Min.   :0.000   Min.   :30.00  
+##  1st Qu.:0.0   1st Qu.:   0.0   1st Qu.:0.000   1st Qu.:0.000   1st Qu.:35.00  
+##  Median :1.0   Median : 406.5   Median :0.000   Median :1.000   Median :43.00  
+##  Mean   :0.6   Mean   : 799.8   Mean   :0.236   Mean   :1.364   Mean   :42.92  
+##  3rd Qu.:1.0   3rd Qu.:1599.8   3rd Qu.:0.000   3rd Qu.:2.000   3rd Qu.:49.00  
+##  Max.   :1.0   Max.   :4950.0   Max.   :3.000   Max.   :8.000   Max.   :60.00  
+##        we       
+##  Min.   : 5.00  
+##  1st Qu.:12.00  
+##  Median :12.00  
+##  Mean   :12.35  
+##  3rd Qu.:13.00  
+##  Max.   :17.00
+\end{verbatim}
+
+\hypertarget{model-1}{%
+\subsection{Model}\label{model-1}}
+
+Our dependent variable is censored from below at zero. This is because
+married women chooses zero labor time if, without any constraint, the
+optimal labor time is negative (corner solution). In this case, we
+should use the tobit model. The tobit model is
+
+\begin{equation*}
+  y_i = 
+  \begin{cases}
+    \mathbf{x}_i \beta + u_i &\mathrm{if}\:\: y_i > a  \\
+    a                        &\mathrm{otherwise}
+  \end{cases},
+\end{equation*} where \(E(u_i) = 0\) and \(\mathrm{Var}(u_i) = 0\). In
+this application, we set \(a = 0\).
+
+Using this model, the probability of \(y_i\) conditional on \(x_i\) is
+defined by
+
+\begin{equation*}
+  p_{\beta, \sigma^2}(y_i | x_i) = \mathbb{P}(y_i \le 0)^{1[y_i = 0]} f(y_i | \mathbf{x}_i)^{1 - 1[y_i = 0]}
+\end{equation*}
+
+where \(f(y_i|x_i)\) is the probability density function conditional on
+\(\mathbf{x}_i\), \(1[y_i = 0]\) is an indicator function returing 1 if
+\(y_i = 0\). Now, we assume the distribution
+\(u_i | \mathbf{x}_i \sim N(0, \sigma^2)\). Then, we can reformulate
+\(\mathbb{P}(y_i \le 0)\) as follows:
+
+\begin{equation*}
+  \mathbb{P}(y_i \le 0) 
+  = \mathbb{P}(-\mathbf{x}_i \beta \le u_i) 
+  = \Phi \left( -\frac{\mathbf{x}_i \beta}{\sigma} \right)  
+  = 1 - \Phi \left( \frac{\mathbf{x}_i \beta}{\sigma} \right),
+\end{equation*} where \(\Phi(\cdot)\) is the cumulative distribution
+function of the stadnard normal distribution. Note that the last
+equatility comes from symmetric property of the standard normal
+distribution. Moreover, the density function \(f\) is reformulated as
+follows:
+
+\begin{equation*}
+  f(y_i | \mathbf{x}_i) = \frac{1}{\sigma} \phi \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right).
+\end{equation*}
+
+Assuming iid sample, we obtain the join probability function as follows:
+
+\begin{equation*}
+  p_{\beta, \sigma^2}((y_i | x_i), i = 1, \ldots, n) 
+  = \prod_{i=1}^n \left(1 - \Phi \left( \frac{\mathbf{x}_i \beta}{\sigma} \right) \right)^{1[y_i = 0]} 
+  \left( \frac{1}{\sigma} \phi \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right) \right)^{1 - 1[y_i = 0]}.
+\end{equation*}
+
+We estimate \(\log p_{\beta, \sigma^2}((y_i | x_i), i = 1, \ldots, n)\),
+using the maximum likelihood method. In \texttt{R}, there are two ways
+to implement the tobit regression. First way is to define the
+log-likelihood function directly and minimize its function by
+\texttt{nlm} function. We need to give intial values in argument of this
+function. As intial values, coefficients of explanatory variables,
+\texttt{b{[}3:6{]}}, are zero, and intercept, denoted by
+\texttt{b{[}2{]}}, and \(\sigma\), denoted by \texttt{b{[}1{]}}, are
+given by mean and standard deviation of \texttt{whrs}, respectively.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{whrs \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{whrs}
+\NormalTok{kl6 \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{kl6; k618 \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{k618}
+\NormalTok{wa \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{wa; we \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{we}
+
+\NormalTok{LnLik \textless{}{-}}\StringTok{ }\ControlFlowTok{function}\NormalTok{(b) \{}
+\NormalTok{  sigma \textless{}{-}}\StringTok{ }\NormalTok{b[}\DecValTok{1}\NormalTok{]}
+\NormalTok{  xb \textless{}{-}}\StringTok{ }\NormalTok{b[}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{3}\NormalTok{]}\OperatorTok{*}\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{4}\NormalTok{]}\OperatorTok{*}\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{5}\NormalTok{]}\OperatorTok{*}\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{6}\NormalTok{]}\OperatorTok{*}\NormalTok{we}
+\NormalTok{  Ia \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(whrs }\OperatorTok{==}\StringTok{ }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{  F0 \textless{}{-}}\StringTok{ }\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(xb}\OperatorTok{/}\NormalTok{sigma)}
+\NormalTok{  fa \textless{}{-}}\StringTok{ }\KeywordTok{dnorm}\NormalTok{((whrs }\OperatorTok{{-}}\StringTok{ }\NormalTok{xb)}\OperatorTok{/}\NormalTok{sigma)}\OperatorTok{/}\NormalTok{sigma}
+\NormalTok{  LL\_i \textless{}{-}}\StringTok{ }\NormalTok{Ia }\OperatorTok{*}\StringTok{ }\KeywordTok{log}\NormalTok{(F0) }\OperatorTok{+}\StringTok{ }\NormalTok{(}\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\NormalTok{Ia) }\OperatorTok{*}\StringTok{ }\KeywordTok{log}\NormalTok{(fa)}
+\NormalTok{  LL \textless{}{-}}\StringTok{ }\OperatorTok{{-}}\KeywordTok{sum}\NormalTok{(LL\_i)}
+  \KeywordTok{return}\NormalTok{(LL)}
+\NormalTok{\}}
+
+\NormalTok{init \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\KeywordTok{sd}\NormalTok{(whrs), }\KeywordTok{mean}\NormalTok{(whrs), }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{est.LnLik \textless{}{-}}\StringTok{ }\KeywordTok{nlm}\NormalTok{(LnLik, init, }\DataTypeTok{hessian =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{coef.tobitNLM \textless{}{-}}\StringTok{ }\NormalTok{est.LnLik}\OperatorTok{$}\NormalTok{estimate}
+\NormalTok{se.tobitNLM \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{solve}\NormalTok{(est.LnLik}\OperatorTok{$}\NormalTok{hessian)))}
+\end{Highlighting}
+\end{Shaded}
+
+Second way is to use the function \texttt{vglm} in the library
+\texttt{VGAM}. First, we need to declare the tobit distribution
+(\texttt{tobit}), using the \texttt{family} augment. The \texttt{tobit}
+function needs the censored point (the value of \(a\)) in arguments
+\texttt{Lower} and \texttt{Upper}. When you specify \texttt{Lower}, the
+observed outcome is left-censored. On the other hand, when you specify
+\texttt{Upper}, the observed outcome is right-censored. In this
+application, we set \texttt{Lower\ =\ 0}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(VGAM)}
+\NormalTok{tobitVGAM \textless{}{-}}\StringTok{ }\KeywordTok{vglm}\NormalTok{(whrs }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{we, }\DataTypeTok{family =} \KeywordTok{tobit}\NormalTok{(}\DataTypeTok{Lower =} \DecValTok{0}\NormalTok{), }\DataTypeTok{data =}\NormalTok{ dt)}
+\NormalTok{coef.tobitVGAM \textless{}{-}}\StringTok{ }\KeywordTok{coef}\NormalTok{(tobitVGAM)}
+\NormalTok{coef.tobitVGAM[}\DecValTok{2}\NormalTok{] \textless{}{-}}\StringTok{ }\KeywordTok{exp}\NormalTok{(coef.tobitVGAM[}\DecValTok{2}\NormalTok{])}
+\NormalTok{se.tobitVGAM \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{vcov}\NormalTok{(tobitVGAM)))[}\OperatorTok{{-}}\DecValTok{2}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{interpretations-1}{%
+\subsection{Interpretations}\label{interpretations-1}}
+
+Table \ref{lfp_tobit} shows results of tobit regression estimated by two
+methods. As a comparison, we also show the OLS result in column (3).
+Althourgh all specifications show the same sign of coefficients, size of
+coefficients of censored regression becomes stronger than of OLS. For
+example, the number of preschool and school-aged children reduces the
+hours of work. The size of coefficient of the number of preschool and
+school-aged children become stronger when we apply the censored
+regression.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ols \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(whrs }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{we, }\DataTypeTok{data =}\NormalTok{dt)}
+\KeywordTok{names}\NormalTok{(coef.tobitNLM) \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"sigma"}\NormalTok{, }\KeywordTok{names}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ols)))}
+\KeywordTok{names}\NormalTok{(se.tobitNLM) \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"sigma"}\NormalTok{, }\KeywordTok{names}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ols)))}
+\KeywordTok{names}\NormalTok{(coef.tobitVGAM) \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\KeywordTok{names}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ols))[}\DecValTok{1}\NormalTok{], }\StringTok{"sigma"}\NormalTok{, }\KeywordTok{names}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ols))[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{])}
+\KeywordTok{names}\NormalTok{(se.tobitVGAM) \textless{}{-}}\StringTok{ }\KeywordTok{names}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ols))}
+
+\KeywordTok{stargazer}\NormalTok{(}
+\NormalTok{  ols, ols, ols,}
+  \DataTypeTok{column.labels =} \KeywordTok{c}\NormalTok{(}\StringTok{"Tobit (vglm)"}\NormalTok{, }\StringTok{"Tobit (nlm)"}\NormalTok{, }\StringTok{"OLS"}\NormalTok{),}
+  \DataTypeTok{coef =} \KeywordTok{list}\NormalTok{(coef.tobitVGAM[}\OperatorTok{{-}}\DecValTok{2}\NormalTok{], coef.tobitNLM[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{]),}
+  \DataTypeTok{se =} \KeywordTok{list}\NormalTok{(se.tobitVGAM, se.tobitNLM[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{]),}
+  \DataTypeTok{report =} \StringTok{"vcs"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+  \DataTypeTok{covariate.labels =} \KeywordTok{c}\NormalTok{(}
+    \StringTok{"}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{\#.Preschool Children"}\NormalTok{,}
+    \StringTok{"}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{\#.School{-}aged Children"}\NormalTok{,}
+    \StringTok{"Age"}\NormalTok{, }\StringTok{"Education Years"}
+\NormalTok{  ),}
+  \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Estimated Sigma"}\NormalTok{, }
+      \KeywordTok{round}\NormalTok{(coef.tobitVGAM[}\DecValTok{2}\NormalTok{], }\DecValTok{3}\NormalTok{), }\KeywordTok{round}\NormalTok{(coef.tobitNLM[}\DecValTok{1}\NormalTok{], }\DecValTok{3}\NormalTok{)),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Log{-}Likelihood"}\NormalTok{, }
+      \KeywordTok{round}\NormalTok{(}\KeywordTok{logLik}\NormalTok{(tobitVGAM), }\DecValTok{3}\NormalTok{), }\KeywordTok{round}\NormalTok{(}\OperatorTok{{-}}\NormalTok{est.LnLik}\OperatorTok{$}\NormalTok{minimum, }\DecValTok{3}\NormalTok{))}
+\NormalTok{  ),}
+  \DataTypeTok{omit.table.layout =} \StringTok{"n"}\NormalTok{, }\DataTypeTok{table.placement =} \StringTok{"t"}\NormalTok{,}
+  \DataTypeTok{title =} \StringTok{"Tobit Regression: Labor Market Participation of Married Women"}\NormalTok{,}
+  \DataTypeTok{label =} \StringTok{"lfp\_tobit"}\NormalTok{,}
+  \DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}  
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[t] \centering 
+  \caption{Tobit Regression: Labor Market Participation of Married Women} 
+  \label{lfp_tobit} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-4} 
+\\[-1.8ex] & \multicolumn{3}{c}{whrs} \\ 
+ & Tobit (vglm) & Tobit (nlm) & OLS \\ 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
+\hline \\[-1.8ex] 
+ \#.Preschool Children & $-$827.768 & $-$827.733 & $-$462.123 \\ 
+  & (218.507) & (171.275) & (124.677) \\ 
+  & & & \\ 
+ \#.School-aged Children & $-$140.017 & $-$140.004 & $-$91.141 \\ 
+  & (75.203) & (69.379) & (45.850) \\ 
+  & & & \\ 
+ Age & $-$24.980 & $-$24.973 & $-$13.158 \\ 
+  & (13.217) & (12.528) & (8.335) \\ 
+  & & & \\ 
+ Education Years & 103.694 & 103.707 & 53.262 \\ 
+  & (41.433) & (41.780) & (26.094) \\ 
+  & & & \\ 
+ Constant & 588.961 & 588.488 & 940.059 \\ 
+  & (838.808) & (812.625) & (530.720) \\ 
+  & & & \\ 
+\hline \\[-1.8ex] 
+Estimated Sigma & 1309.928 & 1309.914 &  \\ 
+Log-Likelihood & -1367.09 & -1367.09 &  \\ 
+Observations & 250 & 250 & 250 \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular} 
