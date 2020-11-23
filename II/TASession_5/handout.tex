@@ -1,0 +1,346 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+  12pt,
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Econometrics II TA Session \#5},
+  pdfauthor={Hiroki Kato},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\usepackage{zxjatype}
+\setCJKmainfont[BoldFont = IPAゴシック]{IPA明朝}
+\setCJKsansfont{IPAゴシック}
+\setCJKmonofont{IPAゴシック}
+\parindent = 1em
+\newcommand{\argmax}{\mathop{\rm arg~max}\limits}
+\newcommand{\argmin}{\mathop{\rm arg~min}\limits}
+\DeclareMathOperator*{\plim}{plim}
+\usepackage{xcolor}
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{Econometrics II TA Session \#5}
+\author{Hiroki Kato}
+\date{}
+
+\begin{document}
+\maketitle
+
+\hypertarget{empirical-application-of-truncated-regression-labor-participation-of-married-women}{%
+\section{Empirical Application of Truncated Regression: Labor
+Participation of Married
+Women}\label{empirical-application-of-truncated-regression-labor-participation-of-married-women}}
+
+\hypertarget{background-and-data}{%
+\subsection{Background and Data}\label{background-and-data}}
+
+To develop women's social advancement, we should create environment to
+keep a good balance between work and childcare after marriage. In this
+application, using the dataset of married women, we explore how much
+childcare prevents married women to participate in labor market.
+
+Our dataset originally comes from Stata sample data. \footnote{\url{http://www.stata-press.com/data/r13/laborsub.dt}.
+  Because this is dta file, we need to import it, using the
+  \texttt{read.dta} function in the library \texttt{foreign}. I
+  intentionally remove married women who could not participate in the
+  labor market.} This dataset contains the following variables:
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{whrs}: Hours of work. This outcome variable is truncated from
+  below at zero.
+\item
+  \texttt{kl6}: the number of preschool children
+\item
+  \texttt{k618}: The number of school‐aged children
+\item
+  \texttt{wa}: age
+\item
+  \texttt{we}: The number of years of education
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\DataTypeTok{file =} \StringTok{"./data/labor.csv"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{TRUE}\NormalTok{,  }\DataTypeTok{sep =} \StringTok{","}\NormalTok{)}
+\KeywordTok{summary}\NormalTok{(dt)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       whrs           kl6              k618             wa       
+##  Min.   :  12   Min.   :0.0000   Min.   :0.000   Min.   :30.00  
+##  1st Qu.: 645   1st Qu.:0.0000   1st Qu.:0.000   1st Qu.:35.00  
+##  Median :1406   Median :0.0000   Median :1.000   Median :43.50  
+##  Mean   :1333   Mean   :0.1733   Mean   :1.313   Mean   :42.79  
+##  3rd Qu.:1903   3rd Qu.:0.0000   3rd Qu.:2.000   3rd Qu.:48.75  
+##  Max.   :4950   Max.   :2.0000   Max.   :8.000   Max.   :60.00  
+##        we       
+##  Min.   : 6.00  
+##  1st Qu.:12.00  
+##  Median :12.00  
+##  Mean   :12.64  
+##  3rd Qu.:13.75  
+##  Max.   :17.00
+\end{verbatim}
+
+\hypertarget{model}{%
+\subsection{Model}\label{model}}
+
+Since we cannot observe those who could not partiapte in the labor
+market (\texttt{whrs\ =\ 0}), we use the truncated regression model.
+Thus, the selection rule is as follows:
+
+\begin{equation*}
+  \begin{cases}
+    y_i = x_i \beta + u_i &\text{if}\:\: s_i = 1  \\
+    s_i = 1 &\text{if}\:\: a_1 < y_i < a_2
+  \end{cases}.
+\end{equation*} where \(u_i \sim N(0, \sigma^2)\). In this case,
+\(a_1 = 0\) and \(a_2 = +\infty\).
+
+Since we are interested in estimating \(\beta\), we must condition on
+\(s_i = 1\). The probability density function of \(y_i\) conditional on
+\((x_i, s_i = 1)\) is
+
+\begin{equation*}
+  p_{\theta}(y_i | x_i, s_i = 1) = \frac{f(y_i | x_i)}{\int_0^{+\infty} f(y_i | x_i) dy_i}.
+\end{equation*} where \(\theta = (\beta, \sigma^2)'\). Because the
+distribution of \(y_i\) depends on the distribution of \(u_i\), using
+\(u_i = y_i - x_i \beta\), we obtain
+
+\begin{equation*}
+  p_{\theta}(u_i | x_i, -x_i \beta < u_i) 
+  = \frac{1}{\sigma} \frac{\phi(\frac{y_i - x_i \beta}{\sigma})}{1 - \Phi(\frac{- x_i \beta}{\sigma})}.
+\end{equation*} Thus, the log-likelihood function is
+
+\begin{equation*}
+  M_n(\theta) 
+  = \sum_{i=1}^n \log \left( \frac{1}{\sigma} \frac{\phi(\frac{y_i - x_i \beta}{\sigma})}{1 - \Phi(\frac{- x_i \beta}{\sigma})} \right).
+\end{equation*}
+
+We provide two ways to estimate truncated regression, using \texttt{R}.
+First way is to define the log-likelihood function directly and minimize
+its function by \texttt{nlm} function. Recall that \texttt{nlm} function
+provides the Newton method to minimize the function. We need to give
+intial values in argument of this function. Coefficients of explanatory
+variables, \texttt{b{[}3:6{]}}, are zero, and intercept,
+\texttt{b{[}2{]}}, and \(\sigma\), \texttt{b{[}1{]}}, are given by mean
+and standard deviation of \texttt{whrs}, respectively.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{whrs \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{whrs}
+\NormalTok{kl6 \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{kl6; k618 \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{k618}
+\NormalTok{wa \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{wa; we \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{we}
+
+\NormalTok{LnLik \textless{}{-}}\StringTok{ }\ControlFlowTok{function}\NormalTok{(b) \{}
+\NormalTok{  sigma \textless{}{-}}\StringTok{ }\NormalTok{b[}\DecValTok{1}\NormalTok{]}
+\NormalTok{  xb \textless{}{-}}\StringTok{ }\NormalTok{b[}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{3}\NormalTok{]}\OperatorTok{*}\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{4}\NormalTok{]}\OperatorTok{*}\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{5}\NormalTok{]}\OperatorTok{*}\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{b[}\DecValTok{6}\NormalTok{]}\OperatorTok{*}\NormalTok{we}
+\NormalTok{  condp \textless{}{-}}\StringTok{ }\KeywordTok{dnorm}\NormalTok{((whrs }\OperatorTok{{-}}\StringTok{ }\NormalTok{xb)}\OperatorTok{/}\NormalTok{sigma)}\OperatorTok{/}\NormalTok{(}\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(}\OperatorTok{{-}}\NormalTok{xb}\OperatorTok{/}\NormalTok{sigma))}
+\NormalTok{  LL\_i \textless{}{-}}\StringTok{ }\KeywordTok{log}\NormalTok{(condp}\OperatorTok{/}\NormalTok{sigma)}
+\NormalTok{  LL \textless{}{-}}\StringTok{ }\OperatorTok{{-}}\KeywordTok{sum}\NormalTok{(LL\_i)}
+  \KeywordTok{return}\NormalTok{(LL)}
+\NormalTok{\}}
+
+\NormalTok{init \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\KeywordTok{sd}\NormalTok{(whrs), }\KeywordTok{mean}\NormalTok{(whrs), }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{est.LnLik \textless{}{-}}\StringTok{ }\KeywordTok{nlm}\NormalTok{(LnLik, init, }\DataTypeTok{hessian =} \OtherTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Second way is to use the function \texttt{truncreg} in the library
+\texttt{truncreg}. This function must specify the trucated point in
+arguments \texttt{point} and \texttt{direction}. If
+\texttt{direction\ =\ "left"}, the outcome variable is truncated from
+below at \texttt{point}, that is, \texttt{point\ \textless{}\ y}. On the
+other hand, if \texttt{direction\ =\ "right"}, the outcome variable is
+truncated from above at \texttt{point}, that is,
+\texttt{y\ \textless{}\ point}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(truncreg)}
+\NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{whrs }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{we}
+\NormalTok{est.trunc \textless{}{-}}\StringTok{ }\KeywordTok{truncreg}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{point =} \DecValTok{0}\NormalTok{, }\DataTypeTok{direction =} \StringTok{"left"}\NormalTok{)}
+\NormalTok{se.trunc \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{vcov}\NormalTok{(est.trunc)))}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{interpretations}{%
+\subsection{Interpretations}\label{interpretations}}
+
+Table \ref{lfp} shows results of truncated regression estimated by two
+methods. As a comparison, we also show the OLS result in column (3). All
+specifications show that the number of preschool and school-aged
+children reduces the hours of work. The size of coefficient of the
+number of preschool and school-aged children become stronger when we
+apply the truncated regression. Although the relationship between labor
+participation and women's characteristics is statistically
+insignificant, size of coefficients largely differs among three
+specifications.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ols \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt)}
+\NormalTok{coef.LnLik \textless{}{-}}\StringTok{ }\NormalTok{est.LnLik}\OperatorTok{$}\NormalTok{estimate}
+\NormalTok{se.LnLik \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{solve}\NormalTok{(est.LnLik}\OperatorTok{$}\NormalTok{hessian)))}
+\KeywordTok{names}\NormalTok{(coef.LnLik) \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"sigma"}\NormalTok{, }\KeywordTok{names}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ols)))}
+\KeywordTok{names}\NormalTok{(se.LnLik) \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"sigma"}\NormalTok{, }\KeywordTok{names}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ols)))}
+
+\KeywordTok{library}\NormalTok{(stargazer)}
+\KeywordTok{stargazer}\NormalTok{(}
+\NormalTok{  ols, ols, ols,}
+  \DataTypeTok{column.labels =} \KeywordTok{c}\NormalTok{(}\StringTok{"Truncated (truncreg)"}\NormalTok{, }\StringTok{"Truncated (nlm)"}\NormalTok{, }\StringTok{"OLS"}\NormalTok{),}
+  \DataTypeTok{coef =} \KeywordTok{list}\NormalTok{(}\KeywordTok{coef}\NormalTok{(est.trunc), coef.LnLik[}\DecValTok{2}\OperatorTok{:}\DecValTok{6}\NormalTok{]),}
+  \DataTypeTok{se =} \KeywordTok{list}\NormalTok{(se.trunc, se.LnLik[}\DecValTok{2}\OperatorTok{:}\DecValTok{6}\NormalTok{]),}
+  \DataTypeTok{report =} \StringTok{"vcs"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+  \DataTypeTok{covariate.labels =} \KeywordTok{c}\NormalTok{(}
+    \StringTok{"}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{\#.Preschool Children"}\NormalTok{,}
+    \StringTok{"}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{\#.School{-}aged Children"}\NormalTok{,}
+    \StringTok{"Age"}\NormalTok{, }\StringTok{"Education Years"}
+\NormalTok{  ),}
+  \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Estimated Sigma"}\NormalTok{, }
+      \KeywordTok{round}\NormalTok{(}\KeywordTok{coef}\NormalTok{(est.trunc)[}\DecValTok{6}\NormalTok{], }\DecValTok{3}\NormalTok{), }\KeywordTok{round}\NormalTok{(coef.LnLik[}\DecValTok{1}\NormalTok{], }\DecValTok{3}\NormalTok{)),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Log{-}Likelihood"}\NormalTok{, }
+      \KeywordTok{round}\NormalTok{(est.trunc}\OperatorTok{$}\NormalTok{logLik, }\DecValTok{3}\NormalTok{), }\KeywordTok{round}\NormalTok{(}\OperatorTok{{-}}\NormalTok{est.LnLik}\OperatorTok{$}\NormalTok{minimum, }\DecValTok{3}\NormalTok{))}
+\NormalTok{  ),}
+  \DataTypeTok{omit.table.layout =} \StringTok{"n"}\NormalTok{, }\DataTypeTok{table.placement =} \StringTok{"t"}\NormalTok{,}
+  \DataTypeTok{title =} \StringTok{"Truncated Regression: Labor Market Participation of Married Women"}\NormalTok{,}
+  \DataTypeTok{label =} \StringTok{"lfp"}\NormalTok{,}
+  \DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}  
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[t] \centering 
+  \caption{Truncated Regression: Labor Market Participation of Married Women} 
+  \label{lfp} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-4} 
+\\[-1.8ex] & \multicolumn{3}{c}{whrs} \\ 
+ & Truncated (truncreg) & Truncated (nlm) & OLS \\ 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
+\hline \\[-1.8ex] 
+ \#.Preschool Children & $-$456.785 & $-$803.032 & $-$421.482 \\ 
+  & (266.367) & (252.803) & (167.973) \\ 
+  & & & \\ 
+ \#.School-aged Children & $-$153.347 & $-$172.875 & $-$104.457 \\ 
+  & (81.780) & (100.590) & (54.186) \\ 
+  & & & \\ 
+ Age & $-$5.379 & $-$8.821 & $-$4.785 \\ 
+  & (13.492) & (14.646) & (9.691) \\ 
+  & & & \\ 
+ Education Years & $-$0.092 & 16.529 & 9.353 \\ 
+  & (43.702) & (46.430) & (31.238) \\ 
+  & & & \\ 
+ Constant & 1,624.584 & 1,586.228 & 1,629.817 \\ 
+  & (857.730) & (932.878) & (615.130) \\ 
+  & & & \\ 
+\hline \\[-1.8ex] 
+Estimated Sigma & 941.464 & 983.736 &  \\ 
+Log-Likelihood & -1201.698 & -1200.916 &  \\ 
+Observations & 150 & 150 & 150 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+\end{document}

@@ -8,9 +8,9 @@ options(repo = "https://cran.rstudio.com/")
 
 #' from Rmd to pdf
 rmarkdown::render(
-  input = "II/TAsession_4/handout.rmd",
+  input = "II/TAsession_5/handout.rmd",
   output_file = "handout.pdf",
-  output_dir = "II/TAsession_4", #いじらない
+  output_dir = "II/TAsession_5", #いじらない
   clean = TRUE, #いじらない
   encoding = "utf8" #いじらない
 )
