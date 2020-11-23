@@ -187,26 +187,41 @@ Thus, the selection rule is as follows:
 
 \begin{equation*}
   \begin{cases}
-    y_i = x_i \beta + u_i &\text{if}\:\: s_i = 1  \\
+    y_i = \mathbf{x}_i \beta + u_i &\text{if}\:\: s_i = 1  \\
     s_i = 1 &\text{if}\:\: a_1 < y_i < a_2
   \end{cases}.
-\end{equation*} where \(u_i \sim N(0, \sigma^2)\). In this case,
-\(a_1 = 0\) and \(a_2 = +\infty\).
+\end{equation*} where \(u_i \sim N(0, \sigma^2)\). By the distributional
+assumption, we have
+\(y_i | \mathbf{x}_i \sim N(\mathbf{x}_i \beta, \sigma^2)\). In this
+application, we set \(a_1 = 0\) and \(a_2 = +\infty\).
 
 Since we are interested in estimating \(\beta\), we must condition on
 \(s_i = 1\). The probability density function of \(y_i\) conditional on
 \((x_i, s_i = 1)\) is
 
 \begin{equation*}
-  p_{\theta}(y_i | x_i, s_i = 1) = \frac{f(y_i | x_i)}{\int_0^{+\infty} f(y_i | x_i) dy_i}.
-\end{equation*} where \(\theta = (\beta, \sigma^2)'\). Because the
-distribution of \(y_i\) depends on the distribution of \(u_i\), using
-\(u_i = y_i - x_i \beta\), we obtain
+  p_{\theta}(y_i | \mathbf{x}_i, s_i = 1) = \frac{f(y_i | \mathbf{x}_i)}{\mathbb{P}(s_i = 1 | \mathbf{x}_i)}.
+\end{equation*} where \(\theta = (\beta, \sigma^2)'\). By the
+distributional assumption, the conditional distribution of \(y_i\) is
+given by
 
 \begin{equation*}
-  p_{\theta}(u_i | x_i, -x_i \beta < u_i) 
-  = \frac{1}{\sigma} \frac{\phi(\frac{y_i - x_i \beta}{\sigma})}{1 - \Phi(\frac{- x_i \beta}{\sigma})}.
-\end{equation*} Thus, the log-likelihood function is
+  f(y_i | \mathbf{x}_i) 
+  = \frac{1}{\sqrt{2\pi\sigma^2}} \exp \left( -\frac{1}{2} \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right)^2 \right)
+  = \frac{1}{\sigma} \phi \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right),
+\end{equation*} where \(\phi(\cdot)\) is the standard normal density
+function. Moreover, the probability of observation (\(s_i = 1\)) is
+given by
+
+\begin{align*}
+  \mathbb{P}(s_i = 1 | \mathbf{x}_i) 
+  &= \mathbb{P}(\mathbf{x}_i \beta + u_i > 0| \mathbf{x}_i)  \\
+  &= \mathbb{P}(u_i/\sigma > -\mathbf{x}_i \beta/\sigma| \mathbf{x}_i)  \\
+  &= 1 - \Phi \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right),
+\end{align*} where \(\Phi(\cdot)\) is the standard normal cumulative
+density function.
+
+Thus, the log-likelihood function is
 
 \begin{equation*}
   M_n(\theta) 
@@ -217,10 +232,13 @@ We provide two ways to estimate truncated regression, using \texttt{R}.
 First way is to define the log-likelihood function directly and minimize
 its function by \texttt{nlm} function. Recall that \texttt{nlm} function
 provides the Newton method to minimize the function. We need to give
-intial values in argument of this function. Coefficients of explanatory
-variables, \texttt{b{[}3:6{]}}, are zero, and intercept,
-\texttt{b{[}2{]}}, and \(\sigma\), \texttt{b{[}1{]}}, are given by mean
-and standard deviation of \texttt{whrs}, respectively.
+intial values in argument of this function. To set initial values, we
+assume that coefficients of explanatory variables are zero. Then, we
+obtain \(y_i | \mathbf{x}_i \sim N(\beta_1, \sigma^2)\). Thus, the
+initial value of \(\sigma\), \texttt{b{[}1{]}} is the standard deviation
+of \texttt{whrs}, and the initial value of \(\beta_1\),
+\texttt{b{[}2{]}} is the mean of \texttt{whrs}. Note that these initial
+values are not unbised estimator.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -243,13 +261,12 @@ and standard deviation of \texttt{whrs}, respectively.
 \end{Shaded}
 
 Second way is to use the function \texttt{truncreg} in the library
-\texttt{truncreg}. This function must specify the trucated point in
-arguments \texttt{point} and \texttt{direction}. If
-\texttt{direction\ =\ "left"}, the outcome variable is truncated from
-below at \texttt{point}, that is, \texttt{point\ \textless{}\ y}. On the
-other hand, if \texttt{direction\ =\ "right"}, the outcome variable is
-truncated from above at \texttt{point}, that is,
-\texttt{y\ \textless{}\ point}.
+\texttt{truncreg}. We must specify the trucated point, using arguments
+\texttt{point} and \texttt{direction}. If \texttt{direction\ =\ "left"},
+the outcome variable is truncated from below at \texttt{point}, that is,
+\texttt{point\ \textless{}\ y}. On the other hand, if
+\texttt{direction\ =\ "right"}, the outcome variable is truncated from
+above at \texttt{point}, that is, \texttt{y\ \textless{}\ point}.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -267,11 +284,10 @@ Table \ref{lfp} shows results of truncated regression estimated by two
 methods. As a comparison, we also show the OLS result in column (3). All
 specifications show that the number of preschool and school-aged
 children reduces the hours of work. The size of coefficient of the
-number of preschool and school-aged children become stronger when we
-apply the truncated regression. Although the relationship between labor
-participation and women's characteristics is statistically
-insignificant, size of coefficients largely differs among three
-specifications.
+number of preschool and school-aged children become stronger when we use
+the truncated regression. Note that the size of coeffieient of
+\texttt{\#.Preschool\ Children} estimated by \texttt{truncreg} is
+different from the coefficient estimated by \texttt{nlm}.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -351,10 +367,10 @@ of Married Women
 \hypertarget{background-and-data-1}{%
 \subsection{Background and Data}\label{background-and-data-1}}
 
-We continue to investigate the previous research question. Our dataset
-comes from Stata sample data, which is same as the previous dataset.
-Unlike the previous dataset, we now observe married woment who do not
-participate in the labor market. Additionally, we introduce the new
+We continue to investigate the previous research question. We use
+dataset coming from same source as the previous one. Unlike the previous
+dataset, we now observe married woment who do not participate in the
+labor market (\texttt{whrs\ =\ 0}). Additionally, we introduce the new
 variable:
 
 \begin{itemize}
@@ -364,8 +380,8 @@ variable:
 \end{itemize}
 
 The previous dataset contains observations with \texttt{lfp\ =\ 1}. In
-this application, we also use observations with \texttt{lfp\ =\ 0} to
-estimate tobit model.
+this application, we use observations with \texttt{lfp\ =\ 0} to
+estimate the tobit model.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -394,10 +410,11 @@ estimate tobit model.
 \hypertarget{model-1}{%
 \subsection{Model}\label{model-1}}
 
-Our dependent variable is censored from below at zero. This is because
-married women chooses zero labor time if, without any constraint, the
-optimal labor time is negative (corner solution). In this case, we
-should use the tobit model. The tobit model is
+Our dependent variable is censored from below at zero. The censored data
+is caused by the corner solution problem. Married women chooses zero
+labor time if, without any constraint, their optimal labor time is
+negative. In this case, we should use the tobit model. The tobit model
+is
 
 \begin{equation*}
   y_i = 
@@ -413,11 +430,9 @@ defined by
 
 \begin{equation*}
   p_{\beta, \sigma^2}(y_i | x_i) = \mathbb{P}(y_i \le 0)^{1[y_i = 0]} f(y_i | \mathbf{x}_i)^{1 - 1[y_i = 0]}
-\end{equation*}
-
-where \(f(y_i|x_i)\) is the probability density function conditional on
-\(\mathbf{x}_i\), \(1[y_i = 0]\) is an indicator function returing 1 if
-\(y_i = 0\). Now, we assume the distribution
+\end{equation*} where \(f(y_i|x_i)\) is the probability density function
+conditional on \(\mathbf{x}_i\), \(1[y_i = 0]\) is an indicator function
+returing 1 if \(y_i = 0\). Now, we assume the distribution
 \(u_i | \mathbf{x}_i \sim N(0, \sigma^2)\). Then, we can reformulate
 \(\mathbb{P}(y_i \le 0)\) as follows:
 
@@ -449,10 +464,13 @@ using the maximum likelihood method. In \texttt{R}, there are two ways
 to implement the tobit regression. First way is to define the
 log-likelihood function directly and minimize its function by
 \texttt{nlm} function. We need to give intial values in argument of this
-function. As intial values, coefficients of explanatory variables,
-\texttt{b{[}3:6{]}}, are zero, and intercept, denoted by
-\texttt{b{[}2{]}}, and \(\sigma\), denoted by \texttt{b{[}1{]}}, are
-given by mean and standard deviation of \texttt{whrs}, respectively.
+function. To set initial values, we assume coefficients of explanatory
+variables are zero. Then, we obtain
+\(y_i | \mathbf{x}_i \sim N(\beta_1, \sigma^2)\) where \(\beta_1\) is
+intercept of regression equation. Thus, the initial value of \(\sigma\),
+\texttt{b{[}1{]}} is the standard deviation of \texttt{whrs}, and the
+initial value of \(\beta_1\), \texttt{b{[}2{]}} is the mean of
+\texttt{whrs}.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -490,7 +508,8 @@ application, we set \texttt{Lower\ =\ 0}.
 \begin{Shaded}
 \begin{Highlighting}[]
 \KeywordTok{library}\NormalTok{(VGAM)}
-\NormalTok{tobitVGAM \textless{}{-}}\StringTok{ }\KeywordTok{vglm}\NormalTok{(whrs }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{we, }\DataTypeTok{family =} \KeywordTok{tobit}\NormalTok{(}\DataTypeTok{Lower =} \DecValTok{0}\NormalTok{), }\DataTypeTok{data =}\NormalTok{ dt)}
+\NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{whrs }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{we}
+\NormalTok{tobitVGAM \textless{}{-}}\StringTok{ }\KeywordTok{vglm}\NormalTok{(model, }\DataTypeTok{family =} \KeywordTok{tobit}\NormalTok{(}\DataTypeTok{Lower =} \DecValTok{0}\NormalTok{), }\DataTypeTok{data =}\NormalTok{ dt)}
 \NormalTok{coef.tobitVGAM \textless{}{-}}\StringTok{ }\KeywordTok{coef}\NormalTok{(tobitVGAM)}
 \NormalTok{coef.tobitVGAM[}\DecValTok{2}\NormalTok{] \textless{}{-}}\StringTok{ }\KeywordTok{exp}\NormalTok{(coef.tobitVGAM[}\DecValTok{2}\NormalTok{])}
 \NormalTok{se.tobitVGAM \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{vcov}\NormalTok{(tobitVGAM)))[}\OperatorTok{{-}}\DecValTok{2}\NormalTok{]}
@@ -502,12 +521,13 @@ application, we set \texttt{Lower\ =\ 0}.
 
 Table \ref{lfp_tobit} shows results of tobit regression estimated by two
 methods. As a comparison, we also show the OLS result in column (3).
-Althourgh all specifications show the same sign of coefficients, size of
-coefficients of censored regression becomes stronger than of OLS. For
-example, the number of preschool and school-aged children reduces the
-hours of work. The size of coefficient of the number of preschool and
-school-aged children become stronger when we apply the censored
-regression.
+Although all specifications show the same sign of coefficients, size of
+coefficients of censored regression becomes stronger than of OLSE. As
+with the truncated regression, the number of preschool and school-aged
+children reduces the hours of work. Unlike the truncated regression, the
+relationship between married women's characteristics and labor
+participation is statistically significant. For example, high educated
+women increases labor time.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -587,8 +607,8 @@ Recreation}\label{empirical-application-of-poisson-regression-demand-of-recreati
 
 The Poisson distribution is used for drawing purchasing behavior.
 Especially, the parameter \(\lambda\) means that preference for goods
-because the expectation of frequency of purchasing, E(X), is equal to
-\(\lambda\) (we omit proof here). For example, Tsuyoshi Morioka, a
+because the expectation of frequency of purchasing, \(E(X)\), is equal
+to \(\lambda\) (we omit proof here). For example, Tsuyoshi Morioka, a
 famous marketer contributing the v-shaped recovery of Universal Studio
 Japan, insists that marketers try to increase the parameter \(\lambda\).
 
@@ -673,10 +693,12 @@ with respect to \(\beta\), we apply the Newton-Raphson method to obtain
 MLE. In \texttt{R}, there are two way to implement the Poisson
 regression. First way is to define the log-likelihood function directly
 and minimize its function by \texttt{nlm} function. We need to give
-intial values in argument of this function. As intial values,
-coefficients of explanatory variables, \texttt{b{[}2:4{]}}, are zero,
-and intercept, denoted by \texttt{b{[}2{]}}, are given by mean of
-\texttt{trips}.
+intial values in argument of this function. To set initial values, we
+assume that coefficients of explanatory variables are zero. Then, we
+have \(E[y_i | \mathbf{x}_i] = \exp(\beta_1) = E[y_i]\) where
+\(\beta_1\) is intercept of regression equation. Thus, the initial value
+of \(\beta_1\), \texttt{b{[}1{]}} is \(\log E[y_i]\). We replace the
+expectation of \(y_i\) by the mathematical mean of \(y_i\).
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -691,7 +713,7 @@ and intercept, denoted by \texttt{b{[}2{]}}, are given by mean of
   \KeywordTok{return}\NormalTok{(LL)}
 \NormalTok{\}}
 
-\NormalTok{init \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\KeywordTok{mean}\NormalTok{(trips), }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{init \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(}\KeywordTok{log}\NormalTok{(}\KeywordTok{mean}\NormalTok{(trips)), }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)}
 \NormalTok{poissonMLE \textless{}{-}}\StringTok{ }\KeywordTok{nlm}\NormalTok{(LnLik, init, }\DataTypeTok{hessian =} \OtherTok{TRUE}\NormalTok{)}
 \NormalTok{coef.poissonMLE \textless{}{-}}\StringTok{ }\NormalTok{poissonMLE}\OperatorTok{$}\NormalTok{estimate}
 \NormalTok{se.poissonMLE \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{solve}\NormalTok{(poissonMLE}\OperatorTok{$}\NormalTok{hessian)))}
@@ -719,12 +741,12 @@ Table \ref{recreation} shows results of the Poisson regression estimated
 by two methods, \texttt{nlm} and \texttt{glm}. As a comparison, we also
 show the result of OLS estimation. Clearly, the \texttt{nlm} methods
 (column 1) returns quite similar results to the \texttt{glm} method
-(column 2). Alotough the size of coeffcients of OLSE is farther away
-from zero than coefficients of the Poisson regression, the sign of
-coeffcients of OLSE is same as coefficients of the Poisson regression.
-Surprisingly, we obtain the negative relationship between annual income
-and preference for boating trips. This implies that high-earners are
-less likely to go to Lake Somerville.
+(column 2). Alotough the size of OLSE is farther away from zero than
+coefficients of the Poisson regression, the sign of OLSE is same as
+coefficients of the Poisson regression. Surprisingly, we obtain the
+negative relationship between annual income and preference for boating
+trips. This implies that high-earners are less likely to go to Lake
+Somerville.
 
 \begin{Shaded}
 \begin{Highlighting}[]
