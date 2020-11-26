@@ -1,0 +1,490 @@
+---
+title: "Econometrics II TA Session #5"
+author: "Hiroki Kato"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    md_extensions: +raw_attribute
+    number_sections: true
+    extra_dependencies: ["xcolor"]
+    keep_tex: yes
+fontsize: 12pt
+header-includes:
+  - \usepackage{zxjatype}
+  - \setCJKmainfont[BoldFont = IPAゴシック]{IPA明朝}
+  - \setCJKsansfont{IPAゴシック}
+  - \setCJKmonofont{IPAゴシック}
+  - \parindent = 1em
+  - \newcommand{\argmax}{\mathop{\rm arg~max}\limits}
+  - \newcommand{\argmin}{\mathop{\rm arg~min}\limits}
+  - \DeclareMathOperator*{\plim}{plim}
+---
+
+```{r setup, include = FALSE, echo = FALSE, purl = FALSE}
+# This is options to make pdf file. You should ignore
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  echo = TRUE, 
+  cache = FALSE,
+  fig.pos = "h")
+knitr::opts_knit$set(root.dir = "C:/Users/katoo/Desktop/2020EconometricsTA/R")
+```
+
+# Empirical Application of Truncated Regression: Labor Participation of Married Women (1)
+
+## Background and Data
+
+To develop women's social advancement,
+we should create environment to keep a good balance between work and childcare after marriage.
+In this application, using the dataset of married women, 
+we explore how much childcare prevents married women to participate in labor market.
+
+Our dataset originally comes from Stata sample data. [^source3]
+This dataset contains the following variables:
+
+- `whrs`: Hours of work. This outcome variable is truncated from below at zero.
+- `kl6`: the number of preschool children
+- `k618`: The number of school‐aged children
+- `wa`: age
+- `we`: The number of years of education
+
+[^source3]: <http://www.stata-press.com/data/r13/laborsub.dt>. Because this is dta file, we need to import it, using the `read.dta` function in the library `foreign`. I intentionally remove married women who could not participate in the labor market.
+
+```{r laborData}
+dt <- read.csv(file = "./data/labor.csv", header = TRUE,  sep = ",")
+summary(dt)
+```
+
+## Model 
+
+Since we cannot observe those who could not partiapte in the labor market (`whrs = 0`),
+we use the truncated regression model.
+Thus, the selection rule is as follows:
+
+\begin{equation*}
+  \begin{cases}
+    y_i = \mathbf{x}_i \beta + u_i &\text{if}\:\: s_i = 1  \\
+    s_i = 1 &\text{if}\:\: a_1 < y_i < a_2
+  \end{cases}.
+\end{equation*}
+where $u_i \sim N(0, \sigma^2)$.
+By the distributional assumption, we have $y_i | \mathbf{x}_i \sim N(\mathbf{x}_i \beta, \sigma^2)$.
+In this application, we set $a_1 = 0$ and $a_2 = +\infty$.
+
+Since we are interested in estimating $\beta$, we must condition on $s_i = 1$.
+The probability density function of $y_i$ conditional on $(x_i, s_i = 1)$ is 
+
+\begin{equation*}
+  p_{\theta}(y_i | \mathbf{x}_i, s_i = 1) = \frac{f(y_i | \mathbf{x}_i)}{\mathbb{P}(s_i = 1 | \mathbf{x}_i)}.
+\end{equation*}
+where $\theta = (\beta, \sigma^2)'$.
+By the distributional assumption, the conditional distribution of $y_i$ is given by 
+
+\begin{equation*}
+  f(y_i | \mathbf{x}_i) 
+  = \frac{1}{\sqrt{2\pi\sigma^2}} \exp \left( -\frac{1}{2} \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right)^2 \right)
+  = \frac{1}{\sigma} \phi \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right),
+\end{equation*}
+where $\phi(\cdot)$ is the standard normal density function.
+Moreover, the probability of observation ($s_i = 1$) is given by 
+
+\begin{align*}
+  \mathbb{P}(s_i = 1 | \mathbf{x}_i) 
+  &= \mathbb{P}(\mathbf{x}_i \beta + u_i > 0| \mathbf{x}_i)  \\
+  &= \mathbb{P}(u_i/\sigma > -\mathbf{x}_i \beta/\sigma| \mathbf{x}_i)  \\
+  &= 1 - \Phi \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right),
+\end{align*}
+where $\Phi(\cdot)$ is the standard normal cumulative density function.
+
+Thus, the log-likelihood function is 
+
+\begin{equation*}
+  M_n(\theta) 
+  = \sum_{i=1}^n \log \left( \frac{1}{\sigma} \frac{\phi(\frac{y_i - x_i \beta}{\sigma})}{1 - \Phi(\frac{- x_i \beta}{\sigma})} \right).
+\end{equation*}
+
+We provide two ways to estimate truncated regression, using `R`.
+First way is to define the log-likelihood function directly and minimize its function by `nlm` function.
+Recall that `nlm` function provides the Newton method to minimize the function.
+We need to give intial values in argument of this function.
+To set initial values, we assume that coefficients of explanatory variables are zero.
+Then, we obtain $y_i | \mathbf{x}_i \sim N(\beta_1, \sigma^2)$.
+Thus, the initial value of $\sigma$, `b[1]` is the standard deviation of `whrs`,
+and the initial value of $\beta_1$, `b[2]` is the mean of `whrs`.
+Note that these initial values are not unbised estimator.
+
+```{r truncMle}
+whrs <- dt$whrs
+kl6 <- dt$kl6; k618 <- dt$k618
+wa <- dt$wa; we <- dt$we
+
+LnLik <- function(b) {
+  sigma <- b[1]
+  xb <- b[2] + b[3]*kl6 + b[4]*k618 + b[5]*wa + b[6]*we
+  condp <- dnorm((whrs - xb)/sigma)/(1 - pnorm(-xb/sigma))
+  LL_i <- log(condp/sigma)
+  LL <- -sum(LL_i)
+  return(LL)
+}
+
+init <- c(sd(whrs), mean(whrs), 0, 0, 0, 0)
+est.LnLik <- nlm(LnLik, init, hessian = TRUE)
+```
+
+Second way is to use the function `truncreg` in the library `truncreg`.
+We must specify the trucated point, using `point` and `direction` arguments.
+The `point` argument indicates where the outcome variable is truncated.
+If `direction = "left"`, the outcome variable is truncated from below at `point`, that is, `point < y`.
+On the other hand, if `direction = "right"`, the outcome variable is truncated from above at `point`, that is, `y < point`.
+
+```{r truncreg}
+library(truncreg)
+model <- whrs ~ kl6 + k618 + wa + we
+est.trunc <- truncreg(
+  model, data = dt, point = 0, direction = "left", method = "NR")
+se.trunc <- sqrt(diag(vcov(est.trunc)))
+```
+
+
+## Interpretations
+
+Table \ref{lfp} shows results of truncated regression estimated by two methods.
+As a comparison, we also show the OLS result in column (3).
+All specifications show that the number of preschool and school-aged children reduces the hours of work.
+The size of coefficient of the number of preschool and school-aged children become stronger
+when we use the truncated regression.
+Note that the size of coeffieient of `#.Preschool Children` estimated by `truncreg` is different from 
+the coefficient estimated by `nlm`.
+
+```{r tab_truncate, results = "asis"}
+ols <- lm(model, data = dt)
+coef.LnLik <- est.LnLik$estimate
+se.LnLik <- sqrt(diag(solve(est.LnLik$hessian)))
+names(coef.LnLik) <- c("sigma", names(coef(ols)))
+names(se.LnLik) <- c("sigma", names(coef(ols)))
+
+library(stargazer)
+stargazer(
+  ols, ols, ols,
+  column.labels = c("Truncated (truncreg)", "Truncated (nlm)", "OLS"),
+  coef = list(coef(est.trunc), coef.LnLik[2:6]),
+  se = list(se.trunc, se.LnLik[2:6]),
+  report = "vcs", keep.stat = c("n"),
+  covariate.labels = c(
+    "\\#.Preschool Children",
+    "\\#.School-aged Children",
+    "Age", "Education Years"
+  ),
+  add.lines = list(
+    c("Estimated Sigma", 
+      round(coef(est.trunc)[6], 3), round(coef.LnLik[1], 3)),
+    c("Log-Likelihood", 
+      round(est.trunc$logLik, 3), round(-est.LnLik$minimum, 3))
+  ),
+  omit.table.layout = "n", table.placement = "t",
+  title = "Truncated Regression: Labor Market Participation of Married Women",
+  label = "lfp",
+  type = "latex", header = FALSE  
+)
+```
+
+\clearpage
+
+# Empirical Application of Tobit Regression: Labor Participation of Married Women (2)
+
+## Background and Data
+
+We continue to investigate the previous research question.
+We use dataset coming from same source as the previous one.
+Unlike the previous dataset,
+ we now observe married woment who do not participate in the labor market (`whrs = 0`).
+Additionally, we introduce the new variable:
+
+- `lfp`: a dummy variable taking 1 if observed unit works.
+
+The previous dataset contains observations with `lfp = 1`.
+In this application, we use observations with `lfp = 0` to estimate the tobit model.
+
+```{r labor2Data}
+dt <- read.csv(file = "./data/labor2.csv", header = TRUE,  sep = ",")
+summary(dt)
+```
+
+## Model
+
+Our dependent variable is censored from below at zero.
+The censored data is caused by the corner solution problem.
+Married women chooses zero labor time 
+if, without any constraint, their optimal labor time is negative.
+In this case, we should use the tobit model.
+The tobit model is 
+
+\begin{equation*}
+  y_i = 
+  \begin{cases}
+    \mathbf{x}_i \beta + u_i &\mathrm{if}\:\: y_i > a  \\
+    a                        &\mathrm{otherwise}
+  \end{cases},
+\end{equation*}
+where $E(u_i) = 0$ and $\mathrm{Var}(u_i) = 0$.
+In this application, we set $a = 0$.
+
+Using this model, the probability of $y_i$ conditional on $x_i$ is defined by 
+
+\begin{equation*}
+  p_{\beta, \sigma^2}(y_i | x_i) = \mathbb{P}(y_i \le 0)^{1[y_i = 0]} f(y_i | \mathbf{x}_i)^{1 - 1[y_i = 0]}
+\end{equation*}
+where $f(y_i|x_i)$ is the probability density function conditional on $\mathbf{x}_i$,
+$1[y_i = 0]$ is an indicator function returing 1 if $y_i = 0$.
+Now, we assume the distribution $u_i | \mathbf{x}_i \sim N(0, \sigma^2)$.
+Then, we can reformulate $\mathbb{P}(y_i \le 0)$ as follows:
+
+\begin{equation*}
+  \mathbb{P}(y_i \le 0) 
+  = \mathbb{P}(-\mathbf{x}_i \beta \le u_i) 
+  = \Phi \left( -\frac{\mathbf{x}_i \beta}{\sigma} \right)  
+  = 1 - \Phi \left( \frac{\mathbf{x}_i \beta}{\sigma} \right),
+\end{equation*}
+where $\Phi(\cdot)$ is the cumulative distribution function of the stadnard normal distribution.
+Note that the last equatility comes from symmetric property of the standard normal distribution.
+Moreover, the density function $f$ is reformulated as follows:
+
+\begin{equation*}
+  f(y_i | \mathbf{x}_i) = \frac{1}{\sigma} \phi \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right).
+\end{equation*}
+
+Assuming iid sample, we obtain the join probability function as follows:
+
+\begin{equation*}
+  p_{\beta, \sigma^2}((y_i | x_i), i = 1, \ldots, n) 
+  = \prod_{i=1}^n \left(1 - \Phi \left( \frac{\mathbf{x}_i \beta}{\sigma} \right) \right)^{1[y_i = 0]} 
+  \left( \frac{1}{\sigma} \phi \left( \frac{y_i - \mathbf{x}_i \beta}{\sigma} \right) \right)^{1 - 1[y_i = 0]}.
+\end{equation*}
+
+We estimate $\log p_{\beta, \sigma^2}((y_i | x_i), i = 1, \ldots, n)$, using the maximum likelihood method.
+In `R`, there are two ways to implement the tobit regression.
+First way is to define the log-likelihood function directly and minimize its function by `nlm` function.
+We need to give intial values in argument of this function.
+To set initial values, we assume coefficients of explanatory variables are zero.
+Then, we obtain $y_i | \mathbf{x}_i \sim N(\beta_1, \sigma^2)$
+where $\beta_1$ is intercept of regression equation.
+Thus, the initial value of $\sigma$, `b[1]` is the standard deviation of `whrs`,
+and the initial value of $\beta_1$, `b[2]` is the mean of `whrs`.
+
+```{r tobitMLE}
+whrs <- dt$whrs
+kl6 <- dt$kl6; k618 <- dt$k618
+wa <- dt$wa; we <- dt$we
+
+LnLik <- function(b) {
+  sigma <- b[1]
+  xb <- b[2] + b[3]*kl6 + b[4]*k618 + b[5]*wa + b[6]*we
+  Ia <- ifelse(whrs == 0, 1, 0)
+  F0 <- 1 - pnorm(xb/sigma)
+  fa <- dnorm((whrs - xb)/sigma)/sigma
+  LL_i <- Ia * log(F0) + (1 - Ia) * log(fa)
+  LL <- -sum(LL_i)
+  return(LL)
+}
+
+init <- c(sd(whrs), mean(whrs), 0, 0, 0, 0)
+est.LnLik <- nlm(LnLik, init, hessian = TRUE)
+coef.tobitNLM <- est.LnLik$estimate
+se.tobitNLM <- sqrt(diag(solve(est.LnLik$hessian)))
+```
+
+
+Second way is to use the function `vglm` in the library `VGAM`.
+First, we need to declare the tobit distribution (`tobit`), using the `family` augment.
+The `tobit` function needs the censored point (the value of $a$) in arguments `Lower` and `Upper`.
+When you specify `Lower`, the observed outcome is left-censored.
+On the other hand, when you specify `Upper`, the observed outcome is right-censored.
+In this application, we set `Lower = 0`.
+
+```{r tobit}
+library(VGAM)
+model <- whrs ~ kl6 + k618 + wa + we
+tobitVGAM <- vglm(model, family = VGAM::tobit(Lower = 0), data = dt)
+coef.tobitVGAM <- coef(tobitVGAM)
+coef.tobitVGAM[2] <- exp(coef.tobitVGAM[2])
+se.tobitVGAM <- sqrt(diag(vcov(tobitVGAM)))[-2]
+```
+
+
+## Interpretations
+
+Table \ref{lfp_tobit} shows results of tobit regression estimated by two methods.
+As a comparison, we also show the OLS result in column (3).
+Although all specifications show the same sign of coefficients,
+size of coefficients of censored regression becomes stronger than of OLSE.
+As with the truncated regression,
+the number of preschool and school-aged children reduces the hours of work.
+Unlike the truncated regression,
+the relationship between married women's characteristics and labor participation is statistically significant.
+For example, high educated women increases labor time.
+
+```{r output_tobit, results = "asis"}
+ols <- lm(whrs ~ kl6 + k618 + wa + we, data =dt)
+names(coef.tobitNLM) <- c("sigma", names(coef(ols)))
+names(se.tobitNLM) <- c("sigma", names(coef(ols)))
+names(coef.tobitVGAM) <- c(names(coef(ols))[1], "sigma", names(coef(ols))[-1])
+names(se.tobitVGAM) <- names(coef(ols))
+
+stargazer(
+  ols, ols, ols,
+  column.labels = c("Tobit (vglm)", "Tobit (nlm)", "OLS"),
+  coef = list(coef.tobitVGAM[-2], coef.tobitNLM[-1]),
+  se = list(se.tobitVGAM, se.tobitNLM[-1]),
+  report = "vcs", keep.stat = c("n"),
+  covariate.labels = c(
+    "\\#.Preschool Children",
+    "\\#.School-aged Children",
+    "Age", "Education Years"
+  ),
+  add.lines = list(
+    c("Estimated Sigma", 
+      round(coef.tobitVGAM[2], 3), round(coef.tobitNLM[1], 3)),
+    c("Log-Likelihood", 
+      round(logLik(tobitVGAM), 3), round(-est.LnLik$minimum, 3))
+  ),
+  omit.table.layout = "n", table.placement = "t",
+  title = "Tobit Regression: Labor Market Participation of Married Women",
+  label = "lfp_tobit",
+  type = "latex", header = FALSE  
+)
+```
+
+\clearpage
+
+# Empirical Application of Poisson Regression: Demand of Recreation
+
+## Background and Data
+
+The Poisson distribution is used for drawing purchasing behavior.
+Especially, the parameter $\lambda$ means that preference for goods because 
+the expectation of frequency of purchasing, $E(X)$, is equal to $\lambda$ (we omit proof here).
+For example, Tsuyoshi Morioka, a famous marketer contributing the v-shaped recovery of Universal Studio Japan,
+insists that marketers try to increase the parameter $\lambda$. 
+
+In this application, using cross-section data about recreational boating trips to Lake Somerville, Texas, in 1980,
+we investigates who has a high preference for this area.
+We use the built-in dataset called `RecreationDemand` in the library `AER`.
+This dataset is based on a survey administered to 2,000 registered leisure boat owners in 23 counties in eastern Texas.
+We use following four variables:
+
+- `trips`: Number of recreational boating trips.
+- `income`: Annual household income of the respondent (in 1,000 USD).
+- `ski`: Dummy variable taking 1 if the individual was engaged in water-skiing at the lake
+- `userfee`: Dummy variable taking 1 if the individual payed an annual user fee at Lake Somerville?
+
+```{r RecreationDemandData}
+library(AER)
+data("RecreationDemand")
+summary(RecreationDemand)
+```
+
+## Model
+
+Let $y_i$ be the number of recreational boating trips.
+We assume that this variable follows the Poisson distribution conditional co covariates $\mathbf{x}_i$.
+That is,
+
+\begin{equation*}
+  p_{\beta}(y_i | \mathbf{x}_i) = \frac{\exp(-\lambda_i) \lambda_i^{y_i}}{y_i !},
+\end{equation*}
+where $\lambda_i = \exp(\mathbf{x}_i \beta)$.
+Importantly, $\lambda_i$ represents the preference for boating trips because
+
+\begin{equation*}
+  E[y_i | \mathbf{x}_i] = \lambda_i = \exp(\mathbf{x}_i \beta).
+\end{equation*}
+
+Assuming iid sample, the joint density function is defined by 
+
+\begin{equation*}
+  p_{\beta}((y_i|\mathbf{x}_i), i = 1, \ldots, n) = \prod_{i=1}^n \frac{\exp(-\lambda_i) \lambda_i^{y_i}}{y_i !}.
+\end{equation*}
+Thus, the log-likelihood function is 
+
+\begin{equation*}
+  M_n(\beta) 
+  = \sum_{i=1}^n (-\lambda_i + y_i \log \lambda_i - \log y_i !)  
+  = \sum_{i=1}^n (- \exp(\mathbf{x}_i \beta) + y_i \mathbf{x}_i \beta - \log y_i !).
+\end{equation*}
+
+Since the first-order condition (orthogonality condition) is non-linear with respect to $\beta$,
+we apply the Newton-Raphson method to obtain MLE.
+In `R`, there are two way to implement the Poisson regression.
+First way is to define the log-likelihood function directly and minimize its function by `nlm` function.
+We need to give intial values in argument of this function.
+To set initial values, we assume that coefficients of explanatory variables are zero.
+Then, we have $E[y_i | \mathbf{x}_i] = \exp(\beta_1) = E[y_i]$ where $\beta_1$ is intercept of regression equation.
+Thus, the initial value of $\beta_1$, `b[1]` is $\log E[y_i]$.
+We replace the expectation of $y_i$ by the mathematical mean of $y_i$.
+
+```{r PoissonMLE}
+trips <- RecreationDemand$trips; income <- RecreationDemand$income
+ski <- as.integer(RecreationDemand$ski) - 1 
+userfee <- as.integer(RecreationDemand$userfee) - 1
+
+LnLik <- function(b) {
+  xb <- b[1] + b[2]*income + b[3]*ski + b[4]*userfee
+  LL_i <- -exp(xb) + trips*xb - log(gamma(trips+1))
+  LL <- -sum(LL_i)
+  return(LL)
+}
+
+init <- c(log(mean(trips)), 0, 0, 0)
+poissonMLE <- nlm(LnLik, init, hessian = TRUE)
+coef.poissonMLE <- poissonMLE$estimate
+se.poissonMLE <- sqrt(diag(solve(poissonMLE$hessian)))
+logLik.poissonMLE <- -poissonMLE$minimum
+```
+
+The second way is to use `glm` function.
+To implement this function, we need to specify the Poisson distribution, `poisson()` in the `family` augment.
+We can obtain the value of log-likelihood function, using the `logLik` function.
+
+```{r PoissonGLM}
+model <- trips ~ income + ski + userfee
+poissonGLM <- glm(model, family = poisson(), data = RecreationDemand)
+logLik.poissonGLM <- as.numeric(logLik(poissonGLM))
+```
+
+## Interpretations
+
+Table \ref{recreation} shows results of the Poisson regression estimated by two methods, `nlm` and `glm`.
+As a comparison, we also show the result of OLS estimation.
+Clearly, the `nlm` methods (column 1) returns quite similar results to the `glm` method (column 2).
+Alotough the size of OLSE is farther away from zero than coefficients of the Poisson regression,
+the sign of OLSE is same as coefficients of the Poisson regression.
+Surprisingly, we obtain the negative relationship between annual income and preference for boating trips.
+This implies that high-earners are less likely to go to Lake Somerville.
+
+```{r tab_PoissonReg, results = "asis"}
+names(coef.poissonMLE) <- names(coef(poissonGLM))
+names(se.poissonMLE) <- names(coef(poissonGLM))
+ols <- lm(model, data = RecreationDemand)
+
+stargazer(
+  poissonGLM, poissonGLM, ols,
+  coef = list(coef.poissonMLE),
+  se = list(se.poissonMLE),
+  report = "vcs", keep.stat = c("n"),
+  covariate.labels = c(
+    "Income",
+    "1 = Playing water-skiing",
+    "1 = Paying annual fee"
+  ),
+  add.lines = list(
+    c("Method", "nlm", "glm", ""),
+    c("Log-Likelihood", 
+      round(logLik.poissonMLE, 3), round(logLik.poissonGLM, 3), "")
+  ),
+  omit.table.layout = "n", table.placement = "t",
+  title = "Poisson Regression: Recreation Demand",
+  label = "recreation", 
+  type = "latex", header = FALSE  
+)
+```
