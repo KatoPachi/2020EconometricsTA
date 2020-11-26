@@ -24,7 +24,8 @@ est.LnLik <- nlm(LnLik, init, hessian = TRUE)
 ## ----truncreg-----------------------------------------------------------------
 library(truncreg)
 model <- whrs ~ kl6 + k618 + wa + we
-est.trunc <- truncreg(model, data = dt, point = 0, direction = "left")
+est.trunc <- truncreg(
+  model, data = dt, point = 0, direction = "left", method = "NR")
 se.trunc <- sqrt(diag(vcov(est.trunc)))
 
 
@@ -90,7 +91,7 @@ se.tobitNLM <- sqrt(diag(solve(est.LnLik$hessian)))
 ## ----tobit--------------------------------------------------------------------
 library(VGAM)
 model <- whrs ~ kl6 + k618 + wa + we
-tobitVGAM <- vglm(model, family = tobit(Lower = 0), data = dt)
+tobitVGAM <- vglm(model, family = VGAM::tobit(Lower = 0), data = dt)
 coef.tobitVGAM <- coef(tobitVGAM)
 coef.tobitVGAM[2] <- exp(coef.tobitVGAM[2])
 se.tobitVGAM <- sqrt(diag(vcov(tobitVGAM)))[-2]
