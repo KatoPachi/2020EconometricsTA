@@ -261,18 +261,21 @@ values are not unbised estimator.
 \end{Shaded}
 
 Second way is to use the function \texttt{truncreg} in the library
-\texttt{truncreg}. We must specify the trucated point, using arguments
-\texttt{point} and \texttt{direction}. If \texttt{direction\ =\ "left"},
-the outcome variable is truncated from below at \texttt{point}, that is,
-\texttt{point\ \textless{}\ y}. On the other hand, if
-\texttt{direction\ =\ "right"}, the outcome variable is truncated from
-above at \texttt{point}, that is, \texttt{y\ \textless{}\ point}.
+\texttt{truncreg}. We must specify the trucated point, using
+\texttt{point} and \texttt{direction} arguments. The \texttt{point}
+argument indicates where the outcome variable is truncated. If
+\texttt{direction\ =\ "left"}, the outcome variable is truncated from
+below at \texttt{point}, that is, \texttt{point\ \textless{}\ y}. On the
+other hand, if \texttt{direction\ =\ "right"}, the outcome variable is
+truncated from above at \texttt{point}, that is,
+\texttt{y\ \textless{}\ point}.
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \KeywordTok{library}\NormalTok{(truncreg)}
 \NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{whrs }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{we}
-\NormalTok{est.trunc \textless{}{-}}\StringTok{ }\KeywordTok{truncreg}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{point =} \DecValTok{0}\NormalTok{, }\DataTypeTok{direction =} \StringTok{"left"}\NormalTok{)}
+\NormalTok{est.trunc \textless{}{-}}\StringTok{ }\KeywordTok{truncreg}\NormalTok{(}
+\NormalTok{  model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{point =} \DecValTok{0}\NormalTok{, }\DataTypeTok{direction =} \StringTok{"left"}\NormalTok{, }\DataTypeTok{method =} \StringTok{"NR"}\NormalTok{)}
 \NormalTok{se.trunc \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{vcov}\NormalTok{(est.trunc)))}
 \end{Highlighting}
 \end{Shaded}
@@ -335,29 +338,31 @@ different from the coefficient estimated by \texttt{nlm}.
  & Truncated (truncreg) & Truncated (nlm) & OLS \\ 
 \\[-1.8ex] & (1) & (2) & (3)\\ 
 \hline \\[-1.8ex] 
- \#.Preschool Children & $-$456.785 & $-$803.032 & $-$421.482 \\ 
-  & (266.367) & (252.803) & (167.973) \\ 
+ \#.Preschool Children & $-$803.004 & $-$803.032 & $-$421.482 \\ 
+  & (321.361) & (252.803) & (167.973) \\ 
   & & & \\ 
- \#.School-aged Children & $-$153.347 & $-$172.875 & $-$104.457 \\ 
-  & (81.780) & (100.590) & (54.186) \\ 
+ \#.School-aged Children & $-$172.875 & $-$172.875 & $-$104.457 \\ 
+  & (88.729) & (100.590) & (54.186) \\ 
   & & & \\ 
- Age & $-$5.379 & $-$8.821 & $-$4.785 \\ 
-  & (13.492) & (14.646) & (9.691) \\ 
+ Age & $-$8.821 & $-$8.821 & $-$4.785 \\ 
+  & (14.368) & (14.646) & (9.691) \\ 
   & & & \\ 
- Education Years & $-$0.092 & 16.529 & 9.353 \\ 
-  & (43.702) & (46.430) & (31.238) \\ 
+ Education Years & 16.529 & 16.529 & 9.353 \\ 
+  & (46.504) & (46.430) & (31.238) \\ 
   & & & \\ 
- Constant & 1,624.584 & 1,586.228 & 1,629.817 \\ 
-  & (857.730) & (932.878) & (615.130) \\ 
+ Constant & 1,586.260 & 1,586.228 & 1,629.817 \\ 
+  & (912.354) & (932.878) & (615.130) \\ 
   & & & \\ 
 \hline \\[-1.8ex] 
-Estimated Sigma & 941.464 & 983.736 &  \\ 
-Log-Likelihood & -1201.698 & -1200.916 &  \\ 
+Estimated Sigma & 983.726 & 983.736 &  \\ 
+Log-Likelihood & -1200.916 & -1200.916 &  \\ 
 Observations & 150 & 150 & 150 \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular} 
 \end{table}
+
+\clearpage
 
 \hypertarget{empirical-application-of-tobit-regression-labor-participation-of-married-women-2}{%
 \section{Empirical Application of Tobit Regression: Labor Participation
@@ -509,7 +514,7 @@ application, we set \texttt{Lower\ =\ 0}.
 \begin{Highlighting}[]
 \KeywordTok{library}\NormalTok{(VGAM)}
 \NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{whrs }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{kl6 }\OperatorTok{+}\StringTok{ }\NormalTok{k618 }\OperatorTok{+}\StringTok{ }\NormalTok{wa }\OperatorTok{+}\StringTok{ }\NormalTok{we}
-\NormalTok{tobitVGAM \textless{}{-}}\StringTok{ }\KeywordTok{vglm}\NormalTok{(model, }\DataTypeTok{family =} \KeywordTok{tobit}\NormalTok{(}\DataTypeTok{Lower =} \DecValTok{0}\NormalTok{), }\DataTypeTok{data =}\NormalTok{ dt)}
+\NormalTok{tobitVGAM \textless{}{-}}\StringTok{ }\KeywordTok{vglm}\NormalTok{(model, }\DataTypeTok{family =}\NormalTok{ VGAM}\OperatorTok{::}\KeywordTok{tobit}\NormalTok{(}\DataTypeTok{Lower =} \DecValTok{0}\NormalTok{), }\DataTypeTok{data =}\NormalTok{ dt)}
 \NormalTok{coef.tobitVGAM \textless{}{-}}\StringTok{ }\KeywordTok{coef}\NormalTok{(tobitVGAM)}
 \NormalTok{coef.tobitVGAM[}\DecValTok{2}\NormalTok{] \textless{}{-}}\StringTok{ }\KeywordTok{exp}\NormalTok{(coef.tobitVGAM[}\DecValTok{2}\NormalTok{])}
 \NormalTok{se.tobitVGAM \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(}\KeywordTok{vcov}\NormalTok{(tobitVGAM)))[}\OperatorTok{{-}}\DecValTok{2}\NormalTok{]}
@@ -597,6 +602,8 @@ Observations & 250 & 250 & 250 \\
 \hline \\[-1.8ex] 
 \end{tabular} 
 \end{table}
+
+\clearpage
 
 \hypertarget{empirical-application-of-poisson-regression-demand-of-recreation}{%
 \section{Empirical Application of Poisson Regression: Demand of
