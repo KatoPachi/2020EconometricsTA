@@ -31,3 +31,30 @@ knitr::opts_chunk$set(
 knitr::opts_knit$set(root.dir = "C:/Users/katoo/Desktop/2020EconometricsTA/R")
 ```
 
+
+# Empirical Application of Panel Data Model: Earnings Equation
+
+## Backgruond
+
+A researcher wants to estimate the effect of full-time work experience on wages.
+He uses a *balanced* panel of 595 individuals from 1976 to 1982, taken from the Panel Study of Income Dynamics (PSID).
+The *balanced* panel data means that we can observe all individuals every year.
+
+```{r data}
+dt <- read.csv("./data/wages.csv")
+head(dt, 14)
+```
+
+The variable `id` and `time` indicate individual and time indexs.
+We use these two variables to apply panel data models.
+Additionally, we use the following variables:
+
+- `exp`: years of full-time work experience
+- `sex`: an indicator of gender
+- `ed`: years of education
+- `lwage`: logarithm of wage
+
+```{r summary}
+dt <- dt[,c("id", "time", "exp", "sex", "ed", "lwage")]
+summary(dt)
+```
