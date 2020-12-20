@@ -3,7 +3,7 @@
 #'
 #+ library and wd
 library(rmarkdown)
-Sys.setenv(RSTUDIO_PANDOC = "C:/Program Files/Pandoc")
+Sys.setenv(RSTUDIO_PANDOC = "C:/Users/katoo/AppData/Local/Pandoc")
 options(repo = "https://cran.rstudio.com/")
 
 #' from Rmd to pdf

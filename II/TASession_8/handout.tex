@@ -6,13 +6,12 @@
   12pt,
 ]{article}
 \usepackage{lmodern}
-\usepackage{amsmath}
+\usepackage{amssymb,amsmath}
 \usepackage{ifxetex,ifluatex}
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
   \usepackage{textcomp} % provide euro and other symbols
-  \usepackage{amssymb}
 \else % if luatex or xetex
   \usepackage{unicode-math}
   \defaultfontfeatures{Scale=MatchLowercase}
@@ -84,6 +83,15 @@
 \newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
 \newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
 \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs}
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
 \usepackage{graphicx}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
@@ -136,8 +144,8 @@ every year.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{dt }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(}\StringTok{"./data/wages.csv"}\NormalTok{)}
-\FunctionTok{head}\NormalTok{(dt, }\DecValTok{14}\NormalTok{)}
+\NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"./data/wages.csv"}\NormalTok{)}
+\KeywordTok{head}\NormalTok{(dt, }\DecValTok{14}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -168,7 +176,9 @@ Additionally, we use the following variables:
 \item
   \texttt{exp}: years of full-time work experience
 \item
-  \texttt{sex}: an indicator of gender
+  \texttt{sqexp}: squared value of \texttt{exp}
+\item
+  \texttt{sex}: a dummy variable taking 1 if an individual is female
 \item
   \texttt{ed}: years of education
 \item
@@ -177,26 +187,266 @@ Additionally, we use the following variables:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{dt }\OtherTok{\textless{}{-}}\NormalTok{ dt[,}\FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{, }\StringTok{"exp"}\NormalTok{, }\StringTok{"sex"}\NormalTok{, }\StringTok{"ed"}\NormalTok{, }\StringTok{"lwage"}\NormalTok{)]}
-\FunctionTok{summary}\NormalTok{(dt)}
+\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{, }\StringTok{"exp"}\NormalTok{, }\StringTok{"sex"}\NormalTok{, }\StringTok{"ed"}\NormalTok{, }\StringTok{"lwage"}\NormalTok{)]}
+\NormalTok{dt}\OperatorTok{$}\NormalTok{sqexp \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{exp}\OperatorTok{\^{}}\DecValTok{2}
+\NormalTok{dt}\OperatorTok{$}\NormalTok{sex \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\KeywordTok{as.character}\NormalTok{(dt}\OperatorTok{$}\NormalTok{sex) }\OperatorTok{==}\StringTok{ "female"}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\KeywordTok{summary}\NormalTok{(dt)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-##        id           time        exp            sex             ed       
-##  Min.   :  1   Min.   :1   Min.   : 1.00   female: 469   Min.   : 4.00  
-##  1st Qu.:149   1st Qu.:2   1st Qu.:11.00   male  :3696   1st Qu.:12.00  
-##  Median :298   Median :4   Median :18.00                 Median :12.00  
-##  Mean   :298   Mean   :4   Mean   :19.85                 Mean   :12.85  
-##  3rd Qu.:447   3rd Qu.:6   3rd Qu.:29.00                 3rd Qu.:16.00  
-##  Max.   :595   Max.   :7   Max.   :51.00                 Max.   :17.00  
-##      lwage      
-##  Min.   :4.605  
-##  1st Qu.:6.395  
-##  Median :6.685  
-##  Mean   :6.676  
-##  3rd Qu.:6.953  
-##  Max.   :8.537
+##        id           time        exp             sex               ed       
+##  Min.   :  1   Min.   :1   Min.   : 1.00   Min.   :0.0000   Min.   : 4.00  
+##  1st Qu.:149   1st Qu.:2   1st Qu.:11.00   1st Qu.:0.0000   1st Qu.:12.00  
+##  Median :298   Median :4   Median :18.00   Median :0.0000   Median :12.00  
+##  Mean   :298   Mean   :4   Mean   :19.85   Mean   :0.1126   Mean   :12.85  
+##  3rd Qu.:447   3rd Qu.:6   3rd Qu.:29.00   3rd Qu.:0.0000   3rd Qu.:16.00  
+##  Max.   :595   Max.   :7   Max.   :51.00   Max.   :1.0000   Max.   :17.00  
+##      lwage           sqexp       
+##  Min.   :4.605   Min.   :   1.0  
+##  1st Qu.:6.395   1st Qu.: 121.0  
+##  Median :6.685   Median : 324.0  
+##  Mean   :6.676   Mean   : 514.4  
+##  3rd Qu.:6.953   3rd Qu.: 841.0  
+##  Max.   :8.537   Max.   :2601.0
+\end{verbatim}
+
+\hypertarget{pooled-ols}{%
+\subsection{Pooled OLS}\label{pooled-ols}}
+
+Using the OLS method, we want to estimate the following linear panel
+data model:
+
+\[
+  \text{lwage}_{it} = 
+  \alpha + \beta_1 \cdot \text{exp}_{it} +
+  \beta_2 \cdot \text{sqexp}_{it} +
+  \beta_3 \cdot \text{sex}_{it} + 
+  \beta_4 \cdot \text{ed}_{it} + u_{it}.
+\]
+
+We will discuss assumptions for applying the OLS method. Let
+\(\mathbf{X}_{it}\) be a \(1 \times K\) (stochastic) explanatory vector.
+This vector contains \texttt{exp}, \texttt{sqexp}, \texttt{sex} and
+\texttt{ed}. Let \(Y_{it}\) be a random variable of outcome, that is
+\texttt{lwage}. The balanced panel data is given by
+
+\begin{longtable}[]{@{}ccccc@{}}
+\toprule
+\begin{minipage}[b]{0.17\columnwidth}\centering
+\strut
+\end{minipage} & \begin{minipage}[b]{0.17\columnwidth}\centering
+\(i = 1\)\strut
+\end{minipage} & \begin{minipage}[b]{0.17\columnwidth}\centering
+\(i = 2\)\strut
+\end{minipage} & \begin{minipage}[b]{0.17\columnwidth}\centering
+\(\cdots\)\strut
+\end{minipage} & \begin{minipage}[b]{0.17\columnwidth}\centering
+\(i = n\)\strut
+\end{minipage}\tabularnewline
+\midrule
+\endhead
+\begin{minipage}[t]{0.17\columnwidth}\centering
+\(t = 1\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\((Y_{11}, \mathbf{X}_{11})\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\((Y_{21}, \mathbf{X}_{21})\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\(\cdots\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\((Y_{n1}, \mathbf{X}_{n1})\)\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.17\columnwidth}\centering
+\(t = 2\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\((Y_{12}, \mathbf{X}_{12})\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\((Y_{22}, \mathbf{X}_{22})\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\(\cdots\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\((Y_{n2}, \mathbf{X}_{n2})\)\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.17\columnwidth}\centering
+\(\vdots\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\(\vdots\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\(\vdots\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\(\cdots\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\(\vdots\)\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.17\columnwidth}\centering
+\(t = T\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\((Y_{1T}, \mathbf{X}_{1T})\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\((Y_{2T}, \mathbf{X}_{2T})\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\(\cdots\)\strut
+\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\((Y_{nT}, \mathbf{X}_{nT})\)\strut
+\end{minipage}\tabularnewline
+\bottomrule
+\end{longtable}
+
+Then, the linear panel data model can be rewritten as follows:
+
+\[
+  Y_{it} = \mathbf{X}_{it} \beta + u_{it}, \quad t = 1, \ldots, T, \quad i = 1, \ldots, n.
+\]
+
+Using notations
+\(\underline{\mathbf{X}}_i = (\mathbf{X}'_{i1}, \ldots, \mathbf{X}'_{iT})'\)
+and \(\underline{Y}_i = (Y_{i1}, \ldots, Y_{iT})'\), and
+\(\underline{u}_i = (u_{i1}, \ldots, u_{iT})'\), we can reformulate this
+model as follows:
+
+\[
+  \underline{Y}_i = \underline{\mathbf{X}}_i \beta + \underline{u}_i, \quad \forall i.
+\]
+
+Now, we assume
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \(E[\mathbf{X}'_{it}u_{it}] = 0\), \(\forall i, t\). This assumption,
+  called \emph{(contempraneous) exogneity assumption}, implies that
+  \(u_{it}\) and \(\mathbf{X}_{it}\) are orthogonal in the conditional
+  mean sence, \(E[u_{it} | \mathbf{X}_{it}] = 0\). However, this
+  assumption does not imply \(u_{it}\) is uncorrelated with the
+  explanatory variables in all time periods (strictly exogeneity), that
+  is, \(E[u_{it} | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}] = 0\). This
+  assumption palces no restriction on the relationship between
+  \(\mathbf{X}_{is}\) and \(u_{it}\) for \(s\not=t\).
+\item
+  \(E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i] \succ 0\).
+\end{enumerate}
+
+Under these two assumptions, the true parameter can be identified by \[
+  \beta = E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i]^{-1} E[\underline{\mathbf{X}}'_i\underline{Y}_i].
+\] Hence, the OLSE (pooled OLSE) is given by \[
+  \hat{\beta} 
+  = \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{Y}_i \right)
+  = \left( \frac{1}{n} \sum_{i=1}^n \sum_{t=1}^T \mathbf{X}'_{it} \mathbf{X}_{it} \right)
+  \left( \frac{1}{n} \sum_{i=1}^n \sum_{t=1}^T \mathbf{X}'_{it} Y_{it} \right).
+\]
+
+The pooled OLS estimator is consistent and asymptotically normally
+distributed. \[
+  \sqrt{n}(\hat{\beta} - \beta) \sim N(0, A^{-1} B A^{-1}),
+\] where \(A = E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i]\)
+and
+\(B = E[\underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i]\).
+The consistent estimator of the asymptotic variance covariance matrix is
+given by \[
+  \hat{A}^{-1} \hat{B} \hat{A}^{-1} = 
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i \right)
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
+\] The standard errors caclulated by this matrix is called \emph{robust
+standard errors clustered by individuals}.
+
+In \texttt{R}, the pooled OLSE can be obtained by \texttt{lm} function.
+However, the \texttt{lm} function does not return the cluster-robust
+standard errors. Thus, you need to caclulate them by yourself. Here is a
+sample code.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# OLSE}
+\NormalTok{pool \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(lwage }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{exp }\OperatorTok{+}\StringTok{ }\NormalTok{sqexp }\OperatorTok{+}\StringTok{ }\NormalTok{sex }\OperatorTok{+}\StringTok{ }\NormalTok{ed, }\DataTypeTok{data =}\NormalTok{ dt)}
+
+\CommentTok{\# Clustered SE}
+\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(pool); uhat \textless{}{-}}\StringTok{ }\NormalTok{pool}\OperatorTok{$}\NormalTok{residuals}
+\NormalTok{uhatset \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{nrow =} \KeywordTok{nrow}\NormalTok{(X), }\DataTypeTok{ncol =} \KeywordTok{nrow}\NormalTok{(X))}
+
+\NormalTok{i\_from \textless{}{-}}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\DecValTok{1}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{max}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)) \{}
+\NormalTok{  x \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i]}
+\NormalTok{  usq \textless{}{-}}\StringTok{ }\NormalTok{uhat[x] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(uhat[x])}
+\NormalTok{  i\_to \textless{}{-}}\StringTok{ }\NormalTok{i\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{nrow}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
+\NormalTok{  j\_to \textless{}{-}}\StringTok{ }\NormalTok{j\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{ncol}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
+\NormalTok{  uhatset[i\_from}\OperatorTok{:}\NormalTok{i\_to, j\_from}\OperatorTok{:}\NormalTok{j\_to] \textless{}{-}}\StringTok{ }\NormalTok{usq}
+\NormalTok{  i\_from \textless{}{-}}\StringTok{ }\NormalTok{i\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\NormalTok{j\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+\NormalTok{\}}
+
+\NormalTok{Ahat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
+\NormalTok{Bhat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{uhatset }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
+\NormalTok{clust\_vcov \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Bhat }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat)}
+\NormalTok{clust\_se \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(clust\_vcov))}
+
+\KeywordTok{print}\NormalTok{(}\StringTok{"Pooled OLSE"}\NormalTok{); }\KeywordTok{coef}\NormalTok{(pool)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Pooled OLSE"
+\end{verbatim}
+
+\begin{verbatim}
+##   (Intercept)           exp         sqexp           sex            ed 
+##  5.2759322858  0.0427794655 -0.0007022517 -0.4305537695  0.0747976640
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"SE of pooled OLSE"}\NormalTok{); clust\_se}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "SE of pooled OLSE"
+\end{verbatim}
+
+\begin{verbatim}
+##  (Intercept)          exp        sqexp          sex           ed 
+## 0.0846130179 0.0047667140 0.0001103059 0.0339740598 0.0048139358
+\end{verbatim}
+
+Alternatively, using the \texttt{plm} function (the package
+\texttt{plm}) and the \texttt{coeftest} function (the package
+\texttt{lmtest}), you can obtain the asymptotic variance covariance
+matrix of pooled OLSE easily. The \texttt{plm} function provides the
+panel data model. When you want to estimate pooled OLS, you need to
+specify \texttt{model\ =\ "pooling"}. Moreover, you should specify
+individual and time index using \texttt{index} augment. This augment
+passes \texttt{index\ =\ c("individual\ index",\ "time\ index")}. After
+estimating the pooled OLS by the \texttt{plm} function, you must use the
+\texttt{coeftest} function to obtain the cluster-robust standard errors.
+To caclulate the clustered standard errors, you should use the
+\texttt{vcovHC} function in the \texttt{vcov} augment.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(plm)}
+\KeywordTok{library}\NormalTok{(lmtest)}
+\KeywordTok{library}\NormalTok{(sandwich)}
+\NormalTok{test \textless{}{-}}\StringTok{ }\KeywordTok{plm}\NormalTok{(}
+\NormalTok{  lwage }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{exp }\OperatorTok{+}\StringTok{ }\NormalTok{sqexp }\OperatorTok{+}\StringTok{ }\NormalTok{sex }\OperatorTok{+}\StringTok{ }\NormalTok{ed, }
+  \DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{model =} \StringTok{"pooling"}\NormalTok{, }\DataTypeTok{index =} \KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{))}
+\KeywordTok{coeftest}\NormalTok{(test, }\DataTypeTok{vcov =} \KeywordTok{vcovHC}\NormalTok{(test, }\DataTypeTok{type =} \StringTok{"HC0"}\NormalTok{, }\DataTypeTok{cluster =} \StringTok{"group"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## t test of coefficients:
+## 
+##                Estimate  Std. Error  t value  Pr(>|t|)    
+## (Intercept)  5.27593229  0.08461302  62.3537 < 2.2e-16 ***
+## exp          0.04277947  0.00476671   8.9746 < 2.2e-16 ***
+## sqexp       -0.00070225  0.00011031  -6.3664 2.145e-10 ***
+## sex         -0.43055377  0.03397406 -12.6730 < 2.2e-16 ***
+## ed           0.07479766  0.00481394  15.5377 < 2.2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 \end{verbatim}
 
 \end{document}

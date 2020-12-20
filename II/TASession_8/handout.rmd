@@ -50,11 +50,143 @@ We use these two variables to apply panel data models.
 Additionally, we use the following variables:
 
 - `exp`: years of full-time work experience
-- `sex`: an indicator of gender
+- `sqexp`: squared value of `exp`
+- `sex`: a dummy variable taking 1 if an individual is female
 - `ed`: years of education
 - `lwage`: logarithm of wage
 
 ```{r summary}
 dt <- dt[,c("id", "time", "exp", "sex", "ed", "lwage")]
+dt$sqexp <- dt$exp^2
+dt$sex <- ifelse(as.character(dt$sex) == "female", 1, 0)
 summary(dt)
+```
+
+## Pooled OLS
+
+Using the OLS method, 
+we want to estimate the following linear panel data model:
+
+$$
+  \text{lwage}_{it} = 
+  \alpha + \beta_1 \cdot \text{exp}_{it} +
+  \beta_2 \cdot \text{sqexp}_{it} +
+  \beta_3 \cdot \text{sex}_{it} + 
+  \beta_4 \cdot \text{ed}_{it} + u_{it}.
+$$
+
+We will discuss assumptions for applying the OLS method.
+Let $\mathbf{X}_{it}$ be a $1 \times K$ (stochastic) explanatory vector.
+This vector contains `exp`, `sqexp`, `sex` and `ed`.
+Let $Y_{it}$ be a random variable of outcome, that is `lwage`.
+The balanced panel data is given by
+
+| | $i = 1$ | $i = 2$ | $\cdots$ | $i = n$ |
+| :--: | :--: | :--: | :--: | :--: |
+| $t = 1$ | $(Y_{11}, \mathbf{X}_{11})$ | $(Y_{21}, \mathbf{X}_{21})$ | $\cdots$ | $(Y_{n1}, \mathbf{X}_{n1})$ |
+| $t = 2$ | $(Y_{12}, \mathbf{X}_{12})$ | $(Y_{22}, \mathbf{X}_{22})$ | $\cdots$ | $(Y_{n2}, \mathbf{X}_{n2})$ |
+| $\vdots$ | $\vdots$ | $\vdots$ | $\cdots$ | $\vdots$ |
+| $t = T$ | $(Y_{1T}, \mathbf{X}_{1T})$ | $(Y_{2T}, \mathbf{X}_{2T})$ | $\cdots$ | $(Y_{nT}, \mathbf{X}_{nT})$ |
+
+Then, the linear panel data model can be rewritten as follows:
+
+$$
+  Y_{it} = \mathbf{X}_{it} \beta + u_{it}, \quad t = 1, \ldots, T, \quad i = 1, \ldots, n.
+$$
+
+Using notations $\underline{\mathbf{X}}_i = (\mathbf{X}'_{i1}, \ldots, \mathbf{X}'_{iT})'$
+and $\underline{Y}_i = (Y_{i1}, \ldots, Y_{iT})'$, and $\underline{u}_i = (u_{i1}, \ldots, u_{iT})'$,
+we can reformulate this model as follows:
+
+$$
+  \underline{Y}_i = \underline{\mathbf{X}}_i \beta + \underline{u}_i, \quad \forall i.
+$$
+
+Now, we assume 
+
+1. $E[\mathbf{X}'_{it}u_{it}] = 0$, $\forall i, t$. This assumption, called *(contempraneous) exogneity assumption*, implies that $u_{it}$ and $\mathbf{X}_{it}$ are orthogonal in the conditional mean sence, $E[u_{it} | \mathbf{X}_{it}] = 0$. However, this assumption does not imply $u_{it}$ is uncorrelated with the explanatory variables in all time periods (strictly exogeneity), that is, $E[u_{it} | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}] = 0$. This assumption palces no restriction on the relationship between $\mathbf{X}_{is}$ and $u_{it}$ for $s\not=t$.
+1. $E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i] \succ 0$.
+
+Under these two assumptions,
+the true parameter can be identified by 
+$$
+  \beta = E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i]^{-1} E[\underline{\mathbf{X}}'_i\underline{Y}_i].
+$$
+Hence, the OLSE (pooled OLSE) is given by 
+$$
+  \hat{\beta} 
+  = \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{Y}_i \right)
+  = \left( \frac{1}{n} \sum_{i=1}^n \sum_{t=1}^T \mathbf{X}'_{it} \mathbf{X}_{it} \right)
+  \left( \frac{1}{n} \sum_{i=1}^n \sum_{t=1}^T \mathbf{X}'_{it} Y_{it} \right).
+$$
+
+The pooled OLS estimator is consistent and asymptotically normally distributed.
+$$
+  \sqrt{n}(\hat{\beta} - \beta) \sim N(0, A^{-1} B A^{-1}),
+$$
+where $A = E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i]$ 
+and $B = E[\underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i]$.
+The consistent estimator of the asymptotic variance covariance matrix is given by 
+$$
+  \hat{A}^{-1} \hat{B} \hat{A}^{-1} = 
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i \right)
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
+$$
+The standard errors caclulated by this matrix is called *robust standard errors clustered by individuals*.
+
+In `R`, the pooled OLSE can be obtained by `lm` function.
+However, the `lm` function does not return the cluster-robust standard errors.
+Thus, you need to caclulate them by yourself.
+Here is a sample code.
+
+```{r pooledOLS}
+# OLSE
+pool <- lm(lwage ~ exp + sqexp + sex + ed, data = dt)
+
+# Clustered SE
+X <- model.matrix(pool); uhat <- pool$residuals
+uhatset <- matrix(0, nrow = nrow(X), ncol = nrow(X))
+
+i_from <- 1; j_from <- 1
+for (i in 1:max(dt$id)) {
+  x <- as.numeric(rownames(dt))[dt$id == i]
+  usq <- uhat[x] %*% t(uhat[x])
+  i_to <- i_from + nrow(usq) - 1
+  j_to <- j_from + ncol(usq) - 1
+  uhatset[i_from:i_to, j_from:j_to] <- usq
+  i_from <- i_to + 1; j_from <- j_to + 1
+}
+
+Ahat <- t(X) %*% X
+Bhat <- t(X) %*% uhatset %*% X
+clust_vcov <- solve(Ahat) %*% Bhat %*% solve(Ahat)
+clust_se <- sqrt(diag(clust_vcov))
+
+print("Pooled OLSE"); coef(pool)
+print("SE of pooled OLSE"); clust_se
+```
+
+
+Alternatively, 
+using the `plm` function (the package `plm`) and the `coeftest` function (the package `lmtest`),
+you can obtain the asymptotic variance covariance matrix of pooled OLSE easily.
+The `plm` function provides the panel data model.
+When you want to estimate pooled OLS, you need to specify `model = "pooling"`.
+Moreover, you should specify individual and time index using `index` augment.
+This augment passes `index = c("individual index", "time index")`.
+After estimating the pooled OLS by the `plm` function,
+you must use the `coeftest` function to obtain the cluster-robust standard errors.
+To caclulate the clustered standard errors,
+you should use the `vcovHC` function in the `vcov` augment.
+
+```{r pooledOLS_plm}
+library(plm)
+library(lmtest)
+library(sandwich)
+test <- plm(
+  lwage ~ exp + sqexp + sex + ed, 
+  data = dt, model = "pooling", index = c("id", "time"))
+coeftest(test, vcov = vcovHC(test, type = "HC0", cluster = "group"))
 ```
