@@ -822,4 +822,55 @@ Observations & 4,165 & 4,165 & 4,165 & 4,165 \\
 \end{tabular} 
 \end{table}
 
+\hypertarget{hasuman-test}{%
+\subsection{Hasuman Test}\label{hasuman-test}}
+
+The Hausman test provides empirical evidence on choosing between FE and
+RE model. The null hypothesis of this test is \(\mathbf{X}_{it}\) and
+\(c_i\) are independent. If we can reject the null hypothesis, then the
+FE model is preferred. If we cannot reject the null hypothesis, then the
+RE model should be used.
+
+The test statistics is \[
+  \hat{H} = 
+  (\hat{\beta}_{RE} - \hat{\beta}_{FE})'
+  \{ Var(\hat{\beta}_{RE}) - Var(\hat{\beta}_{FE}) \}^{-1}
+  (\hat{\beta}_{RE} - \hat{\beta}_{FE}).
+\] The limiting distribution of this test statistics is
+\(\hat{H} \to \chi^2(K)\).
+
+In the \texttt{R} programming, the manual computation is very easy.
+Alternatively, the \texttt{phtest} function in the package \texttt{plm}
+provides the Hausman test. To use the \texttt{phtest}, we need to
+estimate the FE and RE model by the \texttt{plm} function.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{delta \textless{}{-}}\StringTok{ }\NormalTok{bre }\OperatorTok{{-}}\StringTok{ }\NormalTok{bfe}
+\NormalTok{diffv \textless{}{-}}\StringTok{ }\NormalTok{vcovre }\OperatorTok{{-}}\StringTok{ }\NormalTok{vcovfe}
+\NormalTok{H \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(delta) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(diffv) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{delta}
+\NormalTok{qtchi \textless{}{-}}\StringTok{ }\KeywordTok{qchisq}\NormalTok{(}\FloatTok{0.99}\NormalTok{, }\KeywordTok{nrow}\NormalTok{(delta))}
+\KeywordTok{paste}\NormalTok{(}\StringTok{"The test statistics of Hausman test is "}\NormalTok{, }\KeywordTok{round}\NormalTok{(H, }\DecValTok{3}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The test statistics of Hausman test is  3999.537"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{paste}\NormalTok{(}\StringTok{"The 1\% quantile value of chi{-}sq dist is"}\NormalTok{, }\KeywordTok{round}\NormalTok{(qtchi, }\DecValTok{3}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The 1% quantile value of chi-sq dist is 9.21"
+\end{verbatim}
+
+In this empirical application, we can reject the null hypothesis at 1\%
+significance level. This implies that we should use the FE model in this
+application beucase observed covariates and unobserved component are not
+independent.
+
 \end{document}
