@@ -666,26 +666,157 @@ effect of experience represents the percent change of wages. Thus, \[
 \] For example, wages increase by 9.812\% at a mathematical mean of
 labor experience (\texttt{exp}).
 
+\hypertarget{random-effect-model}{%
+\subsection{Random Effect Model}\label{random-effect-model}}
+
+Again, consider the unobserved effects model: \[
+  Y_{it} = \mathbf{X}_{it} \beta + c_i + u_{it}, \quad t = 1, \ldots, T, \quad i = 1, \ldots, n.
+\] The random effect model treats \(c_i\) as a random variable. Thus,
+the variable \(c_i\) is put into the error term. We reformulate the
+model as follows: \[
+  Y_{it} = \mathbf{X}_{it} \beta + v_{it},
+\] where \(v_{it} = c_i + u_{it}\). Using notations
+\(\underline{\mathbf{X}}_i = (\mathbf{X}'_{i1}, \ldots, \mathbf{X}'_{iT})'\)
+and \(\underline{Y}_i = (Y_{i1}, \ldots, Y_{iT})'\), and
+\(\underline{u}_i = (u_{i1}, \ldots, u_{iT})'\), we can reformulate this
+model as follows: \[
+  \underline{Y}_i = \underline{\mathbf{X}}_i \beta + \underline{v}_i,
+\] where \(\underline{v}_i = \iota c_i + \underline{u}_i\), and
+\(\iota = (1, \ldots, 1)'\) is \(T \times 1\) vector.
+
+To implement the RE model, we assume
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Strict exogeneity:
+  \(E[u_{it} | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = 0\).
+\item
+  Orthogonality between \(c_i\) and \(\mathbf{X}_{it}\):
+  \(E[c_i | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}] = 0\).
+\item
+  Full rank:
+  \(rank(E[\underline{\mathbf{X}}'_i \Omega^{-1} \underline{\mathbf{X}}_i]) = K\).
+\item
+  \(E[\underline{u}_i\underline{u}'_i | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = \sigma_u^2 I_T\),
+  and
+  \(E[c_i^2 | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}] = \sigma_c^2\).
+\end{enumerate}
+
+Using the FGLS method through the introduction of \(\Sigma\), we can
+obtain the FGLS-type RE estimator as follows: \[
+  \hat{\beta}_{RE} = 
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{Y}_i \right),
+\] where \[
+  \hat{\Omega} = \hat{\sigma}_u^2 I_T + \hat{\sigma}_c^2 \iota \iota' =
+  \begin{pmatrix}
+    \hat{\sigma}_c^2 + \hat{\sigma}_u^2 & \hat{\sigma}_c^2 & \cdots & \hat{\sigma}_c^2 \\
+    \hat{\sigma}_c^2 & \hat{\sigma}_c^2 + \hat{\sigma}_u^2 & \cdots & \hat{\sigma}_c^2 \\
+    \vdots & \vdots & \cdots & \vdots \\
+    \hat{\sigma}_c^2 & \hat{\sigma}_c^2 & \cdots & \hat{\sigma}_c^2 + \hat{\sigma}_u^2
+  \end{pmatrix}.
+\]
+
+The estimator \(\hat{\sigma}_u^2\) and \(\hat{\sigma}_c^2\) can be
+obtained by \[
+  \hat{\sigma}_u^2 = \hat{\sigma}_v^2 - \hat{\sigma}_c^2,
+\] \[
+  \hat{\sigma}_v^2 = \frac{1}{nT - K} \sum_{i=1}^n \sum_{t=1}^T \hat{v}_{it}^2,
+\] \[
+  \hat{\sigma}_c^2 = 
+  \frac{1}{nT(T-1)/2 - K} \sum_{i=1}^n \sum_{t=1}^{T-1} \sum_{s=t+1}^T \hat{v}_{it} \hat{v}_{is},
+\] \[
+  \hat{v}_{it} = Y_{it} - X_{it} \hat{\beta}_{OLS}.
+\]
+
+In the \texttt{R} programming, the \texttt{plm} function provides the
+random effect model. However, the procedure is not the feasible GLS
+method, but the OLS method on a dataset in which all variables are
+subject to quasi-demeaning. The two procedures generate the same RE
+estimator. Moreover, the idiosyncratic error and the unobserved
+component are obtained by differenct approach. To implement the RE model
+described above, we compute manually.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Setup}
+\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(model, dt)}
+\NormalTok{y \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{lwage}
+\NormalTok{k \textless{}{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X)}
+\NormalTok{N \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id))}
+\NormalTok{T \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{time))}
+
+\CommentTok{\# estimator of Omega}
+\NormalTok{pols \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, dt)}
+\NormalTok{vhat \textless{}{-}}\StringTok{ }\NormalTok{pols}\OperatorTok{$}\NormalTok{residuals}
+\NormalTok{sigmav \textless{}{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(vhat}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)}\OperatorTok{/}\NormalTok{(N}\OperatorTok{*}\NormalTok{T }\OperatorTok{{-}}\StringTok{ }\NormalTok{k)}
+
+\NormalTok{sumuc \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{nrow =}\NormalTok{ N, }\DataTypeTok{ncol =}\NormalTok{ T}\DecValTok{{-}1}\NormalTok{)}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{N) \{}
+  \ControlFlowTok{for}\NormalTok{ (t }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{T}\DecValTok{{-}1}\NormalTok{) \{}
+\NormalTok{    it \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i }\OperatorTok{\&}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{time }\OperatorTok{==}\StringTok{ }\NormalTok{t]}
+\NormalTok{    is \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i }\OperatorTok{\&}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{time }\OperatorTok{\textgreater{}}\StringTok{ }\NormalTok{t]}
+\NormalTok{    sumuc[i,t] \textless{}{-}}\StringTok{ }\NormalTok{vhat[it] }\OperatorTok{*}\StringTok{ }\KeywordTok{sum}\NormalTok{(vhat[is])}
+\NormalTok{  \}}
+\NormalTok{\}}
+\NormalTok{sigmac \textless{}{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(}\KeywordTok{colSums}\NormalTok{(sumuc))}\OperatorTok{/}\NormalTok{((N}\OperatorTok{*}\NormalTok{T}\OperatorTok{*}\NormalTok{(T}\DecValTok{{-}1}\NormalTok{))}\OperatorTok{/}\DecValTok{2}\OperatorTok{{-}}\NormalTok{k)}
+\NormalTok{sigmau \textless{}{-}}\StringTok{ }\NormalTok{sigmav }\OperatorTok{{-}}\StringTok{ }\NormalTok{sigmac}
+
+\NormalTok{i \textless{}{-}}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, T)}
+\NormalTok{Omega \textless{}{-}}\StringTok{ }\NormalTok{sigmau }\OperatorTok{*}\StringTok{ }\KeywordTok{diag}\NormalTok{(T) }\OperatorTok{+}\StringTok{ }\NormalTok{sigmac }\OperatorTok{*}\StringTok{ }\NormalTok{i }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(i)}
+\NormalTok{kroOmega \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(N) }\OperatorTok{\%x\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(Omega)}
+
+\CommentTok{\# Random effect}
+\NormalTok{bre \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{y}
+\end{Highlighting}
+\end{Shaded}
+
+A consistent estimator of asymptotic variance of the RE estimator is
+given by \[
+  \hat{Avar}(\hat{\beta}_{RE}) = 
+  \left( \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}.
+\]
+
+In the \texttt{R} programming, the \texttt{plm} function returns
+standard errors calculated by variance-covariance matrix of OLS on a
+quasi-demeaned data. To obtain the FGLS-type standard errors, we
+compuate manually. The sample code is as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{vcovre \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X)}
+\NormalTok{sere \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(vcovre))}
+\end{Highlighting}
+\end{Shaded}
+
+The result is shown in the fourth column in Table \ref{pdm}. The partial
+effect of experience represents the percent change of wages. Thus, \[
+  (\text{\% Change of Wage}) = 39.5 - 2 \cdot 0.6 \cdot \text{exp}.
+\] For example, wages increase by 15.68\% at a mathematical mean of
+labor experience (\texttt{exp}).
+
 \begin{table}[t] \centering 
   \caption{Panel Data Model: Effect of Experience on Wages} 
   \label{pdm} 
-\begin{tabular}{@{\extracolsep{5pt}}lccc} 
+\begin{tabular}{@{\extracolsep{5pt}}lcccc} 
 \\[-1.8ex]\hline 
 \hline \\[-1.8ex] 
- & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
-\cline{2-4} 
-\\[-1.8ex] & \multicolumn{3}{c}{lwage} \\ 
- & Pooled OLS & FGLS & Fixed Effect \\ 
-\\[-1.8ex] & (1) & (2) & (3)\\ 
+ & \multicolumn{4}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-5} 
+\\[-1.8ex] & \multicolumn{4}{c}{lwage} \\ 
+ & Pooled OLS & FGLS & Fixed Effect & Random Effect \\ 
+\\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
 \hline \\[-1.8ex] 
- exp & 0.646 & 0.529 & 0.114 \\ 
-  & (0.011) & (0.010) & (0.002) \\ 
-  & & & \\ 
- sqexp & $-$0.013 & $-$0.009 & $-$0.0004 \\ 
-  & (0.0004) & (0.0004) & (0.0001) \\ 
-  & & & \\ 
+ exp & 0.646 & 0.529 & 0.114 & 0.395 \\ 
+  & (0.011) & (0.010) & (0.002) & (0.006) \\ 
+  & & & & \\ 
+ sqexp & $-$0.013 & $-$0.009 & $-$0.0004 & $-$0.006 \\ 
+  & (0.0004) & (0.0004) & (0.0001) & (0.0002) \\ 
+  & & & & \\ 
 \hline \\[-1.8ex] 
-Observations & 4,165 & 4,165 & 4,165 \\ 
+Observations & 4,165 & 4,165 & 4,165 & 4,165 \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular} 

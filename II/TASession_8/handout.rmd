@@ -510,14 +510,140 @@ $$
 $$
 For example, wages increase by 9.812\% at a mathematical mean of labor experience (`exp`).
 
+## Random Effect Model
+
+Again, consider the unobserved effects model:
+$$
+  Y_{it} = \mathbf{X}_{it} \beta + c_i + u_{it}, \quad t = 1, \ldots, T, \quad i = 1, \ldots, n.
+$$
+The random effect model treats $c_i$ as a random variable.
+Thus, the variable $c_i$ is put into the error term.
+We reformulate the model as follows:
+$$
+  Y_{it} = \mathbf{X}_{it} \beta + v_{it},
+$$
+where $v_{it} = c_i + u_{it}$.
+Using notations $\underline{\mathbf{X}}_i = (\mathbf{X}'_{i1}, \ldots, \mathbf{X}'_{iT})'$
+and $\underline{Y}_i = (Y_{i1}, \ldots, Y_{iT})'$, and $\underline{u}_i = (u_{i1}, \ldots, u_{iT})'$,
+we can reformulate this model as follows:
+$$
+  \underline{Y}_i = \underline{\mathbf{X}}_i \beta + \underline{v}_i,
+$$
+where $\underline{v}_i = \iota c_i + \underline{u}_i$, and 
+$\iota = (1, \ldots, 1)'$ is $T \times 1$ vector.
+
+To implement the RE model, we assume 
+
+1. Strict exogeneity: $E[u_{it} | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = 0$.
+1. Orthogonality between $c_i$ and $\mathbf{X}_{it}$: $E[c_i | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}] = 0$.
+1. Full rank: $rank(E[\underline{\mathbf{X}}'_i \Omega^{-1} \underline{\mathbf{X}}_i]) = K$.
+1. $E[\underline{u}_i\underline{u}'_i | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = \sigma_u^2 I_T$, and $E[c_i^2 | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}] = \sigma_c^2$.
+
+Using the FGLS method through the introduction of $\Sigma$, 
+we can obtain the FGLS-type RE estimator as follows:
+$$
+  \hat{\beta}_{RE} = 
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{Y}_i \right),
+$$
+where 
+$$
+  \hat{\Omega} = \hat{\sigma}_u^2 I_T + \hat{\sigma}_c^2 \iota \iota' =
+  \begin{pmatrix}
+    \hat{\sigma}_c^2 + \hat{\sigma}_u^2 & \hat{\sigma}_c^2 & \cdots & \hat{\sigma}_c^2 \\
+    \hat{\sigma}_c^2 & \hat{\sigma}_c^2 + \hat{\sigma}_u^2 & \cdots & \hat{\sigma}_c^2 \\
+    \vdots & \vdots & \cdots & \vdots \\
+    \hat{\sigma}_c^2 & \hat{\sigma}_c^2 & \cdots & \hat{\sigma}_c^2 + \hat{\sigma}_u^2
+  \end{pmatrix}.
+$$
+
+The estimator $\hat{\sigma}_u^2$ and $\hat{\sigma}_c^2$ can be obtained by 
+$$
+  \hat{\sigma}_u^2 = \hat{\sigma}_v^2 - \hat{\sigma}_c^2,
+$$
+$$
+  \hat{\sigma}_v^2 = \frac{1}{nT - K} \sum_{i=1}^n \sum_{t=1}^T \hat{v}_{it}^2,
+$$
+$$
+  \hat{\sigma}_c^2 = 
+  \frac{1}{nT(T-1)/2 - K} \sum_{i=1}^n \sum_{t=1}^{T-1} \sum_{s=t+1}^T \hat{v}_{it} \hat{v}_{is},
+$$
+$$
+  \hat{v}_{it} = Y_{it} - X_{it} \hat{\beta}_{OLS}.
+$$
+
+In the `R` programming,
+the `plm` function provides the random effect model.
+However, the procedure is not the feasible GLS method, 
+but the OLS method on a dataset in which all variables are subject to quasi-demeaning.
+The two procedures generate the same RE estimator.
+Moreover, the idiosyncratic error and the unobserved component are obtained by differenct approach.
+To implement the RE model described above, we compute manually.
+
+```{r FGLS-type RE estimator}
+# Setup
+X <- model.matrix(model, dt)
+y <- dt$lwage
+k <- ncol(X)
+N <- length(unique(dt$id))
+T <- length(unique(dt$time))
+
+# estimator of Omega
+pols <- lm(model, dt)
+vhat <- pols$residuals
+sigmav <- sum(vhat^2)/(N*T - k)
+
+sumuc <- matrix(0, nrow = N, ncol = T-1)
+for (i in 1:N) {
+  for (t in 1:T-1) {
+    it <- as.numeric(rownames(dt))[dt$id == i & dt$time == t]
+    is <- as.numeric(rownames(dt))[dt$id == i & dt$time > t]
+    sumuc[i,t] <- vhat[it] * sum(vhat[is])
+  }
+}
+sigmac <- sum(colSums(sumuc))/((N*T*(T-1))/2-k)
+sigmau <- sigmav - sigmac
+
+i <- rep(1, T)
+Omega <- sigmau * diag(T) + sigmac * i %*% t(i)
+kroOmega <- diag(N) %x% solve(Omega)
+
+# Random effect
+bre <- solve(t(X) %*% kroOmega %*% X) %*% t(X) %*% kroOmega %*% y
+```
+
+A consistent estimator of asymptotic variance of the RE estimator is given by 
+$$
+  \hat{Avar}(\hat{\beta}_{RE}) = 
+  \left( \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}.
+$$
+
+In the `R` programming, 
+the `plm` function returns standard errors 
+calculated by variance-covariance matrix of OLS on a quasi-demeaned data.
+To obtain the FGLS-type standard errors, we compuate manually.
+The sample code is as follows:
+
+```{r Inference of RE estimator}
+vcovre <- solve(t(X) %*% kroOmega %*% X)
+sere <- sqrt(diag(vcovre))
+```
+
+The result is shown in the fourth column in Table \ref{pdm}.
+The partial effect of experience represents the percent change of wages.
+Thus,
+$$
+  (\text{\% Change of Wage}) = 39.5 - 2 \cdot 0.6 \cdot \text{exp}.
+$$
+For example, wages increase by `r 39.5 - 2*0.6*19.85`\% at a mathematical mean of labor experience (`exp`).
 
 ```{r table, results = "asis", echo = FALSE}
 library(stargazer)
 stargazer(
-  bols1, bols1, bols1, #bols1, 
-  column.labels = c("Pooled OLS", "FGLS", "Fixed Effect"), #"Random Effect"),
-  coef = list(coef(bols1), bfgls, bfe), #bre),
-  se = list(seols, sefgls, sefe), #sere),
+  bols1, bols1, bols1, bols1, 
+  column.labels = c("Pooled OLS", "FGLS", "Fixed Effect", "Random Effect"),
+  coef = list(coef(bols1), bfgls, bfe, bre),
+  se = list(seols, sefgls, sefe, sere),
   keep.stat = c("n"), report = "vcs",
   omit.table.layout = "n", table.placement = "t",
   header = FALSE,
