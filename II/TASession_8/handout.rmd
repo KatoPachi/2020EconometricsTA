@@ -379,13 +379,145 @@ $$
 $$
 For example, wages increase by 17.17\% at a mathematical mean of labor experience (`exp`).
 
+## Fixed Effect Model
+
+To examine the effect of labor experience on wages,
+we introduce unobserved heterogeneity such as ability.
+The unobserved effects model is given by 
+$$
+  \text{lwage}_{it} = 
+  \beta_1 \cdot \text{exp}_{it} +
+  \beta_2 \cdot \text{sqexp}_{it} + 
+  c_i + u_{it},
+$$
+where $c_i$ is unobserved component which is constant over time, 
+$u_{it}$ is the idiosyncratic error term.
+The fixed effect model treats $c_i$ as a parameter to be estimated for each cross section unit $i$.
+
+We generalize the unobserved effects model as follows:
+$$
+  Y_{it} = \mathbf{X}_{it} \beta + c_i + u_{it}, \quad t = 1, \ldots, T, \quad i = 1, \ldots, n.
+$$
+Using notations $\underline{\mathbf{X}}_i = (\mathbf{X}'_{i1}, \ldots, \mathbf{X}'_{iT})'$
+and $\underline{Y}_i = (Y_{i1}, \ldots, Y_{iT})'$, and $\underline{u}_i = (u_{i1}, \ldots, u_{iT})'$,
+we can reformulate this model as follows:
+$$
+  \underline{Y}_i = \underline{\mathbf{X}}_i \beta + \iota c_i + \underline{u}_i, \quad \forall i,
+$$
+where $\iota = (1, \ldots, 1)'$ is $T \times 1$ vector.
+
+To implement the fixed effect model,
+we assume the following three assumptions:
+
+1. Strict exogeneity: $E[u_{it} | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = 0$.
+1. Full rank: $rank(\sum_t E[\ddot{\mathbf{X}}'_{it}\ddot{\mathbf{X}}_{it}]) = rank(E[\ddot{\underline{\mathbf{X}}}'_i\ddot{\underline{\mathbf{X}}}_i]) = K$ where $\ddot{\mathbf{X}}_{it} = \mathbf{X}_{it} - T^{-1}\sum_t \mathbf{X}_{it}$ is *time-demeaning matrix*.
+1. homoskedasticity: $E[\underline{u}_i \underline{u}'_i|\mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = \sigma^2_u I_T$.
+
+To obtain the FE estimator, we consider the within transformation first.
+Averaging the unobserved effects model for individual $i$ and time $t$ over time yields
+$$
+  \bar{Y}_i = \bar{\mathbf{X}}_i \beta + c_i + \bar{u}_i,
+$$
+where $\bar{Y}_i = T^{-1} \sum_t Y_{it}$, $\bar{\mathbf{X}}_i = T^{-1} \sum_t \mathbf{X}_{it}$,
+and $\bar{u}_i = T^{-1} \sum_t u_{it}$.
+Subtracting this equation from the original one for each t yields
+$$
+  Y_{it} - \bar{Y}_i = (\mathbf{X}_{it} - \bar{\mathbf{X}}_i) \beta + (u_{it} - \bar{u}_i)
+  \Leftrightarrow
+  \ddot{Y}_{it} = \ddot{\mathbf{X}}_{it} \beta + \ddot{u}_{it}.
+$$
+Note that $E[\ddot{u}_{it} | \ddot{\mathbf{X}}_{i1}, \ldots, \ddot{\mathbf{X}}_{iT}] = 0$ 
+under the first assumption.
+Using the $T$ system of equation, the within transformation is 
+$$
+  Q_T \underline{Y}_i = Q_T \underline{\mathbf{X}}_i \beta + Q_T \underline{u}_i
+  \Leftrightarrow
+  \ddot{\underline{Y}}_i = \ddot{\underline{\mathbf{X}}}_i \beta + \ddot{\underline{u}}_i.
+$$
+where $Q_T = I_T - \iota (\iota' \iota)^{-1} \iota$ and $Q_T \iota = 0$.
+Using the matrix notations, the within transformation is 
+$$
+  (I_n \otimes Q_t) Y = (I_n \otimes Q_t) X \beta + (I_n \otimes Q_t) u
+  \Leftrightarrow
+  \ddot{Y} = \ddot{X} \beta + \ddot{u}.
+$$
+
+The FE estimator is given by 
+$$
+  \hat{\beta}_{FE} = 
+  \left( \frac{1}{n} \sum_{i=1}^n \ddot{\underline{\mathbf{X}}}'_i 
+  \ddot{\underline{\mathbf{X}}}_i \right)^{-1}
+  \left( \frac{1}{n} \sum_{i=1}^n \ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{Y}}_i \right)
+  = (\ddot{X}' \ddot{X})^{-1}(\ddot{X}' \ddot{Y}).
+$$
+
+In the `R` programming,
+there are two ways to obtain the FE estimator.
+The first way is to caclulate by yourself.
+The second way is to use the `plm` function.
+When you use the `plm` function,
+you need to specify `model = "within"` to implement the FE model.
+
+```{r FE estimator}
+# Setup
+X <- model.matrix(model, dt); k <- ncol(X)
+y <- dt$lwage
+N <- length(unique(dt$id)); T <- length(unique(dt$time))
+
+# FE estimator
+i <- rep(1, T)
+Qt <- diag(T) - i %*% solve(t(i) %*% i) %*% t(i)
+Ydev <- diag(N) %x% Qt %*% y
+Xdev <- diag(N) %x% Qt %*% X
+bfe <- solve(t(Xdev) %*% Xdev) %*% t(Xdev) %*% Ydev
+
+# Awesome way !!!
+plmfe <- plm(model, data = dt, index = c("id", "time"), model = "within")
+```
+
+Under the third assumption, asymptotic distribution of the FE estimator is given by 
+$$
+  \sqrt{n}(\hat{\beta}_{FE} - \beta) 
+  \sim N(0, \sigma^2_u E[\ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{\mathbf{X}}}_i]).
+$$
+The consistent estimator of the asymptotic variance of the FE estimator is 
+$$
+  \hat{Avar}(\hat{\beta}_{FE}) =
+  \hat{\sigma}_u^2 
+  \left( \sum_{i=1}^n \ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{\mathbf{X}}}_i \right)^{-1} =
+  \hat{\sigma}_u^2 (\ddot{X}' \ddot{X})^{-1},
+$$
+where $\hat{\sigma}_u^2 = \frac{1}{n(T-1)-K} \sum_i \sum_t \hat{\ddot{u}}_{it}$,
+and $\hat{\ddot{u}}_{it} = \ddot{Y}_{it} - \ddot{\mathbf{X}}_{it} \hat{\beta}_{FE}$.
+
+In the `R` programming,
+the `plm` function also returns standard errors, $\hat{\sigma}_u^2 (\ddot{X}' \ddot{X})^{-1}$.
+Of course, you can compute the standard errors manually.
+The sample code is as follows:
+
+```{r Inference of FE estimator}
+uhat <- Ydev - Xdev %*% bfe
+sigmahat <- sum(uhat^2)/(N*(T-1)-k)
+vcovfe <- sigmahat * solve(t(Xdev) %*% Xdev)
+sefe <- sqrt(diag(vcovfe))
+```
+
+The result is shown in the third column in Table \ref{pdm}.
+The partial effect of experience represents the percent change of wages.
+Thus,
+$$
+  (\text{\% Change of Wage}) = 11.4 - 2 \cdot 0.04 \cdot \text{exp}.
+$$
+For example, wages increase by 9.812\% at a mathematical mean of labor experience (`exp`).
+
+
 ```{r table, results = "asis", echo = FALSE}
 library(stargazer)
 stargazer(
-  bols1, bols1, #bols1, bols1, 
-  column.labels = c("Pooled OLS", "FGLS"), #"Fixed Effect", "Random Effect"),
-  coef = list(coef(bols1), bfgls), #bfe, bre),
-  se = list(seols, sefgls), #sefe, sere),
+  bols1, bols1, bols1, #bols1, 
+  column.labels = c("Pooled OLS", "FGLS", "Fixed Effect"), #"Random Effect"),
+  coef = list(coef(bols1), bfgls, bfe), #bre),
+  se = list(seols, sefgls, sefe), #sere),
   keep.stat = c("n"), report = "vcs",
   omit.table.layout = "n", table.placement = "t",
   header = FALSE,

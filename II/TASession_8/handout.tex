@@ -527,26 +527,165 @@ effect of experience represents the percent change of wages. Thus, \[
 \] For example, wages increase by 17.17\% at a mathematical mean of
 labor experience (\texttt{exp}).
 
+\hypertarget{fixed-effect-model}{%
+\subsection{Fixed Effect Model}\label{fixed-effect-model}}
+
+To examine the effect of labor experience on wages, we introduce
+unobserved heterogeneity such as ability. The unobserved effects model
+is given by \[
+  \text{lwage}_{it} = 
+  \beta_1 \cdot \text{exp}_{it} +
+  \beta_2 \cdot \text{sqexp}_{it} + 
+  c_i + u_{it},
+\] where \(c_i\) is unobserved component which is constant over time,
+\(u_{it}\) is the idiosyncratic error term. The fixed effect model
+treats \(c_i\) as a parameter to be estimated for each cross section
+unit \(i\).
+
+We generalize the unobserved effects model as follows: \[
+  Y_{it} = \mathbf{X}_{it} \beta + c_i + u_{it}, \quad t = 1, \ldots, T, \quad i = 1, \ldots, n.
+\] Using notations
+\(\underline{\mathbf{X}}_i = (\mathbf{X}'_{i1}, \ldots, \mathbf{X}'_{iT})'\)
+and \(\underline{Y}_i = (Y_{i1}, \ldots, Y_{iT})'\), and
+\(\underline{u}_i = (u_{i1}, \ldots, u_{iT})'\), we can reformulate this
+model as follows: \[
+  \underline{Y}_i = \underline{\mathbf{X}}_i \beta + \iota c_i + \underline{u}_i, \quad \forall i,
+\] where \(\iota = (1, \ldots, 1)'\) is \(T \times 1\) vector.
+
+To implement the fixed effect model, we assume the following three
+assumptions:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Strict exogeneity:
+  \(E[u_{it} | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = 0\).
+\item
+  Full rank:
+  \(rank(\sum_t E[\ddot{\mathbf{X}}'_{it}\ddot{\mathbf{X}}_{it}]) = rank(E[\ddot{\underline{\mathbf{X}}}'_i\ddot{\underline{\mathbf{X}}}_i]) = K\)
+  where
+  \(\ddot{\mathbf{X}}_{it} = \mathbf{X}_{it} - T^{-1}\sum_t \mathbf{X}_{it}\)
+  is \emph{time-demeaning matrix}.
+\item
+  homoskedasticity:
+  \(E[\underline{u}_i \underline{u}'_i|\mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = \sigma^2_u I_T\).
+\end{enumerate}
+
+To obtain the FE estimator, we consider the within transformation first.
+Averaging the unobserved effects model for individual \(i\) and time
+\(t\) over time yields \[
+  \bar{Y}_i = \bar{\mathbf{X}}_i \beta + c_i + \bar{u}_i,
+\] where \(\bar{Y}_i = T^{-1} \sum_t Y_{it}\),
+\(\bar{\mathbf{X}}_i = T^{-1} \sum_t \mathbf{X}_{it}\), and
+\(\bar{u}_i = T^{-1} \sum_t u_{it}\). Subtracting this equation from the
+original one for each t yields \[
+  Y_{it} - \bar{Y}_i = (\mathbf{X}_{it} - \bar{\mathbf{X}}_i) \beta + (u_{it} - \bar{u}_i)
+  \Leftrightarrow
+  \ddot{Y}_{it} = \ddot{\mathbf{X}}_{it} \beta + \ddot{u}_{it}.
+\] Note that
+\(E[\ddot{u}_{it} | \ddot{\mathbf{X}}_{i1}, \ldots, \ddot{\mathbf{X}}_{iT}] = 0\)
+under the first assumption. Using the \(T\) system of equation, the
+within transformation is \[
+  Q_T \underline{Y}_i = Q_T \underline{\mathbf{X}}_i \beta + Q_T \underline{u}_i
+  \Leftrightarrow
+  \ddot{\underline{Y}}_i = \ddot{\underline{\mathbf{X}}}_i \beta + \ddot{\underline{u}}_i.
+\] where \(Q_T = I_T - \iota (\iota' \iota)^{-1} \iota\) and
+\(Q_T \iota = 0\). Using the matrix notations, the within transformation
+is \[
+  (I_n \otimes Q_t) Y = (I_n \otimes Q_t) X \beta + (I_n \otimes Q_t) u
+  \Leftrightarrow
+  \ddot{Y} = \ddot{X} \beta + \ddot{u}.
+\]
+
+The FE estimator is given by \[
+  \hat{\beta}_{FE} = 
+  \left( \frac{1}{n} \sum_{i=1}^n \ddot{\underline{\mathbf{X}}}'_i 
+  \ddot{\underline{\mathbf{X}}}_i \right)^{-1}
+  \left( \frac{1}{n} \sum_{i=1}^n \ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{Y}}_i \right)
+  = (\ddot{X}' \ddot{X})^{-1}(\ddot{X}' \ddot{Y}).
+\]
+
+In the \texttt{R} programming, there are two ways to obtain the FE
+estimator. The first way is to caclulate by yourself. The second way is
+to use the \texttt{plm} function. When you use the \texttt{plm}
+function, you need to specify \texttt{model\ =\ "within"} to implement
+the FE model.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Setup}
+\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(model, dt); k \textless{}{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X)}
+\NormalTok{y \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{lwage}
+\NormalTok{N \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)); T \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{time))}
+
+\CommentTok{\# FE estimator}
+\NormalTok{i \textless{}{-}}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, T)}
+\NormalTok{Qt \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(T) }\OperatorTok{{-}}\StringTok{ }\NormalTok{i }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(i) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{i) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(i)}
+\NormalTok{Ydev \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(N) }\OperatorTok{\%x\%}\StringTok{ }\NormalTok{Qt }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{y}
+\NormalTok{Xdev \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(N) }\OperatorTok{\%x\%}\StringTok{ }\NormalTok{Qt }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
+\NormalTok{bfe \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(Xdev) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Xdev) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(Xdev) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Ydev}
+
+\CommentTok{\# Awesome way !!!}
+\NormalTok{plmfe \textless{}{-}}\StringTok{ }\KeywordTok{plm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{index =} \KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{), }\DataTypeTok{model =} \StringTok{"within"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Under the third assumption, asymptotic distribution of the FE estimator
+is given by \[
+  \sqrt{n}(\hat{\beta}_{FE} - \beta) 
+  \sim N(0, \sigma^2_u E[\ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{\mathbf{X}}}_i]).
+\] The consistent estimator of the asymptotic variance of the FE
+estimator is \[
+  \hat{Avar}(\hat{\beta}_{FE}) =
+  \hat{\sigma}_u^2 
+  \left( \sum_{i=1}^n \ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{\mathbf{X}}}_i \right)^{-1} =
+  \hat{\sigma}_u^2 (\ddot{X}' \ddot{X})^{-1},
+\] where
+\(\hat{\sigma}_u^2 = \frac{1}{n(T-1)-K} \sum_i \sum_t \hat{\ddot{u}}_{it}\),
+and
+\(\hat{\ddot{u}}_{it} = \ddot{Y}_{it} - \ddot{\mathbf{X}}_{it} \hat{\beta}_{FE}\).
+
+In the \texttt{R} programming, the \texttt{plm} function also returns
+standard errors, \(\hat{\sigma}_u^2 (\ddot{X}' \ddot{X})^{-1}\). Of
+course, you can compute the standard errors manually. The sample code is
+as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{uhat \textless{}{-}}\StringTok{ }\NormalTok{Ydev }\OperatorTok{{-}}\StringTok{ }\NormalTok{Xdev }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{bfe}
+\NormalTok{sigmahat \textless{}{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(uhat}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)}\OperatorTok{/}\NormalTok{(N}\OperatorTok{*}\NormalTok{(T}\DecValTok{{-}1}\NormalTok{)}\OperatorTok{{-}}\NormalTok{k)}
+\NormalTok{vcovfe \textless{}{-}}\StringTok{ }\NormalTok{sigmahat }\OperatorTok{*}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(Xdev) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Xdev)}
+\NormalTok{sefe \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(vcovfe))}
+\end{Highlighting}
+\end{Shaded}
+
+The result is shown in the third column in Table \ref{pdm}. The partial
+effect of experience represents the percent change of wages. Thus, \[
+  (\text{\% Change of Wage}) = 11.4 - 2 \cdot 0.04 \cdot \text{exp}.
+\] For example, wages increase by 9.812\% at a mathematical mean of
+labor experience (\texttt{exp}).
+
 \begin{table}[t] \centering 
   \caption{Panel Data Model: Effect of Experience on Wages} 
   \label{pdm} 
-\begin{tabular}{@{\extracolsep{5pt}}lcc} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
 \\[-1.8ex]\hline 
 \hline \\[-1.8ex] 
- & \multicolumn{2}{c}{\textit{Dependent variable:}} \\ 
-\cline{2-3} 
-\\[-1.8ex] & \multicolumn{2}{c}{lwage} \\ 
- & Pooled OLS & FGLS \\ 
-\\[-1.8ex] & (1) & (2)\\ 
+ & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-4} 
+\\[-1.8ex] & \multicolumn{3}{c}{lwage} \\ 
+ & Pooled OLS & FGLS & Fixed Effect \\ 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
 \hline \\[-1.8ex] 
- exp & 0.646 & 0.529 \\ 
-  & (0.011) & (0.010) \\ 
-  & & \\ 
- sqexp & $-$0.013 & $-$0.009 \\ 
-  & (0.0004) & (0.0004) \\ 
-  & & \\ 
+ exp & 0.646 & 0.529 & 0.114 \\ 
+  & (0.011) & (0.010) & (0.002) \\ 
+  & & & \\ 
+ sqexp & $-$0.013 & $-$0.009 & $-$0.0004 \\ 
+  & (0.0004) & (0.0004) & (0.0001) \\ 
+  & & & \\ 
 \hline \\[-1.8ex] 
-Observations & 4,165 & 4,165 \\ 
+Observations & 4,165 & 4,165 & 4,165 \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular} 
