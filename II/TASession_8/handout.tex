@@ -6,12 +6,13 @@
   12pt,
 ]{article}
 \usepackage{lmodern}
-\usepackage{amssymb,amsmath}
+\usepackage{amsmath}
 \usepackage{ifxetex,ifluatex}
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
   \usepackage{textcomp} % provide euro and other symbols
+  \usepackage{amssymb}
 \else % if luatex or xetex
   \usepackage{unicode-math}
   \defaultfontfeatures{Scale=MatchLowercase}
@@ -84,6 +85,7 @@
 \newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
 \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
 \usepackage{longtable,booktabs}
+\usepackage{calc} % for calculating minipage widths
 % Correct order of tables after \paragraph or \subparagraph
 \usepackage{etoolbox}
 \makeatletter
@@ -144,8 +146,8 @@ every year.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"./data/wages.csv"}\NormalTok{)}
-\KeywordTok{head}\NormalTok{(dt, }\DecValTok{14}\NormalTok{)}
+\NormalTok{dt }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(}\StringTok{"./data/wages.csv"}\NormalTok{)}
+\FunctionTok{head}\NormalTok{(dt, }\DecValTok{14}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -187,28 +189,20 @@ Additionally, we use the following variables:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{, }\StringTok{"exp"}\NormalTok{, }\StringTok{"sex"}\NormalTok{, }\StringTok{"ed"}\NormalTok{, }\StringTok{"lwage"}\NormalTok{)]}
-\NormalTok{dt}\OperatorTok{$}\NormalTok{sqexp \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{exp}\OperatorTok{\^{}}\DecValTok{2}
-\NormalTok{dt}\OperatorTok{$}\NormalTok{sex \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\KeywordTok{as.character}\NormalTok{(dt}\OperatorTok{$}\NormalTok{sex) }\OperatorTok{==}\StringTok{ "female"}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
-\KeywordTok{summary}\NormalTok{(dt)}
+\NormalTok{dt }\OtherTok{\textless{}{-}}\NormalTok{ dt[,}\FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{, }\StringTok{"exp"}\NormalTok{, }\StringTok{"lwage"}\NormalTok{)]}
+\NormalTok{dt}\SpecialCharTok{$}\NormalTok{sqexp }\OtherTok{\textless{}{-}}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{exp}\SpecialCharTok{\^{}}\DecValTok{2}
+\FunctionTok{summary}\NormalTok{(dt)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-##        id           time        exp             sex               ed       
-##  Min.   :  1   Min.   :1   Min.   : 1.00   Min.   :0.0000   Min.   : 4.00  
-##  1st Qu.:149   1st Qu.:2   1st Qu.:11.00   1st Qu.:0.0000   1st Qu.:12.00  
-##  Median :298   Median :4   Median :18.00   Median :0.0000   Median :12.00  
-##  Mean   :298   Mean   :4   Mean   :19.85   Mean   :0.1126   Mean   :12.85  
-##  3rd Qu.:447   3rd Qu.:6   3rd Qu.:29.00   3rd Qu.:0.0000   3rd Qu.:16.00  
-##  Max.   :595   Max.   :7   Max.   :51.00   Max.   :1.0000   Max.   :17.00  
-##      lwage           sqexp       
-##  Min.   :4.605   Min.   :   1.0  
-##  1st Qu.:6.395   1st Qu.: 121.0  
-##  Median :6.685   Median : 324.0  
-##  Mean   :6.676   Mean   : 514.4  
-##  3rd Qu.:6.953   3rd Qu.: 841.0  
-##  Max.   :8.537   Max.   :2601.0
+##        id           time        exp            lwage           sqexp       
+##  Min.   :  1   Min.   :1   Min.   : 1.00   Min.   :4.605   Min.   :   1.0  
+##  1st Qu.:149   1st Qu.:2   1st Qu.:11.00   1st Qu.:6.395   1st Qu.: 121.0  
+##  Median :298   Median :4   Median :18.00   Median :6.685   Median : 324.0  
+##  Mean   :298   Mean   :4   Mean   :19.85   Mean   :6.676   Mean   : 514.4  
+##  3rd Qu.:447   3rd Qu.:6   3rd Qu.:29.00   3rd Qu.:6.953   3rd Qu.: 841.0  
+##  Max.   :595   Max.   :7   Max.   :51.00   Max.   :8.537   Max.   :2601.0
 \end{verbatim}
 
 \hypertarget{pooled-ols}{%
@@ -233,61 +227,81 @@ This vector contains \texttt{exp}, \texttt{sqexp}, \texttt{sex} and
 
 \begin{longtable}[]{@{}ccccc@{}}
 \toprule
-\begin{minipage}[b]{0.17\columnwidth}\centering
+\begin{minipage}[b]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \strut
-\end{minipage} & \begin{minipage}[b]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[b]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(i = 1\)\strut
-\end{minipage} & \begin{minipage}[b]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[b]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(i = 2\)\strut
-\end{minipage} & \begin{minipage}[b]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[b]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(\cdots\)\strut
-\end{minipage} & \begin{minipage}[b]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[b]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(i = n\)\strut
 \end{minipage}\tabularnewline
 \midrule
 \endhead
-\begin{minipage}[t]{0.17\columnwidth}\centering
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(t = 1\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \((Y_{11}, \mathbf{X}_{11})\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \((Y_{21}, \mathbf{X}_{21})\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(\cdots\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \((Y_{n1}, \mathbf{X}_{n1})\)\strut
 \end{minipage}\tabularnewline
-\begin{minipage}[t]{0.17\columnwidth}\centering
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(t = 2\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \((Y_{12}, \mathbf{X}_{12})\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \((Y_{22}, \mathbf{X}_{22})\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(\cdots\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \((Y_{n2}, \mathbf{X}_{n2})\)\strut
 \end{minipage}\tabularnewline
-\begin{minipage}[t]{0.17\columnwidth}\centering
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(\vdots\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(\vdots\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(\vdots\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(\cdots\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(\vdots\)\strut
 \end{minipage}\tabularnewline
-\begin{minipage}[t]{0.17\columnwidth}\centering
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(t = T\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \((Y_{1T}, \mathbf{X}_{1T})\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \((Y_{2T}, \mathbf{X}_{2T})\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \(\cdots\)\strut
-\end{minipage} & \begin{minipage}[t]{0.17\columnwidth}\centering
+\end{minipage} &
+\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
 \((Y_{nT}, \mathbf{X}_{nT})\)\strut
 \end{minipage}\tabularnewline
 \bottomrule
@@ -361,28 +375,28 @@ sample code.
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{\# OLSE}
-\NormalTok{pool \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(lwage }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{exp }\OperatorTok{+}\StringTok{ }\NormalTok{sqexp }\OperatorTok{+}\StringTok{ }\NormalTok{sex }\OperatorTok{+}\StringTok{ }\NormalTok{ed, }\DataTypeTok{data =}\NormalTok{ dt)}
+\NormalTok{pool }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(lwage }\SpecialCharTok{\textasciitilde{}} \SpecialCharTok{{-}}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ exp }\SpecialCharTok{+}\NormalTok{ sqexp, }\AttributeTok{data =}\NormalTok{ dt)}
 
 \CommentTok{\# Clustered SE}
-\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(pool); uhat \textless{}{-}}\StringTok{ }\NormalTok{pool}\OperatorTok{$}\NormalTok{residuals}
-\NormalTok{uhatset \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{nrow =} \KeywordTok{nrow}\NormalTok{(X), }\DataTypeTok{ncol =} \KeywordTok{nrow}\NormalTok{(X))}
+\NormalTok{X }\OtherTok{\textless{}{-}} \FunctionTok{model.matrix}\NormalTok{(pool); uhat }\OtherTok{\textless{}{-}}\NormalTok{ pool}\SpecialCharTok{$}\NormalTok{residuals}
+\NormalTok{uhatset }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\AttributeTok{nrow =} \FunctionTok{nrow}\NormalTok{(X), }\AttributeTok{ncol =} \FunctionTok{nrow}\NormalTok{(X))}
 
-\NormalTok{i\_from \textless{}{-}}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\DecValTok{1}
-\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{max}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)) \{}
-\NormalTok{  x \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i]}
-\NormalTok{  usq \textless{}{-}}\StringTok{ }\NormalTok{uhat[x] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(uhat[x])}
-\NormalTok{  i\_to \textless{}{-}}\StringTok{ }\NormalTok{i\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{nrow}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
-\NormalTok{  j\_to \textless{}{-}}\StringTok{ }\NormalTok{j\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{ncol}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
-\NormalTok{  uhatset[i\_from}\OperatorTok{:}\NormalTok{i\_to, j\_from}\OperatorTok{:}\NormalTok{j\_to] \textless{}{-}}\StringTok{ }\NormalTok{usq}
-\NormalTok{  i\_from \textless{}{-}}\StringTok{ }\NormalTok{i\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\NormalTok{j\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+\NormalTok{i\_from }\OtherTok{\textless{}{-}} \DecValTok{1}\NormalTok{; j\_from }\OtherTok{\textless{}{-}} \DecValTok{1}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) \{}
+\NormalTok{  x }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(dt))[dt}\SpecialCharTok{$}\NormalTok{id }\SpecialCharTok{==}\NormalTok{ i]}
+\NormalTok{  usq }\OtherTok{\textless{}{-}}\NormalTok{ uhat[x] }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(uhat[x])}
+\NormalTok{  i\_to }\OtherTok{\textless{}{-}}\NormalTok{ i\_from }\SpecialCharTok{+} \FunctionTok{nrow}\NormalTok{(usq) }\SpecialCharTok{{-}} \DecValTok{1}
+\NormalTok{  j\_to }\OtherTok{\textless{}{-}}\NormalTok{ j\_from }\SpecialCharTok{+} \FunctionTok{ncol}\NormalTok{(usq) }\SpecialCharTok{{-}} \DecValTok{1}
+\NormalTok{  uhatset[i\_from}\SpecialCharTok{:}\NormalTok{i\_to, j\_from}\SpecialCharTok{:}\NormalTok{j\_to] }\OtherTok{\textless{}{-}}\NormalTok{ usq}
+\NormalTok{  i\_from }\OtherTok{\textless{}{-}}\NormalTok{ i\_to }\SpecialCharTok{+} \DecValTok{1}\NormalTok{; j\_from }\OtherTok{\textless{}{-}}\NormalTok{ j\_to }\SpecialCharTok{+} \DecValTok{1}
 \NormalTok{\}}
 
-\NormalTok{Ahat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
-\NormalTok{Bhat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{uhatset }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
-\NormalTok{clust\_vcov \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Bhat }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat)}
-\NormalTok{clust\_se \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(clust\_vcov))}
+\NormalTok{Ahat }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ X}
+\NormalTok{Bhat }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ uhatset }\SpecialCharTok{\%*\%}\NormalTok{ X}
+\NormalTok{clust\_vcov }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(Ahat) }\SpecialCharTok{\%*\%}\NormalTok{ Bhat }\SpecialCharTok{\%*\%} \FunctionTok{solve}\NormalTok{(Ahat)}
+\NormalTok{clust\_se }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(}\FunctionTok{diag}\NormalTok{(clust\_vcov))}
 
-\KeywordTok{print}\NormalTok{(}\StringTok{"Pooled OLSE"}\NormalTok{); }\KeywordTok{coef}\NormalTok{(pool)}
+\FunctionTok{print}\NormalTok{(}\StringTok{"Pooled OLSE"}\NormalTok{); }\FunctionTok{coef}\NormalTok{(pool)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -391,13 +405,13 @@ sample code.
 \end{verbatim}
 
 \begin{verbatim}
-##   (Intercept)           exp         sqexp           sex            ed 
-##  5.2759322858  0.0427794655 -0.0007022517 -0.4305537695  0.0747976640
+##         exp       sqexp 
+##  0.64570881 -0.01279755
 \end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\KeywordTok{print}\NormalTok{(}\StringTok{"SE of pooled OLSE"}\NormalTok{); clust\_se}
+\FunctionTok{print}\NormalTok{(}\StringTok{"SE of pooled OLSE"}\NormalTok{); clust\_se}
 \end{Highlighting}
 \end{Shaded}
 
@@ -406,8 +420,8 @@ sample code.
 \end{verbatim}
 
 \begin{verbatim}
-##  (Intercept)          exp        sqexp          sex           ed 
-## 0.0846130179 0.0047667140 0.0001103059 0.0339740598 0.0048139358
+##          exp        sqexp 
+## 0.0107859273 0.0003765058
 \end{verbatim}
 
 Alternatively, using the \texttt{plm} function (the package
@@ -425,13 +439,11 @@ To caclulate the clustered standard errors, you should use the
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\KeywordTok{library}\NormalTok{(plm)}
-\KeywordTok{library}\NormalTok{(lmtest)}
-\KeywordTok{library}\NormalTok{(sandwich)}
-\NormalTok{test \textless{}{-}}\StringTok{ }\KeywordTok{plm}\NormalTok{(}
-\NormalTok{  lwage }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{exp }\OperatorTok{+}\StringTok{ }\NormalTok{sqexp }\OperatorTok{+}\StringTok{ }\NormalTok{sex }\OperatorTok{+}\StringTok{ }\NormalTok{ed, }
-  \DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{model =} \StringTok{"pooling"}\NormalTok{, }\DataTypeTok{index =} \KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{))}
-\KeywordTok{coeftest}\NormalTok{(test, }\DataTypeTok{vcov =} \KeywordTok{vcovHC}\NormalTok{(test, }\DataTypeTok{type =} \StringTok{"HC0"}\NormalTok{, }\DataTypeTok{cluster =} \StringTok{"group"}\NormalTok{))}
+\FunctionTok{library}\NormalTok{(plm)}
+\FunctionTok{library}\NormalTok{(lmtest)}
+\FunctionTok{library}\NormalTok{(sandwich)}
+\NormalTok{test }\OtherTok{\textless{}{-}} \FunctionTok{plm}\NormalTok{(lwage }\SpecialCharTok{\textasciitilde{}} \SpecialCharTok{{-}}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ exp }\SpecialCharTok{+}\NormalTok{ sqexp, }\AttributeTok{data =}\NormalTok{ dt, }\AttributeTok{model =} \StringTok{"pooling"}\NormalTok{, }\AttributeTok{index =} \FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{))}
+\FunctionTok{coeftest}\NormalTok{(test, }\AttributeTok{vcov =} \FunctionTok{vcovHC}\NormalTok{(test, }\AttributeTok{type =} \StringTok{"HC0"}\NormalTok{, }\AttributeTok{cluster =} \StringTok{"group"}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
 
@@ -439,14 +451,172 @@ To caclulate the clustered standard errors, you should use the
 ## 
 ## t test of coefficients:
 ## 
-##                Estimate  Std. Error  t value  Pr(>|t|)    
-## (Intercept)  5.27593229  0.08461302  62.3537 < 2.2e-16 ***
-## exp          0.04277947  0.00476671   8.9746 < 2.2e-16 ***
-## sqexp       -0.00070225  0.00011031  -6.3664 2.145e-10 ***
-## sex         -0.43055377  0.03397406 -12.6730 < 2.2e-16 ***
-## ed           0.07479766  0.00481394  15.5377 < 2.2e-16 ***
+##          Estimate  Std. Error t value  Pr(>|t|)    
+## exp    0.64570881  0.01078593  59.866 < 2.2e-16 ***
+## sqexp -0.01279755  0.00037651 -33.990 < 2.2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# OLS}
+\NormalTok{pool }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(lwage }\SpecialCharTok{\textasciitilde{}} \SpecialCharTok{{-}}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ exp }\SpecialCharTok{+}\NormalTok{ sqexp, }\AttributeTok{data =}\NormalTok{ dt)}
+\NormalTok{uhat }\OtherTok{\textless{}{-}}\NormalTok{ pool}\SpecialCharTok{$}\NormalTok{residuals}
+\NormalTok{omega\_sum }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\AttributeTok{ncol =} \FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time), }\AttributeTok{nrow =} \FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time))}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) \{}
+\NormalTok{  x }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(dt))[dt}\SpecialCharTok{$}\NormalTok{id }\SpecialCharTok{==}\NormalTok{ i]}
+\NormalTok{  omega\_sum }\OtherTok{\textless{}{-}}\NormalTok{ uhat[x] }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(uhat[x]) }\SpecialCharTok{+}\NormalTok{ omega\_sum}
+\NormalTok{\}}
+\NormalTok{omega }\OtherTok{\textless{}{-}}\NormalTok{ omega\_sum}\SpecialCharTok{/}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)}
+
+\CommentTok{\# FGLS}
+\NormalTok{X }\OtherTok{\textless{}{-}} \FunctionTok{model.matrix}\NormalTok{(pool)}
+\NormalTok{Y }\OtherTok{\textless{}{-}}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{lwage}
+\NormalTok{Iomega }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) }\SpecialCharTok{\%x\%} \FunctionTok{solve}\NormalTok{(omega)}
+\NormalTok{bfgls }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ Iomega }\SpecialCharTok{\%*\%}\NormalTok{ X) }\SpecialCharTok{\%*\%}\NormalTok{ (}\FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ Iomega }\SpecialCharTok{\%*\%}\NormalTok{ Y)}
+
+\CommentTok{\# vcov of FGLS}
+\NormalTok{ufgls }\OtherTok{\textless{}{-}}\NormalTok{ Y }\SpecialCharTok{{-}}\NormalTok{ X }\SpecialCharTok{\%*\%}\NormalTok{ bfgls}
+\NormalTok{uhatset }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\AttributeTok{nrow =} \FunctionTok{nrow}\NormalTok{(X), }\AttributeTok{ncol =} \FunctionTok{nrow}\NormalTok{(X))}
+\NormalTok{i\_from }\OtherTok{\textless{}{-}} \DecValTok{1}\NormalTok{; j\_from }\OtherTok{\textless{}{-}} \DecValTok{1}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) \{}
+\NormalTok{  x }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(dt))[dt}\SpecialCharTok{$}\NormalTok{id }\SpecialCharTok{==}\NormalTok{ i]}
+\NormalTok{  usq }\OtherTok{\textless{}{-}}\NormalTok{ uhat[x] }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(uhat[x])}
+\NormalTok{  i\_to }\OtherTok{\textless{}{-}}\NormalTok{ i\_from }\SpecialCharTok{+} \FunctionTok{nrow}\NormalTok{(usq) }\SpecialCharTok{{-}} \DecValTok{1}
+\NormalTok{  j\_to }\OtherTok{\textless{}{-}}\NormalTok{ j\_from }\SpecialCharTok{+} \FunctionTok{ncol}\NormalTok{(usq) }\SpecialCharTok{{-}} \DecValTok{1}
+\NormalTok{  uhatset[i\_from}\SpecialCharTok{:}\NormalTok{i\_to, j\_from}\SpecialCharTok{:}\NormalTok{j\_to] }\OtherTok{\textless{}{-}}\NormalTok{ usq}
+\NormalTok{  i\_from }\OtherTok{\textless{}{-}}\NormalTok{ i\_to }\SpecialCharTok{+} \DecValTok{1}\NormalTok{; j\_from }\OtherTok{\textless{}{-}}\NormalTok{ j\_to }\SpecialCharTok{+} \DecValTok{1}
+\NormalTok{\}}
+
+\NormalTok{Ahat }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ Iomega }\SpecialCharTok{\%*\%}\NormalTok{ X}
+\NormalTok{Bhat }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ Iomega }\SpecialCharTok{\%*\%}\NormalTok{ uhatset }\SpecialCharTok{\%*\%}\NormalTok{ Iomega }\SpecialCharTok{\%*\%}\NormalTok{ X}
+\NormalTok{vcov\_fgls }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(Ahat) }\SpecialCharTok{\%*\%}\NormalTok{ Bhat }\SpecialCharTok{\%*\%} \FunctionTok{solve}\NormalTok{(Ahat)}
+\NormalTok{se\_fgls }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(}\FunctionTok{diag}\NormalTok{(vcov\_fgls))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# estimate}
+\NormalTok{i }\OtherTok{\textless{}{-}} \FunctionTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, }\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time))}
+\NormalTok{Qt }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time)) }\SpecialCharTok{{-}}\NormalTok{ i }\SpecialCharTok{\%*\%} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(i) }\SpecialCharTok{\%*\%}\NormalTok{ i) }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(i)}
+\NormalTok{Ybar }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) }\SpecialCharTok{\%x\%}\NormalTok{ Qt }\SpecialCharTok{\%*\%}\NormalTok{ Y}
+\NormalTok{Xbar }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) }\SpecialCharTok{\%x\%}\NormalTok{ Qt }\SpecialCharTok{\%*\%}\NormalTok{ X}
+\NormalTok{bfe }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(Xbar) }\SpecialCharTok{\%*\%}\NormalTok{ Xbar) }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(Xbar) }\SpecialCharTok{\%*\%}\NormalTok{ Ybar}
+
+\CommentTok{\# inference}
+\NormalTok{uhat }\OtherTok{\textless{}{-}}\NormalTok{ Ybar }\SpecialCharTok{{-}}\NormalTok{ Xbar }\SpecialCharTok{\%*\%}\NormalTok{ bfe}
+\NormalTok{sigmahat }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(uhat}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)}\SpecialCharTok{/}\NormalTok{(}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)}\SpecialCharTok{*}\NormalTok{(}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time)}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{)}\SpecialCharTok{{-}}\DecValTok{2}\NormalTok{)}
+\NormalTok{vcovfe }\OtherTok{\textless{}{-}}\NormalTok{ sigmahat }\SpecialCharTok{*} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(Xbar) }\SpecialCharTok{\%*\%}\NormalTok{ Xbar)}
+\NormalTok{sefe }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(}\FunctionTok{diag}\NormalTok{(vcovfe))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(plm)}
+\FunctionTok{summary}\NormalTok{(}\FunctionTok{plm}\NormalTok{(lwage }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ exp }\SpecialCharTok{+}\NormalTok{ sqexp, }\AttributeTok{data =}\NormalTok{ dt, }\AttributeTok{index =} \FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{), }\AttributeTok{model =} \StringTok{"within"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Oneway (individual) effect Within Model
+## 
+## Call:
+## plm(formula = lwage ~ 1 + exp + sqexp, data = dt, model = "within", 
+##     index = c("id", "time"))
+## 
+## Balanced Panel: n = 595, T = 7, N = 4165
+## 
+## Residuals:
+##       Min.    1st Qu.     Median    3rd Qu.       Max. 
+## -1.8119015 -0.0506647  0.0041017  0.0607943  1.9430281 
+## 
+## Coefficients:
+##          Estimate  Std. Error t-value  Pr(>|t|)    
+## exp    0.11398290  0.00246524  46.236 < 2.2e-16 ***
+## sqexp -0.00042940  0.00005452  -7.876 4.452e-15 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Total Sum of Squares:    240.65
+## Residual Sum of Squares: 82.677
+## R-Squared:      0.65644
+## Adj. R-Squared: 0.59906
+## F-statistic: 3408.73 on 2 and 3568 DF, p-value: < 2.22e-16
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# pooled OLS and estimator of sigma}
+\NormalTok{n }\OtherTok{\textless{}{-}} \FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id); t }\OtherTok{\textless{}{-}} \FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time)}
+\NormalTok{vhat }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(lwage }\SpecialCharTok{\textasciitilde{}} \SpecialCharTok{{-}}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ exp }\SpecialCharTok{+}\NormalTok{ sqexp, }\AttributeTok{data =}\NormalTok{ dt)}\SpecialCharTok{$}\NormalTok{residuals}
+\NormalTok{sigmav }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(vhat}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)}\SpecialCharTok{/}\NormalTok{(n}\SpecialCharTok{*}\NormalTok{t }\SpecialCharTok{{-}} \DecValTok{2}\NormalTok{)}
+\NormalTok{vdt }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{vhat =}\NormalTok{ vhat, }\AttributeTok{id =}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{id, }\AttributeTok{time =}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{time)}
+\NormalTok{vdt}\SpecialCharTok{$}\NormalTok{time1 }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(vdt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{\textgreater{}} \DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{vdt}\SpecialCharTok{$}\NormalTok{time2 }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(vdt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{\textgreater{}} \DecValTok{2}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{vdt}\SpecialCharTok{$}\NormalTok{time3 }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(vdt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{\textgreater{}} \DecValTok{3}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{vdt}\SpecialCharTok{$}\NormalTok{time4 }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(vdt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{\textgreater{}} \DecValTok{4}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{vdt}\SpecialCharTok{$}\NormalTok{time5 }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(vdt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{\textgreater{}} \DecValTok{5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{vdt}\SpecialCharTok{$}\NormalTok{time6 }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(vdt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{\textgreater{}} \DecValTok{6}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+
+\FunctionTok{library}\NormalTok{(tidyverse)}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\NormalTok{n) \{}
+\NormalTok{  vdt }\OtherTok{\textless{}{-}}\NormalTok{ vdt }\SpecialCharTok{\%\textgreater{}\%} 
+    \FunctionTok{mutate}\NormalTok{(}
+      \AttributeTok{dmu =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{        id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ time }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}}\NormalTok{ vhat }\SpecialCharTok{*}\NormalTok{ time1,}
+\NormalTok{        id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ time }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}}\NormalTok{ vhat }\SpecialCharTok{*}\NormalTok{ time2,}
+\NormalTok{        id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ time }\SpecialCharTok{==} \DecValTok{3} \SpecialCharTok{\textasciitilde{}}\NormalTok{ vhat }\SpecialCharTok{*}\NormalTok{ time3,}
+\NormalTok{        id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ time }\SpecialCharTok{==} \DecValTok{4} \SpecialCharTok{\textasciitilde{}}\NormalTok{ vhat }\SpecialCharTok{*}\NormalTok{ time4,}
+\NormalTok{        id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ time }\SpecialCharTok{==} \DecValTok{5} \SpecialCharTok{\textasciitilde{}}\NormalTok{ vhat }\SpecialCharTok{*}\NormalTok{ time5,}
+\NormalTok{        id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ time }\SpecialCharTok{==} \DecValTok{6} \SpecialCharTok{\textasciitilde{}}\NormalTok{ vhat }\SpecialCharTok{*}\NormalTok{ time6}
+\NormalTok{      )}
+\NormalTok{    )}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(plm)}
+\FunctionTok{summary}\NormalTok{(}\FunctionTok{plm}\NormalTok{(lwage }\SpecialCharTok{\textasciitilde{}} \SpecialCharTok{{-}}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ exp }\SpecialCharTok{+}\NormalTok{ sqexp, }\AttributeTok{data =}\NormalTok{ dt, }\AttributeTok{index =} \FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{), }\AttributeTok{model =} \StringTok{"random"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Oneway (individual) effect Random Effect Model 
+##    (Swamy-Arora's transformation)
+## 
+## Call:
+## plm(formula = lwage ~ -1 + exp + sqexp, data = dt, model = "random", 
+##     index = c("id", "time"))
+## 
+## Balanced Panel: n = 595, T = 7, N = 4165
+## 
+## Effects:
+##                   var std.dev share
+## idiosyncratic 0.02317 0.15222 0.009
+## individual    2.62039 1.61876 0.991
+## theta: 0.9645
+## 
+## Residuals:
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## -1.7247  0.0639  0.1400  0.1422  0.2258  2.1452 
+## 
+## Coefficients:
+##          Estimate  Std. Error z-value  Pr(>|z|)    
+## exp    1.6583e-01  3.2167e-03  51.552 < 2.2e-16 ***
+## sqexp -1.2025e-03  7.3838e-05 -16.285 < 2.2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Total Sum of Squares:    241.47
+## Residual Sum of Squares: 186.73
+## R-Squared:      0.62742
+## Adj. R-Squared: 0.62733
+## Chisq: 6442.14 on 2 DF, p-value: < 2.22e-16
 \end{verbatim}
 
 \end{document}

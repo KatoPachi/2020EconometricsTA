@@ -28,7 +28,7 @@ knitr::opts_chunk$set(
   echo = TRUE, 
   cache = FALSE,
   fig.pos = "h")
-knitr::opts_knit$set(root.dir = "C:/Users/katoo/Desktop/2020EconometricsTA/R")
+knitr::opts_knit$set(root.dir = "C:/Users/vge00/Desktop/2020EconometricsTA/R")
 ```
 
 
@@ -56,9 +56,8 @@ Additionally, we use the following variables:
 - `lwage`: logarithm of wage
 
 ```{r summary}
-dt <- dt[,c("id", "time", "exp", "sex", "ed", "lwage")]
+dt <- dt[,c("id", "time", "exp", "lwage")]
 dt$sqexp <- dt$exp^2
-dt$sex <- ifelse(as.character(dt$sex) == "female", 1, 0)
 summary(dt)
 ```
 
@@ -143,7 +142,7 @@ Here is a sample code.
 
 ```{r pooledOLS}
 # OLSE
-pool <- lm(lwage ~ exp + sqexp + sex + ed, data = dt)
+pool <- lm(lwage ~ -1 + exp + sqexp, data = dt)
 
 # Clustered SE
 X <- model.matrix(pool); uhat <- pool$residuals
@@ -185,8 +184,109 @@ you should use the `vcovHC` function in the `vcov` augment.
 library(plm)
 library(lmtest)
 library(sandwich)
-test <- plm(
-  lwage ~ exp + sqexp + sex + ed, 
-  data = dt, model = "pooling", index = c("id", "time"))
+test <- plm(lwage ~ -1 + exp + sqexp, data = dt, model = "pooling", index = c("id", "time"))
 coeftest(test, vcov = vcovHC(test, type = "HC0", cluster = "group"))
+```
+
+```{r FGLS}
+# pooled OLS
+n <- max(dt$id); t <- max(dt$time)
+pols <- lm(lwage ~ -1 + exp + sqexp, data = dt)
+uhat <- pool$residuals
+
+# estimator of Omega
+Omega_sum <- matrix(0, ncol = t, nrow = t)
+for (x in 1:n) {
+  i <- as.numeric(rownames(dt))[dt$id == x]
+  Omega_sum <- uhat[i] %*% t(uhat[i]) + Omega_sum
+}
+Omega <- Omega_sum/n
+
+# Feasible GLS
+X <- model.matrix(pols)
+Y <- dt$lwage
+IOmega <- diag(n) %x% solve(Omega)
+bfgls <- solve(t(X) %*% IOmega %*% X) %*% (t(X) %*% IOmega %*% Y)
+
+# Inference
+ufgls <- Y - X %*% bfgls
+uhatset <- matrix(0, nrow = nrow(X), ncol = nrow(X))
+i_from <- 1; j_from <- 1
+for (i in 1:max(dt$id)) {
+  x <- as.numeric(rownames(dt))[dt$id == i]
+  usq <- uhat[x] %*% t(uhat[x])
+  i_to <- i_from + nrow(usq) - 1
+  j_to <- j_from + ncol(usq) - 1
+  uhatset[i_from:i_to, j_from:j_to] <- usq
+  i_from <- i_to + 1; j_from <- j_to + 1
+}
+
+Ahat <- t(X) %*% IOmega %*% X
+Bhat <- t(X) %*% IOmega %*% uhatset %*% IOmega %*% X
+vcovfgls <- solve(Ahat) %*% Bhat %*% solve(Ahat)
+sefgls <- sqrt(diag(vcov_fgls))
+```
+
+```{r easyFGLS}
+# Assume system homoskedasticity assmption (Wooldridge, p.180)
+library(plm)
+re <- pggls(lwage ~ -1 + exp + sqexp, data = dt, index = c("id", "time"), model = "pooling")
+summary(re)
+```
+
+```{r FEmodel}
+# estimate
+i <- rep(1, max(dt$time))
+Qt <- diag(max(dt$time)) - i %*% solve(t(i) %*% i) %*% t(i)
+Ybar <- diag(max(dt$id)) %x% Qt %*% Y
+Xbar <- diag(max(dt$id)) %x% Qt %*% X
+bfe <- solve(t(Xbar) %*% Xbar) %*% t(Xbar) %*% Ybar
+
+# inference
+uhat <- Ybar - Xbar %*% bfe
+sigmahat <- sum(uhat^2)/(max(dt$id)*(max(dt$time)-1)-2)
+vcovfe <- sigmahat * solve(t(Xbar) %*% Xbar)
+sefe <- sqrt(diag(vcovfe))
+```
+
+```{r easyFEmodel}
+library(plm)
+summary(plm(lwage ~ -1 + exp + sqexp, data = dt, index = c("id", "time"), model = "within"))
+```
+
+```{r REmodel}
+# pooled OLS and setup
+n <- max(dt$id); t <- max(dt$time)
+pols <- lm(lwage ~ -1 + exp + sqexp, data = dt)
+X <- model.matrix(pols)
+k <- ncol(X)
+
+# sigma v,c,u
+vhat <- pols$residuals
+sigmav <- sum(vhat^2)/(n*t - k)
+
+Itri <- matrix(1, nrow = t-1, ncol = 7)
+diag(Itri) <- 0
+Itri[lower.tri(Itri)] <- 0
+vis <- (diag(n) %x% Itri) %*% vhat
+l <- as.numeric(rownames(dt))[dt$time < 7]
+sigmac <- sum(vhat[l] * vis)/(n*t*(t-1)/2 - k)
+sigmau <- sigmav - sigmac
+
+i <- rep(1, t)
+Omega <- test$ercomp$sigma2[1] * diag(t) + test$ercomp$sigma2[2] * i %*% t(i)
+IOmega <- diag(n) %x% solve(Omega)
+
+# Random effect
+bre <- solve(t(X) %*% IOmega %*% X) %*% t(X) %*% IOmega %*% Y
+
+# VCOV of RE
+vcovre <- solve(t(X) %*% IOmega %*% X)
+sere <- sqrt(diag(vcovre))
+```
+
+```{r easyREmodel}
+# reference: http://ricardo.ecn.wfu.edu/~cottrell/gretl/random-effects.pdf
+library(plm)
+test <- plm(lwage ~ -1 + exp + sqexp, data = dt, index = c("id", "time"), model = "random")
 ```
