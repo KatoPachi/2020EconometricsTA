@@ -22,13 +22,14 @@ header-includes:
 
 ```{r setup, include = FALSE, echo = FALSE, purl = FALSE}
 # This is options to make pdf file. You should ignore
+library(here)
 knitr::opts_chunk$set(
   message = FALSE, 
   warning = FALSE, 
   echo = TRUE, 
   cache = FALSE,
   fig.pos = "h")
-knitr::opts_knit$set(root.dir = "C:/Users/vge00/Desktop/2020EconometricsTA/R")
+knitr::opts_knit$set(root.dir = paste(here(), "/R", sep = ""))
 ```
 
 
@@ -51,8 +52,6 @@ Additionally, we use the following variables:
 
 - `exp`: years of full-time work experience
 - `sqexp`: squared value of `exp`
-- `sex`: a dummy variable taking 1 if an individual is female
-- `ed`: years of education
 - `lwage`: logarithm of wage
 
 ```{r summary}
@@ -61,32 +60,31 @@ dt$sqexp <- dt$exp^2
 summary(dt)
 ```
 
-## Pooled OLS
-
-Using the OLS method, 
+To examine the effect of labor experience on wages,
 we want to estimate the following linear panel data model:
 
 $$
   \text{lwage}_{it} = 
-  \alpha + \beta_1 \cdot \text{exp}_{it} +
-  \beta_2 \cdot \text{sqexp}_{it} +
-  \beta_3 \cdot \text{sex}_{it} + 
-  \beta_4 \cdot \text{ed}_{it} + u_{it}.
+  \beta_1 \cdot \text{exp}_{it} +
+  \beta_2 \cdot \text{sqexp}_{it} + 
+  u_{it}.
 $$
 
-We will discuss assumptions for applying the OLS method.
+We can define the regression equation as the `formula` object in `R`.
+To exclude the intercept, we must specify `-1` in the rhs of regression equation.
+Thus, in `R`, we define the linear panel data model as follows:
+
+```{r model}
+model <- lwage ~ -1 + exp + sqexp
+```
+
+## Pooled OLS
+
+We want to estimate the above regression equation by the OLS method.
+We will discuss assumptions for implementation.
 Let $\mathbf{X}_{it}$ be a $1 \times K$ (stochastic) explanatory vector.
-This vector contains `exp`, `sqexp`, `sex` and `ed`.
+This vector contains `exp`, `sqexp`.
 Let $Y_{it}$ be a random variable of outcome, that is `lwage`.
-The balanced panel data is given by
-
-| | $i = 1$ | $i = 2$ | $\cdots$ | $i = n$ |
-| :--: | :--: | :--: | :--: | :--: |
-| $t = 1$ | $(Y_{11}, \mathbf{X}_{11})$ | $(Y_{21}, \mathbf{X}_{21})$ | $\cdots$ | $(Y_{n1}, \mathbf{X}_{n1})$ |
-| $t = 2$ | $(Y_{12}, \mathbf{X}_{12})$ | $(Y_{22}, \mathbf{X}_{22})$ | $\cdots$ | $(Y_{n2}, \mathbf{X}_{n2})$ |
-| $\vdots$ | $\vdots$ | $\vdots$ | $\cdots$ | $\vdots$ |
-| $t = T$ | $(Y_{1T}, \mathbf{X}_{1T})$ | $(Y_{2T}, \mathbf{X}_{2T})$ | $\cdots$ | $(Y_{nT}, \mathbf{X}_{nT})$ |
-
 Then, the linear panel data model can be rewritten as follows:
 
 $$
@@ -106,19 +104,37 @@ Now, we assume
 1. $E[\mathbf{X}'_{it}u_{it}] = 0$, $\forall i, t$. This assumption, called *(contempraneous) exogneity assumption*, implies that $u_{it}$ and $\mathbf{X}_{it}$ are orthogonal in the conditional mean sence, $E[u_{it} | \mathbf{X}_{it}] = 0$. However, this assumption does not imply $u_{it}$ is uncorrelated with the explanatory variables in all time periods (strictly exogeneity), that is, $E[u_{it} | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}] = 0$. This assumption palces no restriction on the relationship between $\mathbf{X}_{is}$ and $u_{it}$ for $s\not=t$.
 1. $E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i] \succ 0$.
 
-Under these two assumptions,
-the true parameter can be identified by 
+Under these two assumptions, the true parameter is given by
 $$
   \beta = E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i]^{-1} E[\underline{\mathbf{X}}'_i\underline{Y}_i].
 $$
+
 Hence, the OLSE (pooled OLSE) is given by 
 $$
   \hat{\beta} 
-  = \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)
+  = \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
   \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{Y}_i \right)
-  = \left( \frac{1}{n} \sum_{i=1}^n \sum_{t=1}^T \mathbf{X}'_{it} \mathbf{X}_{it} \right)
+  = \left( \frac{1}{n} \sum_{i=1}^n \sum_{t=1}^T \mathbf{X}'_{it} \mathbf{X}_{it} \right)^{-1}
   \left( \frac{1}{n} \sum_{i=1}^n \sum_{t=1}^T \mathbf{X}'_{it} Y_{it} \right).
 $$
+
+Using the full matrix notation, the OLS estimator is 
+$$
+  \hat{\beta} = (\mathbf{X}' \mathbf{X})^{-1} (\mathbf{X}' Y),
+$$
+where $\mathbf{X} = (\underline{\mathbf{X}}_1, \ldots, \underline{\mathbf{X}}_n)'$ and 
+$Y = (\underline{Y}_1, \ldots, \underline{Y}_n)'$.
+
+In `R` programming, the `lm` function provides the pooled OLSE in the context of panel data model.
+Another way is the `plm` function in the package `plm`.
+When you want to estimate pooled OLS by the `plm` function, you need to specify `model = "pooling"`.
+Moreover, you should specify individual and time index using `index` augment.
+This augment passes `index = c("individual index", "time index")`.
+
+```{r pooledOLSE}
+bols1 <- lm(model, data = dt)
+bols2 <- plm(model, data = dt, model = "pooling", index = c("id", "time"))
+```
 
 The pooled OLS estimator is consistent and asymptotically normally distributed.
 $$
@@ -133,19 +149,48 @@ $$
   \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i \right)
   \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
 $$
-The standard errors caclulated by this matrix is called *robust standard errors clustered by individuals*.
+Thus, estimator of asymptotic variance of the pooled OLSE is 
+$$
+  \hat{Avar}(\hat{\beta}) =
+  \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
+  \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i \right)
+  \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}.
+$$
+Using the full matrix notations, we can reformulate
+$$
+  \hat{Avar}(\hat{\beta}) =
+  (\mathbf{X}' \mathbf{X})^{-1}
+  (\mathbf{X}' \Omega \mathbf{X})
+  (\mathbf{X}' \mathbf{X})^{-1},
+$$
+where
+$$
+  \Omega = 
+  \begin{pmatrix}
+    \underline{u}_1 \underline{u}'_1 & \mathbf{0} & \cdots & \mathbf{0} \\
+    \mathbf{0} & \underline{u}_2 \underline{u}'_2 & \cdots & \mathbf{0} \\
+    \vdots & \vdots & \cdots & \vdots \\
+    \mathbf{0} & \mathbf{0} & \cdots & \underline{u}_n \underline{u}'_n
+  \end{pmatrix}.
+$$
+The standard errors calculated by this matrix is called *robust standard errors clustered by individuals*.
 
-In `R`, the pooled OLSE can be obtained by `lm` function.
-However, the `lm` function does not return the cluster-robust standard errors.
-Thus, you need to caclulate them by yourself.
-Here is a sample code.
+In `R`, the `lm` and `plm` function provide the standard errors based on $\hat{Avar}(\hat{\beta}) = \hat{\sigma}^2 (X'X)^{-1}$,
+where $\hat{\sigma}^2 = \hat{u}\hat{u}'/(nT - K)$ and $\hat{u} = Y - X \hat{\beta}$.
+There are two ways to obtain cluster robust standard errors.
+The first way is to caclulate by yourself.
+The second way is to use the `coeftest` function in the package `lmtest`.
+When you use this function, 
+we should use the `plm` function to estimate the pooled OLSE, and 
+the `vcovHC` function (the package `sandwich`) in the `vcov` augment of `coeftest` fucntion.
 
-```{r pooledOLS}
-# OLSE
-pool <- lm(lwage ~ -1 + exp + sqexp, data = dt)
+```{r Inference of Pooled OLSE}
+# Setup
+N <- length(unique(dt$id)); T <- length(unique(dt$time))
+X <- model.matrix(bols1); k <- ncol(X)
 
-# Clustered SE
-X <- model.matrix(pool); uhat <- pool$residuals
+# Inference
+uhat <- bols1$residuals
 uhatset <- matrix(0, nrow = nrow(X), ncol = nrow(X))
 
 i_from <- 1; j_from <- 1
@@ -160,133 +205,22 @@ for (i in 1:max(dt$id)) {
 
 Ahat <- t(X) %*% X
 Bhat <- t(X) %*% uhatset %*% X
-clust_vcov <- solve(Ahat) %*% Bhat %*% solve(Ahat)
-clust_se <- sqrt(diag(clust_vcov))
+vcovols <- solve(Ahat) %*% Bhat %*% solve(Ahat)
+seols <- sqrt(diag(vcovols))
 
-print("Pooled OLSE"); coef(pool)
-print("SE of pooled OLSE"); clust_se
-```
-
-
-Alternatively, 
-using the `plm` function (the package `plm`) and the `coeftest` function (the package `lmtest`),
-you can obtain the asymptotic variance covariance matrix of pooled OLSE easily.
-The `plm` function provides the panel data model.
-When you want to estimate pooled OLS, you need to specify `model = "pooling"`.
-Moreover, you should specify individual and time index using `index` augment.
-This augment passes `index = c("individual index", "time index")`.
-After estimating the pooled OLS by the `plm` function,
-you must use the `coeftest` function to obtain the cluster-robust standard errors.
-To caclulate the clustered standard errors,
-you should use the `vcovHC` function in the `vcov` augment.
-
-```{r pooledOLS_plm}
-library(plm)
+# Easy way
 library(lmtest)
 library(sandwich)
-test <- plm(lwage ~ -1 + exp + sqexp, data = dt, model = "pooling", index = c("id", "time"))
-coeftest(test, vcov = vcovHC(test, type = "HC0", cluster = "group"))
+easy_cluster <- coeftest(
+  bols2, vcov = vcovHC(bols2, type = "HC0", cluster = "group"))
 ```
 
-```{r FGLS}
-# pooled OLS
-n <- max(dt$id); t <- max(dt$time)
-pols <- lm(lwage ~ -1 + exp + sqexp, data = dt)
-uhat <- pool$residuals
+The result is shown in the first column of \ref{pdm}.
+The partial effect of experience represents the percent change of wages.
+Thus,
+$$
+  (\text{\% Change of Wage}) = 64.6 - 2 \cdot 1.3 \cdot \text{exp}.
+$$
+For example, wages increase by 12.99\% at a mathematical mean of labor experience (`exp`).
+Moreover, this result implies diminishing marginal returns of labor experience.
 
-# estimator of Omega
-Omega_sum <- matrix(0, ncol = t, nrow = t)
-for (x in 1:n) {
-  i <- as.numeric(rownames(dt))[dt$id == x]
-  Omega_sum <- uhat[i] %*% t(uhat[i]) + Omega_sum
-}
-Omega <- Omega_sum/n
-
-# Feasible GLS
-X <- model.matrix(pols)
-Y <- dt$lwage
-IOmega <- diag(n) %x% solve(Omega)
-bfgls <- solve(t(X) %*% IOmega %*% X) %*% (t(X) %*% IOmega %*% Y)
-
-# Inference
-ufgls <- Y - X %*% bfgls
-uhatset <- matrix(0, nrow = nrow(X), ncol = nrow(X))
-i_from <- 1; j_from <- 1
-for (i in 1:max(dt$id)) {
-  x <- as.numeric(rownames(dt))[dt$id == i]
-  usq <- uhat[x] %*% t(uhat[x])
-  i_to <- i_from + nrow(usq) - 1
-  j_to <- j_from + ncol(usq) - 1
-  uhatset[i_from:i_to, j_from:j_to] <- usq
-  i_from <- i_to + 1; j_from <- j_to + 1
-}
-
-Ahat <- t(X) %*% IOmega %*% X
-Bhat <- t(X) %*% IOmega %*% uhatset %*% IOmega %*% X
-vcovfgls <- solve(Ahat) %*% Bhat %*% solve(Ahat)
-sefgls <- sqrt(diag(vcov_fgls))
-```
-
-```{r easyFGLS}
-# Assume system homoskedasticity assmption (Wooldridge, p.180)
-library(plm)
-re <- pggls(lwage ~ -1 + exp + sqexp, data = dt, index = c("id", "time"), model = "pooling")
-summary(re)
-```
-
-```{r FEmodel}
-# estimate
-i <- rep(1, max(dt$time))
-Qt <- diag(max(dt$time)) - i %*% solve(t(i) %*% i) %*% t(i)
-Ybar <- diag(max(dt$id)) %x% Qt %*% Y
-Xbar <- diag(max(dt$id)) %x% Qt %*% X
-bfe <- solve(t(Xbar) %*% Xbar) %*% t(Xbar) %*% Ybar
-
-# inference
-uhat <- Ybar - Xbar %*% bfe
-sigmahat <- sum(uhat^2)/(max(dt$id)*(max(dt$time)-1)-2)
-vcovfe <- sigmahat * solve(t(Xbar) %*% Xbar)
-sefe <- sqrt(diag(vcovfe))
-```
-
-```{r easyFEmodel}
-library(plm)
-summary(plm(lwage ~ -1 + exp + sqexp, data = dt, index = c("id", "time"), model = "within"))
-```
-
-```{r REmodel}
-# pooled OLS and setup
-n <- max(dt$id); t <- max(dt$time)
-pols <- lm(lwage ~ -1 + exp + sqexp, data = dt)
-X <- model.matrix(pols)
-k <- ncol(X)
-
-# sigma v,c,u
-vhat <- pols$residuals
-sigmav <- sum(vhat^2)/(n*t - k)
-
-Itri <- matrix(1, nrow = t-1, ncol = 7)
-diag(Itri) <- 0
-Itri[lower.tri(Itri)] <- 0
-vis <- (diag(n) %x% Itri) %*% vhat
-l <- as.numeric(rownames(dt))[dt$time < 7]
-sigmac <- sum(vhat[l] * vis)/(n*t*(t-1)/2 - k)
-sigmau <- sigmav - sigmac
-
-i <- rep(1, t)
-Omega <- test$ercomp$sigma2[1] * diag(t) + test$ercomp$sigma2[2] * i %*% t(i)
-IOmega <- diag(n) %x% solve(Omega)
-
-# Random effect
-bre <- solve(t(X) %*% IOmega %*% X) %*% t(X) %*% IOmega %*% Y
-
-# VCOV of RE
-vcovre <- solve(t(X) %*% IOmega %*% X)
-sere <- sqrt(diag(vcovre))
-```
-
-```{r easyREmodel}
-# reference: http://ricardo.ecn.wfu.edu/~cottrell/gretl/random-effects.pdf
-library(plm)
-test <- plm(lwage ~ -1 + exp + sqexp, data = dt, index = c("id", "time"), model = "random")
-```

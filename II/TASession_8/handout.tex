@@ -6,13 +6,12 @@
   12pt,
 ]{article}
 \usepackage{lmodern}
-\usepackage{amsmath}
+\usepackage{amssymb,amsmath}
 \usepackage{ifxetex,ifluatex}
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
   \usepackage{textcomp} % provide euro and other symbols
-  \usepackage{amssymb}
 \else % if luatex or xetex
   \usepackage{unicode-math}
   \defaultfontfeatures{Scale=MatchLowercase}
@@ -84,16 +83,6 @@
 \newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
 \newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
 \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\usepackage{longtable,booktabs}
-\usepackage{calc} % for calculating minipage widths
-% Correct order of tables after \paragraph or \subparagraph
-\usepackage{etoolbox}
-\makeatletter
-\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
-\makeatother
-% Allow footnotes in longtable head/foot
-\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
-\makesavenoteenv{longtable}
 \usepackage{graphicx}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
@@ -146,8 +135,8 @@ every year.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{dt }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(}\StringTok{"./data/wages.csv"}\NormalTok{)}
-\FunctionTok{head}\NormalTok{(dt, }\DecValTok{14}\NormalTok{)}
+\NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"./data/wages.csv"}\NormalTok{)}
+\KeywordTok{head}\NormalTok{(dt, }\DecValTok{14}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -180,18 +169,14 @@ Additionally, we use the following variables:
 \item
   \texttt{sqexp}: squared value of \texttt{exp}
 \item
-  \texttt{sex}: a dummy variable taking 1 if an individual is female
-\item
-  \texttt{ed}: years of education
-\item
   \texttt{lwage}: logarithm of wage
 \end{itemize}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{dt }\OtherTok{\textless{}{-}}\NormalTok{ dt[,}\FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{, }\StringTok{"exp"}\NormalTok{, }\StringTok{"lwage"}\NormalTok{)]}
-\NormalTok{dt}\SpecialCharTok{$}\NormalTok{sqexp }\OtherTok{\textless{}{-}}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{exp}\SpecialCharTok{\^{}}\DecValTok{2}
-\FunctionTok{summary}\NormalTok{(dt)}
+\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{, }\StringTok{"exp"}\NormalTok{, }\StringTok{"lwage"}\NormalTok{)]}
+\NormalTok{dt}\OperatorTok{$}\NormalTok{sqexp \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{exp}\OperatorTok{\^{}}\DecValTok{2}
+\KeywordTok{summary}\NormalTok{(dt)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -205,109 +190,36 @@ Additionally, we use the following variables:
 ##  Max.   :595   Max.   :7   Max.   :51.00   Max.   :8.537   Max.   :2601.0
 \end{verbatim}
 
-\hypertarget{pooled-ols}{%
-\subsection{Pooled OLS}\label{pooled-ols}}
-
-Using the OLS method, we want to estimate the following linear panel
-data model:
+To examine the effect of labor experience on wages, we want to estimate
+the following linear panel data model:
 
 \[
   \text{lwage}_{it} = 
-  \alpha + \beta_1 \cdot \text{exp}_{it} +
-  \beta_2 \cdot \text{sqexp}_{it} +
-  \beta_3 \cdot \text{sex}_{it} + 
-  \beta_4 \cdot \text{ed}_{it} + u_{it}.
+  \beta_1 \cdot \text{exp}_{it} +
+  \beta_2 \cdot \text{sqexp}_{it} + 
+  u_{it}.
 \]
 
-We will discuss assumptions for applying the OLS method. Let
-\(\mathbf{X}_{it}\) be a \(1 \times K\) (stochastic) explanatory vector.
-This vector contains \texttt{exp}, \texttt{sqexp}, \texttt{sex} and
-\texttt{ed}. Let \(Y_{it}\) be a random variable of outcome, that is
-\texttt{lwage}. The balanced panel data is given by
+We can define the regression equation as the \texttt{formula} object in
+\texttt{R}. To exclude the intercept, we must specify \texttt{-1} in the
+rhs of regression equation. Thus, in \texttt{R}, we define the linear
+panel data model as follows:
 
-\begin{longtable}[]{@{}ccccc@{}}
-\toprule
-\begin{minipage}[b]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\strut
-\end{minipage} &
-\begin{minipage}[b]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(i = 1\)\strut
-\end{minipage} &
-\begin{minipage}[b]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(i = 2\)\strut
-\end{minipage} &
-\begin{minipage}[b]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(\cdots\)\strut
-\end{minipage} &
-\begin{minipage}[b]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(i = n\)\strut
-\end{minipage}\tabularnewline
-\midrule
-\endhead
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(t = 1\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\((Y_{11}, \mathbf{X}_{11})\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\((Y_{21}, \mathbf{X}_{21})\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(\cdots\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\((Y_{n1}, \mathbf{X}_{n1})\)\strut
-\end{minipage}\tabularnewline
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(t = 2\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\((Y_{12}, \mathbf{X}_{12})\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\((Y_{22}, \mathbf{X}_{22})\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(\cdots\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\((Y_{n2}, \mathbf{X}_{n2})\)\strut
-\end{minipage}\tabularnewline
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(\vdots\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(\vdots\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(\vdots\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(\cdots\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(\vdots\)\strut
-\end{minipage}\tabularnewline
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(t = T\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\((Y_{1T}, \mathbf{X}_{1T})\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\((Y_{2T}, \mathbf{X}_{2T})\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\(\cdots\)\strut
-\end{minipage} &
-\begin{minipage}[t]{(\columnwidth - 4\tabcolsep) * \real{0.20}}\centering
-\((Y_{nT}, \mathbf{X}_{nT})\)\strut
-\end{minipage}\tabularnewline
-\bottomrule
-\end{longtable}
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{lwage }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{{-}1} \OperatorTok{+}\StringTok{ }\NormalTok{exp }\OperatorTok{+}\StringTok{ }\NormalTok{sqexp}
+\end{Highlighting}
+\end{Shaded}
 
-Then, the linear panel data model can be rewritten as follows:
+\hypertarget{pooled-ols}{%
+\subsection{Pooled OLS}\label{pooled-ols}}
+
+We want to estimate the above regression equation by the OLS method. We
+will discuss assumptions for implementation. Let \(\mathbf{X}_{it}\) be
+a \(1 \times K\) (stochastic) explanatory vector. This vector contains
+\texttt{exp}, \texttt{sqexp}. Let \(Y_{it}\) be a random variable of
+outcome, that is \texttt{lwage}. Then, the linear panel data model can
+be rewritten as follows:
 
 \[
   Y_{it} = \mathbf{X}_{it} \beta + u_{it}, \quad t = 1, \ldots, T, \quad i = 1, \ldots, n.
@@ -342,15 +254,38 @@ Now, we assume
   \(E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i] \succ 0\).
 \end{enumerate}
 
-Under these two assumptions, the true parameter can be identified by \[
+Under these two assumptions, the true parameter is given by \[
   \beta = E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i]^{-1} E[\underline{\mathbf{X}}'_i\underline{Y}_i].
-\] Hence, the OLSE (pooled OLSE) is given by \[
+\]
+
+Hence, the OLSE (pooled OLSE) is given by \[
   \hat{\beta} 
-  = \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)
+  = \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
   \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{Y}_i \right)
-  = \left( \frac{1}{n} \sum_{i=1}^n \sum_{t=1}^T \mathbf{X}'_{it} \mathbf{X}_{it} \right)
+  = \left( \frac{1}{n} \sum_{i=1}^n \sum_{t=1}^T \mathbf{X}'_{it} \mathbf{X}_{it} \right)^{-1}
   \left( \frac{1}{n} \sum_{i=1}^n \sum_{t=1}^T \mathbf{X}'_{it} Y_{it} \right).
 \]
+
+Using the full matrix notation, the OLS estimator is \[
+  \hat{\beta} = (\mathbf{X}' \mathbf{X})^{-1} (\mathbf{X}' Y),
+\] where
+\(\mathbf{X} = (\underline{\mathbf{X}}_1, \ldots, \underline{\mathbf{X}}_n)'\)
+and \(Y = (\underline{Y}_1, \ldots, \underline{Y}_n)'\).
+
+In \texttt{R} programming, the \texttt{lm} function provides the pooled
+OLSE in the context of panel data model. Another way is the \texttt{plm}
+function in the package \texttt{plm}. When you want to estimate pooled
+OLS by the \texttt{plm} function, you need to specify
+\texttt{model\ =\ "pooling"}. Moreover, you should specify individual
+and time index using \texttt{index} augment. This augment passes
+\texttt{index\ =\ c("individual\ index",\ "time\ index")}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{bols1 \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt)}
+\NormalTok{bols2 \textless{}{-}}\StringTok{ }\KeywordTok{plm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{model =} \StringTok{"pooling"}\NormalTok{, }\DataTypeTok{index =} \KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
 
 The pooled OLS estimator is consistent and asymptotically normally
 distributed. \[
@@ -364,259 +299,77 @@ given by \[
   \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
   \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i \right)
   \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
-\] The standard errors caclulated by this matrix is called \emph{robust
+\] Thus, estimator of asymptotic variance of the pooled OLSE is \[
+  \hat{Avar}(\hat{\beta}) =
+  \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
+  \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i \right)
+  \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}.
+\] Using the full matrix notations, we can reformulate \[
+  \hat{Avar}(\hat{\beta}) =
+  (\mathbf{X}' \mathbf{X})^{-1}
+  (\mathbf{X}' \Omega \mathbf{X})
+  (\mathbf{X}' \mathbf{X})^{-1},
+\] where \[
+  \Omega = 
+  \begin{pmatrix}
+    \underline{u}_1 \underline{u}'_1 & \mathbf{0} & \cdots & \mathbf{0} \\
+    \mathbf{0} & \underline{u}_2 \underline{u}'_2 & \cdots & \mathbf{0} \\
+    \vdots & \vdots & \cdots & \vdots \\
+    \mathbf{0} & \mathbf{0} & \cdots & \underline{u}_n \underline{u}'_n
+  \end{pmatrix}.
+\] The standard errors calculated by this matrix is called \emph{robust
 standard errors clustered by individuals}.
 
-In \texttt{R}, the pooled OLSE can be obtained by \texttt{lm} function.
-However, the \texttt{lm} function does not return the cluster-robust
-standard errors. Thus, you need to caclulate them by yourself. Here is a
-sample code.
+In \texttt{R}, the \texttt{lm} and \texttt{plm} function provide the
+standard errors based on
+\(\hat{Avar}(\hat{\beta}) = \hat{\sigma}^2 (X'X)^{-1}\), where
+\(\hat{\sigma}^2 = \hat{u}\hat{u}'/(nT - K)\) and
+\(\hat{u} = Y - X \hat{\beta}\). There are two ways to obtain cluster
+robust standard errors. The first way is to caclulate by yourself. The
+second way is to use the \texttt{coeftest} function in the package
+\texttt{lmtest}. When you use this function, we should use the
+\texttt{plm} function to estimate the pooled OLSE, and the
+\texttt{vcovHC} function (the package \texttt{sandwich}) in the
+\texttt{vcov} augment of \texttt{coeftest} fucntion.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# OLSE}
-\NormalTok{pool }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(lwage }\SpecialCharTok{\textasciitilde{}} \SpecialCharTok{{-}}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ exp }\SpecialCharTok{+}\NormalTok{ sqexp, }\AttributeTok{data =}\NormalTok{ dt)}
+\CommentTok{\# Setup}
+\NormalTok{N \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)); T \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{time))}
+\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(bols1); k \textless{}{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X)}
 
-\CommentTok{\# Clustered SE}
-\NormalTok{X }\OtherTok{\textless{}{-}} \FunctionTok{model.matrix}\NormalTok{(pool); uhat }\OtherTok{\textless{}{-}}\NormalTok{ pool}\SpecialCharTok{$}\NormalTok{residuals}
-\NormalTok{uhatset }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\AttributeTok{nrow =} \FunctionTok{nrow}\NormalTok{(X), }\AttributeTok{ncol =} \FunctionTok{nrow}\NormalTok{(X))}
+\CommentTok{\# Inference}
+\NormalTok{uhat \textless{}{-}}\StringTok{ }\NormalTok{bols1}\OperatorTok{$}\NormalTok{residuals}
+\NormalTok{uhatset \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{nrow =} \KeywordTok{nrow}\NormalTok{(X), }\DataTypeTok{ncol =} \KeywordTok{nrow}\NormalTok{(X))}
 
-\NormalTok{i\_from }\OtherTok{\textless{}{-}} \DecValTok{1}\NormalTok{; j\_from }\OtherTok{\textless{}{-}} \DecValTok{1}
-\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) \{}
-\NormalTok{  x }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(dt))[dt}\SpecialCharTok{$}\NormalTok{id }\SpecialCharTok{==}\NormalTok{ i]}
-\NormalTok{  usq }\OtherTok{\textless{}{-}}\NormalTok{ uhat[x] }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(uhat[x])}
-\NormalTok{  i\_to }\OtherTok{\textless{}{-}}\NormalTok{ i\_from }\SpecialCharTok{+} \FunctionTok{nrow}\NormalTok{(usq) }\SpecialCharTok{{-}} \DecValTok{1}
-\NormalTok{  j\_to }\OtherTok{\textless{}{-}}\NormalTok{ j\_from }\SpecialCharTok{+} \FunctionTok{ncol}\NormalTok{(usq) }\SpecialCharTok{{-}} \DecValTok{1}
-\NormalTok{  uhatset[i\_from}\SpecialCharTok{:}\NormalTok{i\_to, j\_from}\SpecialCharTok{:}\NormalTok{j\_to] }\OtherTok{\textless{}{-}}\NormalTok{ usq}
-\NormalTok{  i\_from }\OtherTok{\textless{}{-}}\NormalTok{ i\_to }\SpecialCharTok{+} \DecValTok{1}\NormalTok{; j\_from }\OtherTok{\textless{}{-}}\NormalTok{ j\_to }\SpecialCharTok{+} \DecValTok{1}
+\NormalTok{i\_from \textless{}{-}}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\DecValTok{1}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{max}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)) \{}
+\NormalTok{  x \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i]}
+\NormalTok{  usq \textless{}{-}}\StringTok{ }\NormalTok{uhat[x] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(uhat[x])}
+\NormalTok{  i\_to \textless{}{-}}\StringTok{ }\NormalTok{i\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{nrow}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
+\NormalTok{  j\_to \textless{}{-}}\StringTok{ }\NormalTok{j\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{ncol}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
+\NormalTok{  uhatset[i\_from}\OperatorTok{:}\NormalTok{i\_to, j\_from}\OperatorTok{:}\NormalTok{j\_to] \textless{}{-}}\StringTok{ }\NormalTok{usq}
+\NormalTok{  i\_from \textless{}{-}}\StringTok{ }\NormalTok{i\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\NormalTok{j\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}
 \NormalTok{\}}
 
-\NormalTok{Ahat }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ X}
-\NormalTok{Bhat }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ uhatset }\SpecialCharTok{\%*\%}\NormalTok{ X}
-\NormalTok{clust\_vcov }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(Ahat) }\SpecialCharTok{\%*\%}\NormalTok{ Bhat }\SpecialCharTok{\%*\%} \FunctionTok{solve}\NormalTok{(Ahat)}
-\NormalTok{clust\_se }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(}\FunctionTok{diag}\NormalTok{(clust\_vcov))}
+\NormalTok{Ahat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
+\NormalTok{Bhat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{uhatset }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
+\NormalTok{vcovols \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Bhat }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat)}
+\NormalTok{seols \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(vcovols))}
 
-\FunctionTok{print}\NormalTok{(}\StringTok{"Pooled OLSE"}\NormalTok{); }\FunctionTok{coef}\NormalTok{(pool)}
+\CommentTok{\# Easy way}
+\KeywordTok{library}\NormalTok{(lmtest)}
+\KeywordTok{library}\NormalTok{(sandwich)}
+\NormalTok{easy\_cluster \textless{}{-}}\StringTok{ }\KeywordTok{coeftest}\NormalTok{(}
+\NormalTok{  bols2, }\DataTypeTok{vcov =} \KeywordTok{vcovHC}\NormalTok{(bols2, }\DataTypeTok{type =} \StringTok{"HC0"}\NormalTok{, }\DataTypeTok{cluster =} \StringTok{"group"}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{verbatim}
-## [1] "Pooled OLSE"
-\end{verbatim}
-
-\begin{verbatim}
-##         exp       sqexp 
-##  0.64570881 -0.01279755
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{print}\NormalTok{(}\StringTok{"SE of pooled OLSE"}\NormalTok{); clust\_se}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## [1] "SE of pooled OLSE"
-\end{verbatim}
-
-\begin{verbatim}
-##          exp        sqexp 
-## 0.0107859273 0.0003765058
-\end{verbatim}
-
-Alternatively, using the \texttt{plm} function (the package
-\texttt{plm}) and the \texttt{coeftest} function (the package
-\texttt{lmtest}), you can obtain the asymptotic variance covariance
-matrix of pooled OLSE easily. The \texttt{plm} function provides the
-panel data model. When you want to estimate pooled OLS, you need to
-specify \texttt{model\ =\ "pooling"}. Moreover, you should specify
-individual and time index using \texttt{index} augment. This augment
-passes \texttt{index\ =\ c("individual\ index",\ "time\ index")}. After
-estimating the pooled OLS by the \texttt{plm} function, you must use the
-\texttt{coeftest} function to obtain the cluster-robust standard errors.
-To caclulate the clustered standard errors, you should use the
-\texttt{vcovHC} function in the \texttt{vcov} augment.
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{library}\NormalTok{(plm)}
-\FunctionTok{library}\NormalTok{(lmtest)}
-\FunctionTok{library}\NormalTok{(sandwich)}
-\NormalTok{test }\OtherTok{\textless{}{-}} \FunctionTok{plm}\NormalTok{(lwage }\SpecialCharTok{\textasciitilde{}} \SpecialCharTok{{-}}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ exp }\SpecialCharTok{+}\NormalTok{ sqexp, }\AttributeTok{data =}\NormalTok{ dt, }\AttributeTok{model =} \StringTok{"pooling"}\NormalTok{, }\AttributeTok{index =} \FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{))}
-\FunctionTok{coeftest}\NormalTok{(test, }\AttributeTok{vcov =} \FunctionTok{vcovHC}\NormalTok{(test, }\AttributeTok{type =} \StringTok{"HC0"}\NormalTok{, }\AttributeTok{cluster =} \StringTok{"group"}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## 
-## t test of coefficients:
-## 
-##          Estimate  Std. Error t value  Pr(>|t|)    
-## exp    0.64570881  0.01078593  59.866 < 2.2e-16 ***
-## sqexp -0.01279755  0.00037651 -33.990 < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# OLS}
-\NormalTok{pool }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(lwage }\SpecialCharTok{\textasciitilde{}} \SpecialCharTok{{-}}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ exp }\SpecialCharTok{+}\NormalTok{ sqexp, }\AttributeTok{data =}\NormalTok{ dt)}
-\NormalTok{uhat }\OtherTok{\textless{}{-}}\NormalTok{ pool}\SpecialCharTok{$}\NormalTok{residuals}
-\NormalTok{omega\_sum }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\AttributeTok{ncol =} \FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time), }\AttributeTok{nrow =} \FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time))}
-\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) \{}
-\NormalTok{  x }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(dt))[dt}\SpecialCharTok{$}\NormalTok{id }\SpecialCharTok{==}\NormalTok{ i]}
-\NormalTok{  omega\_sum }\OtherTok{\textless{}{-}}\NormalTok{ uhat[x] }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(uhat[x]) }\SpecialCharTok{+}\NormalTok{ omega\_sum}
-\NormalTok{\}}
-\NormalTok{omega }\OtherTok{\textless{}{-}}\NormalTok{ omega\_sum}\SpecialCharTok{/}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)}
-
-\CommentTok{\# FGLS}
-\NormalTok{X }\OtherTok{\textless{}{-}} \FunctionTok{model.matrix}\NormalTok{(pool)}
-\NormalTok{Y }\OtherTok{\textless{}{-}}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{lwage}
-\NormalTok{Iomega }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) }\SpecialCharTok{\%x\%} \FunctionTok{solve}\NormalTok{(omega)}
-\NormalTok{bfgls }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ Iomega }\SpecialCharTok{\%*\%}\NormalTok{ X) }\SpecialCharTok{\%*\%}\NormalTok{ (}\FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ Iomega }\SpecialCharTok{\%*\%}\NormalTok{ Y)}
-
-\CommentTok{\# vcov of FGLS}
-\NormalTok{ufgls }\OtherTok{\textless{}{-}}\NormalTok{ Y }\SpecialCharTok{{-}}\NormalTok{ X }\SpecialCharTok{\%*\%}\NormalTok{ bfgls}
-\NormalTok{uhatset }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\AttributeTok{nrow =} \FunctionTok{nrow}\NormalTok{(X), }\AttributeTok{ncol =} \FunctionTok{nrow}\NormalTok{(X))}
-\NormalTok{i\_from }\OtherTok{\textless{}{-}} \DecValTok{1}\NormalTok{; j\_from }\OtherTok{\textless{}{-}} \DecValTok{1}
-\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) \{}
-\NormalTok{  x }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(dt))[dt}\SpecialCharTok{$}\NormalTok{id }\SpecialCharTok{==}\NormalTok{ i]}
-\NormalTok{  usq }\OtherTok{\textless{}{-}}\NormalTok{ uhat[x] }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(uhat[x])}
-\NormalTok{  i\_to }\OtherTok{\textless{}{-}}\NormalTok{ i\_from }\SpecialCharTok{+} \FunctionTok{nrow}\NormalTok{(usq) }\SpecialCharTok{{-}} \DecValTok{1}
-\NormalTok{  j\_to }\OtherTok{\textless{}{-}}\NormalTok{ j\_from }\SpecialCharTok{+} \FunctionTok{ncol}\NormalTok{(usq) }\SpecialCharTok{{-}} \DecValTok{1}
-\NormalTok{  uhatset[i\_from}\SpecialCharTok{:}\NormalTok{i\_to, j\_from}\SpecialCharTok{:}\NormalTok{j\_to] }\OtherTok{\textless{}{-}}\NormalTok{ usq}
-\NormalTok{  i\_from }\OtherTok{\textless{}{-}}\NormalTok{ i\_to }\SpecialCharTok{+} \DecValTok{1}\NormalTok{; j\_from }\OtherTok{\textless{}{-}}\NormalTok{ j\_to }\SpecialCharTok{+} \DecValTok{1}
-\NormalTok{\}}
-
-\NormalTok{Ahat }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ Iomega }\SpecialCharTok{\%*\%}\NormalTok{ X}
-\NormalTok{Bhat }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ Iomega }\SpecialCharTok{\%*\%}\NormalTok{ uhatset }\SpecialCharTok{\%*\%}\NormalTok{ Iomega }\SpecialCharTok{\%*\%}\NormalTok{ X}
-\NormalTok{vcov\_fgls }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(Ahat) }\SpecialCharTok{\%*\%}\NormalTok{ Bhat }\SpecialCharTok{\%*\%} \FunctionTok{solve}\NormalTok{(Ahat)}
-\NormalTok{se\_fgls }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(}\FunctionTok{diag}\NormalTok{(vcov\_fgls))}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# estimate}
-\NormalTok{i }\OtherTok{\textless{}{-}} \FunctionTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, }\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time))}
-\NormalTok{Qt }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time)) }\SpecialCharTok{{-}}\NormalTok{ i }\SpecialCharTok{\%*\%} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(i) }\SpecialCharTok{\%*\%}\NormalTok{ i) }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(i)}
-\NormalTok{Ybar }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) }\SpecialCharTok{\%x\%}\NormalTok{ Qt }\SpecialCharTok{\%*\%}\NormalTok{ Y}
-\NormalTok{Xbar }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) }\SpecialCharTok{\%x\%}\NormalTok{ Qt }\SpecialCharTok{\%*\%}\NormalTok{ X}
-\NormalTok{bfe }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(Xbar) }\SpecialCharTok{\%*\%}\NormalTok{ Xbar) }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(Xbar) }\SpecialCharTok{\%*\%}\NormalTok{ Ybar}
-
-\CommentTok{\# inference}
-\NormalTok{uhat }\OtherTok{\textless{}{-}}\NormalTok{ Ybar }\SpecialCharTok{{-}}\NormalTok{ Xbar }\SpecialCharTok{\%*\%}\NormalTok{ bfe}
-\NormalTok{sigmahat }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(uhat}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)}\SpecialCharTok{/}\NormalTok{(}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)}\SpecialCharTok{*}\NormalTok{(}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time)}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{)}\SpecialCharTok{{-}}\DecValTok{2}\NormalTok{)}
-\NormalTok{vcovfe }\OtherTok{\textless{}{-}}\NormalTok{ sigmahat }\SpecialCharTok{*} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(Xbar) }\SpecialCharTok{\%*\%}\NormalTok{ Xbar)}
-\NormalTok{sefe }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(}\FunctionTok{diag}\NormalTok{(vcovfe))}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{library}\NormalTok{(plm)}
-\FunctionTok{summary}\NormalTok{(}\FunctionTok{plm}\NormalTok{(lwage }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ exp }\SpecialCharTok{+}\NormalTok{ sqexp, }\AttributeTok{data =}\NormalTok{ dt, }\AttributeTok{index =} \FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{), }\AttributeTok{model =} \StringTok{"within"}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## Oneway (individual) effect Within Model
-## 
-## Call:
-## plm(formula = lwage ~ 1 + exp + sqexp, data = dt, model = "within", 
-##     index = c("id", "time"))
-## 
-## Balanced Panel: n = 595, T = 7, N = 4165
-## 
-## Residuals:
-##       Min.    1st Qu.     Median    3rd Qu.       Max. 
-## -1.8119015 -0.0506647  0.0041017  0.0607943  1.9430281 
-## 
-## Coefficients:
-##          Estimate  Std. Error t-value  Pr(>|t|)    
-## exp    0.11398290  0.00246524  46.236 < 2.2e-16 ***
-## sqexp -0.00042940  0.00005452  -7.876 4.452e-15 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Total Sum of Squares:    240.65
-## Residual Sum of Squares: 82.677
-## R-Squared:      0.65644
-## Adj. R-Squared: 0.59906
-## F-statistic: 3408.73 on 2 and 3568 DF, p-value: < 2.22e-16
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# pooled OLS and estimator of sigma}
-\NormalTok{n }\OtherTok{\textless{}{-}} \FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id); t }\OtherTok{\textless{}{-}} \FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time)}
-\NormalTok{vhat }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(lwage }\SpecialCharTok{\textasciitilde{}} \SpecialCharTok{{-}}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ exp }\SpecialCharTok{+}\NormalTok{ sqexp, }\AttributeTok{data =}\NormalTok{ dt)}\SpecialCharTok{$}\NormalTok{residuals}
-\NormalTok{sigmav }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(vhat}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)}\SpecialCharTok{/}\NormalTok{(n}\SpecialCharTok{*}\NormalTok{t }\SpecialCharTok{{-}} \DecValTok{2}\NormalTok{)}
-\NormalTok{vdt }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{vhat =}\NormalTok{ vhat, }\AttributeTok{id =}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{id, }\AttributeTok{time =}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{time)}
-\NormalTok{vdt}\SpecialCharTok{$}\NormalTok{time1 }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(vdt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{\textgreater{}} \DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
-\NormalTok{vdt}\SpecialCharTok{$}\NormalTok{time2 }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(vdt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{\textgreater{}} \DecValTok{2}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
-\NormalTok{vdt}\SpecialCharTok{$}\NormalTok{time3 }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(vdt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{\textgreater{}} \DecValTok{3}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
-\NormalTok{vdt}\SpecialCharTok{$}\NormalTok{time4 }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(vdt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{\textgreater{}} \DecValTok{4}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
-\NormalTok{vdt}\SpecialCharTok{$}\NormalTok{time5 }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(vdt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{\textgreater{}} \DecValTok{5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
-\NormalTok{vdt}\SpecialCharTok{$}\NormalTok{time6 }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(vdt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{\textgreater{}} \DecValTok{6}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
-
-\FunctionTok{library}\NormalTok{(tidyverse)}
-\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\NormalTok{n) \{}
-\NormalTok{  vdt }\OtherTok{\textless{}{-}}\NormalTok{ vdt }\SpecialCharTok{\%\textgreater{}\%} 
-    \FunctionTok{mutate}\NormalTok{(}
-      \AttributeTok{dmu =} \FunctionTok{case\_when}\NormalTok{(}
-\NormalTok{        id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ time }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}}\NormalTok{ vhat }\SpecialCharTok{*}\NormalTok{ time1,}
-\NormalTok{        id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ time }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}}\NormalTok{ vhat }\SpecialCharTok{*}\NormalTok{ time2,}
-\NormalTok{        id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ time }\SpecialCharTok{==} \DecValTok{3} \SpecialCharTok{\textasciitilde{}}\NormalTok{ vhat }\SpecialCharTok{*}\NormalTok{ time3,}
-\NormalTok{        id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ time }\SpecialCharTok{==} \DecValTok{4} \SpecialCharTok{\textasciitilde{}}\NormalTok{ vhat }\SpecialCharTok{*}\NormalTok{ time4,}
-\NormalTok{        id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ time }\SpecialCharTok{==} \DecValTok{5} \SpecialCharTok{\textasciitilde{}}\NormalTok{ vhat }\SpecialCharTok{*}\NormalTok{ time5,}
-\NormalTok{        id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ time }\SpecialCharTok{==} \DecValTok{6} \SpecialCharTok{\textasciitilde{}}\NormalTok{ vhat }\SpecialCharTok{*}\NormalTok{ time6}
-\NormalTok{      )}
-\NormalTok{    )}
-\NormalTok{\}}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{library}\NormalTok{(plm)}
-\FunctionTok{summary}\NormalTok{(}\FunctionTok{plm}\NormalTok{(lwage }\SpecialCharTok{\textasciitilde{}} \SpecialCharTok{{-}}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ exp }\SpecialCharTok{+}\NormalTok{ sqexp, }\AttributeTok{data =}\NormalTok{ dt, }\AttributeTok{index =} \FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{), }\AttributeTok{model =} \StringTok{"random"}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## Oneway (individual) effect Random Effect Model 
-##    (Swamy-Arora's transformation)
-## 
-## Call:
-## plm(formula = lwage ~ -1 + exp + sqexp, data = dt, model = "random", 
-##     index = c("id", "time"))
-## 
-## Balanced Panel: n = 595, T = 7, N = 4165
-## 
-## Effects:
-##                   var std.dev share
-## idiosyncratic 0.02317 0.15222 0.009
-## individual    2.62039 1.61876 0.991
-## theta: 0.9645
-## 
-## Residuals:
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-## -1.7247  0.0639  0.1400  0.1422  0.2258  2.1452 
-## 
-## Coefficients:
-##          Estimate  Std. Error z-value  Pr(>|z|)    
-## exp    1.6583e-01  3.2167e-03  51.552 < 2.2e-16 ***
-## sqexp -1.2025e-03  7.3838e-05 -16.285 < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Total Sum of Squares:    241.47
-## Residual Sum of Squares: 186.73
-## R-Squared:      0.62742
-## Adj. R-Squared: 0.62733
-## Chisq: 6442.14 on 2 DF, p-value: < 2.22e-16
-\end{verbatim}
+The result is shown in the first column of \ref{pdm}. The partial effect
+of experience represents the percent change of wages. Thus, \[
+  (\text{\% Change of Wage}) = 64.6 - 2 \cdot 1.3 \cdot \text{exp}.
+\] For example, wages increase by 12.99\% at a mathematical mean of
+labor experience (\texttt{exp}). Moreover, this result implies
+diminishing marginal returns of labor experience.
 
 \end{document}
