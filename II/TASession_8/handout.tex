@@ -6,12 +6,13 @@
   12pt,
 ]{article}
 \usepackage{lmodern}
-\usepackage{amssymb,amsmath}
+\usepackage{amsmath}
 \usepackage{ifxetex,ifluatex}
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
   \usepackage{textcomp} % provide euro and other symbols
+  \usepackage{amssymb}
 \else % if luatex or xetex
   \usepackage{unicode-math}
   \defaultfontfeatures{Scale=MatchLowercase}
@@ -135,8 +136,8 @@ every year.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"./data/wages.csv"}\NormalTok{)}
-\KeywordTok{head}\NormalTok{(dt, }\DecValTok{14}\NormalTok{)}
+\NormalTok{dt }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(}\StringTok{"./data/wages.csv"}\NormalTok{)}
+\FunctionTok{head}\NormalTok{(dt, }\DecValTok{14}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -174,9 +175,9 @@ Additionally, we use the following variables:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{, }\StringTok{"exp"}\NormalTok{, }\StringTok{"lwage"}\NormalTok{)]}
-\NormalTok{dt}\OperatorTok{$}\NormalTok{sqexp \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{exp}\OperatorTok{\^{}}\DecValTok{2}
-\KeywordTok{summary}\NormalTok{(dt)}
+\NormalTok{dt }\OtherTok{\textless{}{-}}\NormalTok{ dt[,}\FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{, }\StringTok{"exp"}\NormalTok{, }\StringTok{"lwage"}\NormalTok{)]}
+\NormalTok{dt}\SpecialCharTok{$}\NormalTok{sqexp }\OtherTok{\textless{}{-}}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{exp}\SpecialCharTok{\^{}}\DecValTok{2}
+\FunctionTok{summary}\NormalTok{(dt)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -207,7 +208,7 @@ panel data model as follows:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{lwage }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{{-}1} \OperatorTok{+}\StringTok{ }\NormalTok{exp }\OperatorTok{+}\StringTok{ }\NormalTok{sqexp}
+\NormalTok{model }\OtherTok{\textless{}{-}}\NormalTok{ lwage }\SpecialCharTok{\textasciitilde{}} \SpecialCharTok{{-}}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ exp }\SpecialCharTok{+}\NormalTok{ sqexp}
 \end{Highlighting}
 \end{Shaded}
 
@@ -217,8 +218,8 @@ panel data model as follows:
 We want to estimate the above regression equation by the OLS method. We
 will discuss assumptions for implementation. Let \(\mathbf{X}_{it}\) be
 a \(1 \times K\) (stochastic) explanatory vector. This vector contains
-\texttt{exp}, \texttt{sqexp}. Let \(Y_{it}\) be a random variable of
-outcome, that is \texttt{lwage}. Then, the linear panel data model can
+\texttt{exp} and \texttt{sqexp}. Let \(Y_{it}\) be a random variable of
+outcome, that is, \texttt{lwage}. Then, the linear panel data model can
 be rewritten as follows:
 
 \[
@@ -282,10 +283,10 @@ and time index using \texttt{index} augment. This augment passes
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{bols1 \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt)}
+\NormalTok{bols1 }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(model, }\AttributeTok{data =}\NormalTok{ dt)}
 
-\KeywordTok{library}\NormalTok{(plm)}
-\NormalTok{bols2 \textless{}{-}}\StringTok{ }\KeywordTok{plm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{model =} \StringTok{"pooling"}\NormalTok{, }\DataTypeTok{index =} \KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{))}
+\FunctionTok{library}\NormalTok{(plm)}
+\NormalTok{bols2 }\OtherTok{\textless{}{-}} \FunctionTok{plm}\NormalTok{(model, }\AttributeTok{data =}\NormalTok{ dt, }\AttributeTok{model =} \StringTok{"pooling"}\NormalTok{, }\AttributeTok{index =} \FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
 
@@ -295,19 +296,17 @@ distributed. \[
 \] where \(A = E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i]\)
 and
 \(B = E[\underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i]\).
-The consistent estimator of the asymptotic variance covariance matrix is
-given by \[
-  \hat{A}^{-1} \hat{B} \hat{A}^{-1} = 
-  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
-  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i \right)
-  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
+The consistent estimator of A and B is given by \[
+  \hat{A} = \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i,
+\] \[
+  \hat{B} = \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i.
 \] Thus, estimator of asymptotic variance of the pooled OLSE is \[
-  \hat{Avar}(\hat{\beta}) =
+  \hat{Asyvar}(\hat{\beta}) =
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i \right)
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}.
 \] Using the full matrix notations, we can reformulate \[
-  \hat{Avar}(\hat{\beta}) =
+  \hat{Asyvar}(\hat{\beta}) =
   (\mathbf{X}' \mathbf{X})^{-1}
   (\mathbf{X}' U \mathbf{X})
   (\mathbf{X}' \mathbf{X})^{-1},
@@ -324,7 +323,7 @@ standard errors clustered by individuals}.
 
 In \texttt{R}, the \texttt{lm} and \texttt{plm} function provide the
 standard errors based on
-\(\hat{Avar}(\hat{\beta}) = \hat{\sigma}^2 (X'X)^{-1}\), where
+\(\hat{Asyvar}(\hat{\beta}) = \hat{\sigma}^2 (X'X)^{-1}\), where
 \(\hat{\sigma}^2 = \hat{u}\hat{u}'/(nT - K)\) and
 \(\hat{u} = Y - X \hat{\beta}\). There are two ways to obtain cluster
 robust standard errors. The first way is to caclulate by yourself. The
@@ -337,33 +336,33 @@ second way is to use the \texttt{coeftest} function in the package
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{\# Setup}
-\NormalTok{N \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)); T \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{time))}
-\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(bols1); k \textless{}{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X)}
+\NormalTok{N }\OtherTok{\textless{}{-}} \FunctionTok{length}\NormalTok{(}\FunctionTok{unique}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)); T }\OtherTok{\textless{}{-}} \FunctionTok{length}\NormalTok{(}\FunctionTok{unique}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time))}
+\NormalTok{X }\OtherTok{\textless{}{-}} \FunctionTok{model.matrix}\NormalTok{(bols1); k }\OtherTok{\textless{}{-}} \FunctionTok{ncol}\NormalTok{(X)}
 
 \CommentTok{\# Inference}
-\NormalTok{uhat \textless{}{-}}\StringTok{ }\NormalTok{bols1}\OperatorTok{$}\NormalTok{residuals}
-\NormalTok{uhatset \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{nrow =} \KeywordTok{nrow}\NormalTok{(X), }\DataTypeTok{ncol =} \KeywordTok{nrow}\NormalTok{(X))}
+\NormalTok{uhat }\OtherTok{\textless{}{-}}\NormalTok{ bols1}\SpecialCharTok{$}\NormalTok{residuals}
+\NormalTok{uhatset }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\AttributeTok{nrow =} \FunctionTok{nrow}\NormalTok{(X), }\AttributeTok{ncol =} \FunctionTok{nrow}\NormalTok{(X))}
 
-\NormalTok{i\_from \textless{}{-}}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\DecValTok{1}
-\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{max}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)) \{}
-\NormalTok{  x \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i]}
-\NormalTok{  usq \textless{}{-}}\StringTok{ }\NormalTok{uhat[x] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(uhat[x])}
-\NormalTok{  i\_to \textless{}{-}}\StringTok{ }\NormalTok{i\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{nrow}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
-\NormalTok{  j\_to \textless{}{-}}\StringTok{ }\NormalTok{j\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{ncol}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
-\NormalTok{  uhatset[i\_from}\OperatorTok{:}\NormalTok{i\_to, j\_from}\OperatorTok{:}\NormalTok{j\_to] \textless{}{-}}\StringTok{ }\NormalTok{usq}
-\NormalTok{  i\_from \textless{}{-}}\StringTok{ }\NormalTok{i\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\NormalTok{j\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+\NormalTok{i\_from }\OtherTok{\textless{}{-}} \DecValTok{1}\NormalTok{; j\_from }\OtherTok{\textless{}{-}} \DecValTok{1}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) \{}
+\NormalTok{  x }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(dt))[dt}\SpecialCharTok{$}\NormalTok{id }\SpecialCharTok{==}\NormalTok{ i]}
+\NormalTok{  usq }\OtherTok{\textless{}{-}}\NormalTok{ uhat[x] }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(uhat[x])}
+\NormalTok{  i\_to }\OtherTok{\textless{}{-}}\NormalTok{ i\_from }\SpecialCharTok{+} \FunctionTok{nrow}\NormalTok{(usq) }\SpecialCharTok{{-}} \DecValTok{1}
+\NormalTok{  j\_to }\OtherTok{\textless{}{-}}\NormalTok{ j\_from }\SpecialCharTok{+} \FunctionTok{ncol}\NormalTok{(usq) }\SpecialCharTok{{-}} \DecValTok{1}
+\NormalTok{  uhatset[i\_from}\SpecialCharTok{:}\NormalTok{i\_to, j\_from}\SpecialCharTok{:}\NormalTok{j\_to] }\OtherTok{\textless{}{-}}\NormalTok{ usq}
+\NormalTok{  i\_from }\OtherTok{\textless{}{-}}\NormalTok{ i\_to }\SpecialCharTok{+} \DecValTok{1}\NormalTok{; j\_from }\OtherTok{\textless{}{-}}\NormalTok{ j\_to }\SpecialCharTok{+} \DecValTok{1}
 \NormalTok{\}}
 
-\NormalTok{Ahat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
-\NormalTok{Bhat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{uhatset }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
-\NormalTok{vcovols \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Bhat }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat)}
-\NormalTok{seols \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(vcovols))}
+\NormalTok{Ahat }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ X}
+\NormalTok{Bhat }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ uhatset }\SpecialCharTok{\%*\%}\NormalTok{ X}
+\NormalTok{vcovols }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(Ahat) }\SpecialCharTok{\%*\%}\NormalTok{ Bhat }\SpecialCharTok{\%*\%} \FunctionTok{solve}\NormalTok{(Ahat)}
+\NormalTok{seols }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(}\FunctionTok{diag}\NormalTok{(vcovols))}
 
 \CommentTok{\# Easy way}
-\KeywordTok{library}\NormalTok{(lmtest)}
-\KeywordTok{library}\NormalTok{(sandwich)}
-\NormalTok{easy\_cluster \textless{}{-}}\StringTok{ }\KeywordTok{coeftest}\NormalTok{(}
-\NormalTok{  bols2, }\DataTypeTok{vcov =} \KeywordTok{vcovHC}\NormalTok{(bols2, }\DataTypeTok{type =} \StringTok{"HC0"}\NormalTok{, }\DataTypeTok{cluster =} \StringTok{"group"}\NormalTok{))}
+\FunctionTok{library}\NormalTok{(lmtest)}
+\FunctionTok{library}\NormalTok{(sandwich)}
+\NormalTok{easy\_cluster }\OtherTok{\textless{}{-}} \FunctionTok{coeftest}\NormalTok{(}
+\NormalTok{  bols2, }\AttributeTok{vcov =} \FunctionTok{vcovHC}\NormalTok{(bols2, }\AttributeTok{type =} \StringTok{"HC0"}\NormalTok{, }\AttributeTok{cluster =} \StringTok{"group"}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
 
@@ -392,8 +391,8 @@ we assume
   \(\Omega = E[\underline{u}_i\underline{u}'_i]\) is \(T \times T\)
   matrix.
 \item
-  \(\Omega \succ 0\) and E{[}\underline{X}'\_i \Omega\^{}\{-1\}
-  \underline{X}'\_i{]} \succ 0\$.
+  \(\Omega \succ 0\) and
+  \(E[\underline{X}'_i \Omega^{-1} \underline{X}'_i] \succ 0\).
 \end{enumerate}
 
 The GLS estimator is given by \[
@@ -430,27 +429,27 @@ indexs using \texttt{index} augment, and type in
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{\# Setup}
-\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(model, dt); k \textless{}{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X)}
-\NormalTok{y \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{lwage}
-\NormalTok{N \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)); T \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{time))}
+\NormalTok{X }\OtherTok{\textless{}{-}} \FunctionTok{model.matrix}\NormalTok{(model, dt); k }\OtherTok{\textless{}{-}} \FunctionTok{ncol}\NormalTok{(X)}
+\NormalTok{y }\OtherTok{\textless{}{-}}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{lwage}
+\NormalTok{N }\OtherTok{\textless{}{-}} \FunctionTok{length}\NormalTok{(}\FunctionTok{unique}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)); T }\OtherTok{\textless{}{-}} \FunctionTok{length}\NormalTok{(}\FunctionTok{unique}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time))}
 
 \CommentTok{\# Estimator of Omega}
-\NormalTok{uhat \textless{}{-}}\StringTok{ }\NormalTok{bols1}\OperatorTok{$}\NormalTok{residuals}
+\NormalTok{uhat }\OtherTok{\textless{}{-}}\NormalTok{ bols1}\SpecialCharTok{$}\NormalTok{residuals}
 
-\NormalTok{Omega\_sum \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{ncol =}\NormalTok{ T, }\DataTypeTok{nrow =}\NormalTok{ T)}
-\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{N) \{}
-\NormalTok{  x \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i]}
-\NormalTok{  Omega\_sum \textless{}{-}}\StringTok{ }\NormalTok{uhat[x] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(uhat[x]) }\OperatorTok{+}\StringTok{ }\NormalTok{Omega\_sum}
+\NormalTok{Omega\_sum }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\AttributeTok{ncol =}\NormalTok{ T, }\AttributeTok{nrow =}\NormalTok{ T)}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\NormalTok{N) \{}
+\NormalTok{  x }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(dt))[dt}\SpecialCharTok{$}\NormalTok{id }\SpecialCharTok{==}\NormalTok{ i]}
+\NormalTok{  Omega\_sum }\OtherTok{\textless{}{-}}\NormalTok{ uhat[x] }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(uhat[x]) }\SpecialCharTok{+}\NormalTok{ Omega\_sum}
 \NormalTok{\}}
-\NormalTok{Omega \textless{}{-}}\StringTok{ }\NormalTok{Omega\_sum}\OperatorTok{/}\NormalTok{N}
+\NormalTok{Omega }\OtherTok{\textless{}{-}}\NormalTok{ Omega\_sum}\SpecialCharTok{/}\NormalTok{N}
 
 \CommentTok{\# FGLS estimator}
-\NormalTok{kroOmega \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(N) }\OperatorTok{\%x\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(Omega)}
-\NormalTok{bfgls \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{y)}
+\NormalTok{kroOmega }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(N) }\SpecialCharTok{\%x\%} \FunctionTok{solve}\NormalTok{(Omega)}
+\NormalTok{bfgls }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ kroOmega }\SpecialCharTok{\%*\%}\NormalTok{ X) }\SpecialCharTok{\%*\%}\NormalTok{ (}\FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ kroOmega }\SpecialCharTok{\%*\%}\NormalTok{ y)}
 
 \CommentTok{\# Easy way!!!}
-\NormalTok{easy\_fgls \textless{}{-}}\StringTok{ }\KeywordTok{pggls}\NormalTok{(}
-\NormalTok{  model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{index =} \KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{), }\DataTypeTok{model =} \StringTok{"pooling"}\NormalTok{)}
+\NormalTok{easy\_fgls }\OtherTok{\textless{}{-}} \FunctionTok{pggls}\NormalTok{(}
+\NormalTok{  model, }\AttributeTok{data =}\NormalTok{ dt, }\AttributeTok{index =} \FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{), }\AttributeTok{model =} \StringTok{"pooling"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -470,15 +469,15 @@ The consistent estimator of \(A\) and \(B\) is \[
   \hat{\Omega}^{-1} \underline{\mathbf{X}}_i,
 \] where
 \(\underline{u}^{FLGS}_i = \underline{Y}_i - \underline{\mathbf{X}}_i \hat{\beta}_{FGLS}\).
-Thus, estimator of asymptotic variance of the pooled OLSE is \[
-  \hat{Avar}(\hat{\beta}_{FGLS}) =
+Thus, estimator of asymptotic variance of the FGLS estimator is \[
+  \hat{Asyvar}(\hat{\beta}_{FGLS}) =
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} 
   \underline{u}^{FLGS}_i \underline{u}^{FGLS'}_i 
   \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}.
 \] Using the full matrix notations, \[
-  \hat{Avar}(\hat{\beta}_{FGLS}) =
+  \hat{Asyvar}(\hat{\beta}_{FGLS}) =
   \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) \mathbf{X} \}^{-1}
   \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) U (I_n \otimes \hat{\Omega}^{-1}) \mathbf{X} \}^{-1}
   \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) \mathbf{X} \}^{-1},
@@ -502,22 +501,22 @@ easiest way to carry out statistical inference.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{ufgls \textless{}{-}}\StringTok{ }\NormalTok{y }\OperatorTok{{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{bfgls}
-\NormalTok{uhatset \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{nrow =} \KeywordTok{nrow}\NormalTok{(X), }\DataTypeTok{ncol =} \KeywordTok{nrow}\NormalTok{(X))}
-\NormalTok{i\_from \textless{}{-}}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\DecValTok{1}
-\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{max}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)) \{}
-\NormalTok{  x \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i]}
-\NormalTok{  usq \textless{}{-}}\StringTok{ }\NormalTok{uhat[x] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(uhat[x])}
-\NormalTok{  i\_to \textless{}{-}}\StringTok{ }\NormalTok{i\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{nrow}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
-\NormalTok{  j\_to \textless{}{-}}\StringTok{ }\NormalTok{j\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{ncol}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
-\NormalTok{  uhatset[i\_from}\OperatorTok{:}\NormalTok{i\_to, j\_from}\OperatorTok{:}\NormalTok{j\_to] \textless{}{-}}\StringTok{ }\NormalTok{usq}
-\NormalTok{  i\_from \textless{}{-}}\StringTok{ }\NormalTok{i\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\NormalTok{j\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+\NormalTok{ufgls }\OtherTok{\textless{}{-}}\NormalTok{ y }\SpecialCharTok{{-}}\NormalTok{ X }\SpecialCharTok{\%*\%}\NormalTok{ bfgls}
+\NormalTok{uhatset }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\AttributeTok{nrow =} \FunctionTok{nrow}\NormalTok{(X), }\AttributeTok{ncol =} \FunctionTok{nrow}\NormalTok{(X))}
+\NormalTok{i\_from }\OtherTok{\textless{}{-}} \DecValTok{1}\NormalTok{; j\_from }\OtherTok{\textless{}{-}} \DecValTok{1}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{max}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)) \{}
+\NormalTok{  x }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(dt))[dt}\SpecialCharTok{$}\NormalTok{id }\SpecialCharTok{==}\NormalTok{ i]}
+\NormalTok{  usq }\OtherTok{\textless{}{-}}\NormalTok{ uhat[x] }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(uhat[x])}
+\NormalTok{  i\_to }\OtherTok{\textless{}{-}}\NormalTok{ i\_from }\SpecialCharTok{+} \FunctionTok{nrow}\NormalTok{(usq) }\SpecialCharTok{{-}} \DecValTok{1}
+\NormalTok{  j\_to }\OtherTok{\textless{}{-}}\NormalTok{ j\_from }\SpecialCharTok{+} \FunctionTok{ncol}\NormalTok{(usq) }\SpecialCharTok{{-}} \DecValTok{1}
+\NormalTok{  uhatset[i\_from}\SpecialCharTok{:}\NormalTok{i\_to, j\_from}\SpecialCharTok{:}\NormalTok{j\_to] }\OtherTok{\textless{}{-}}\NormalTok{ usq}
+\NormalTok{  i\_from }\OtherTok{\textless{}{-}}\NormalTok{ i\_to }\SpecialCharTok{+} \DecValTok{1}\NormalTok{; j\_from }\OtherTok{\textless{}{-}}\NormalTok{ j\_to }\SpecialCharTok{+} \DecValTok{1}
 \NormalTok{\}}
 
-\NormalTok{Ahat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
-\NormalTok{Bhat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{uhatset }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
-\NormalTok{vcovfgls \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Bhat }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat)}
-\NormalTok{sefgls \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(vcovfgls))}
+\NormalTok{Ahat }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ kroOmega }\SpecialCharTok{\%*\%}\NormalTok{ X}
+\NormalTok{Bhat }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ kroOmega }\SpecialCharTok{\%*\%}\NormalTok{ uhatset }\SpecialCharTok{\%*\%}\NormalTok{ kroOmega }\SpecialCharTok{\%*\%}\NormalTok{ X}
+\NormalTok{vcovfgls }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(Ahat) }\SpecialCharTok{\%*\%}\NormalTok{ Bhat }\SpecialCharTok{\%*\%} \FunctionTok{solve}\NormalTok{(Ahat)}
+\NormalTok{sefgls }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(}\FunctionTok{diag}\NormalTok{(vcovfgls))}
 \end{Highlighting}
 \end{Shaded}
 
@@ -615,19 +614,19 @@ the FE model.
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{\# Setup}
-\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(model, dt); k \textless{}{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X)}
-\NormalTok{y \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{lwage}
-\NormalTok{N \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)); T \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{time))}
+\NormalTok{X }\OtherTok{\textless{}{-}} \FunctionTok{model.matrix}\NormalTok{(model, dt); k }\OtherTok{\textless{}{-}} \FunctionTok{ncol}\NormalTok{(X)}
+\NormalTok{y }\OtherTok{\textless{}{-}}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{lwage}
+\NormalTok{N }\OtherTok{\textless{}{-}} \FunctionTok{length}\NormalTok{(}\FunctionTok{unique}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id)); T }\OtherTok{\textless{}{-}} \FunctionTok{length}\NormalTok{(}\FunctionTok{unique}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time))}
 
 \CommentTok{\# FE estimator}
-\NormalTok{i \textless{}{-}}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, T)}
-\NormalTok{Qt \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(T) }\OperatorTok{{-}}\StringTok{ }\NormalTok{i }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(i) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{i) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(i)}
-\NormalTok{Ydev \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(N) }\OperatorTok{\%x\%}\StringTok{ }\NormalTok{Qt }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{y}
-\NormalTok{Xdev \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(N) }\OperatorTok{\%x\%}\StringTok{ }\NormalTok{Qt }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
-\NormalTok{bfe \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(Xdev) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Xdev) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(Xdev) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Ydev}
+\NormalTok{i }\OtherTok{\textless{}{-}} \FunctionTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, T)}
+\NormalTok{Qt }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(T) }\SpecialCharTok{{-}}\NormalTok{ i }\SpecialCharTok{\%*\%} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(i) }\SpecialCharTok{\%*\%}\NormalTok{ i) }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(i)}
+\NormalTok{Ydev }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(N) }\SpecialCharTok{\%x\%}\NormalTok{ Qt }\SpecialCharTok{\%*\%}\NormalTok{ y}
+\NormalTok{Xdev }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(N) }\SpecialCharTok{\%x\%}\NormalTok{ Qt }\SpecialCharTok{\%*\%}\NormalTok{ X}
+\NormalTok{bfe }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(Xdev) }\SpecialCharTok{\%*\%}\NormalTok{ Xdev) }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(Xdev) }\SpecialCharTok{\%*\%}\NormalTok{ Ydev}
 
 \CommentTok{\# Awesome way !!!}
-\NormalTok{plmfe \textless{}{-}}\StringTok{ }\KeywordTok{plm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{index =} \KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{), }\DataTypeTok{model =} \StringTok{"within"}\NormalTok{)}
+\NormalTok{plmfe }\OtherTok{\textless{}{-}} \FunctionTok{plm}\NormalTok{(model, }\AttributeTok{data =}\NormalTok{ dt, }\AttributeTok{index =} \FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{), }\AttributeTok{model =} \StringTok{"within"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -637,7 +636,7 @@ is given by \[
   \sim N(0, \sigma^2_u E[\ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{\mathbf{X}}}_i]).
 \] The consistent estimator of the asymptotic variance of the FE
 estimator is \[
-  \hat{Avar}(\hat{\beta}_{FE}) =
+  \hat{Asyvar}(\hat{\beta}_{FE}) =
   \hat{\sigma}_u^2 
   \left( \sum_{i=1}^n \ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{\mathbf{X}}}_i \right)^{-1} =
   \hat{\sigma}_u^2 (\ddot{X}' \ddot{X})^{-1},
@@ -653,10 +652,10 @@ as follows:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{uhat \textless{}{-}}\StringTok{ }\NormalTok{Ydev }\OperatorTok{{-}}\StringTok{ }\NormalTok{Xdev }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{bfe}
-\NormalTok{sigmahat \textless{}{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(uhat}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)}\OperatorTok{/}\NormalTok{(N}\OperatorTok{*}\NormalTok{(T}\DecValTok{{-}1}\NormalTok{)}\OperatorTok{{-}}\NormalTok{k)}
-\NormalTok{vcovfe \textless{}{-}}\StringTok{ }\NormalTok{sigmahat }\OperatorTok{*}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(Xdev) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Xdev)}
-\NormalTok{sefe \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(vcovfe))}
+\NormalTok{uhat }\OtherTok{\textless{}{-}}\NormalTok{ Ydev }\SpecialCharTok{{-}}\NormalTok{ Xdev }\SpecialCharTok{\%*\%}\NormalTok{ bfe}
+\NormalTok{sigmahat }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(uhat}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)}\SpecialCharTok{/}\NormalTok{(N}\SpecialCharTok{*}\NormalTok{(T}\DecValTok{{-}1}\NormalTok{)}\SpecialCharTok{{-}}\NormalTok{k)}
+\NormalTok{vcovfe }\OtherTok{\textless{}{-}}\NormalTok{ sigmahat }\SpecialCharTok{*} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(Xdev) }\SpecialCharTok{\%*\%}\NormalTok{ Xdev)}
+\NormalTok{sefe }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(}\FunctionTok{diag}\NormalTok{(vcovfe))}
 \end{Highlighting}
 \end{Shaded}
 
@@ -742,40 +741,40 @@ described above, we compute manually.
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{\# Setup}
-\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(model, dt)}
-\NormalTok{y \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{lwage}
-\NormalTok{k \textless{}{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X)}
-\NormalTok{N \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id))}
-\NormalTok{T \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{time))}
+\NormalTok{X }\OtherTok{\textless{}{-}} \FunctionTok{model.matrix}\NormalTok{(model, dt)}
+\NormalTok{y }\OtherTok{\textless{}{-}}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{lwage}
+\NormalTok{k }\OtherTok{\textless{}{-}} \FunctionTok{ncol}\NormalTok{(X)}
+\NormalTok{N }\OtherTok{\textless{}{-}} \FunctionTok{length}\NormalTok{(}\FunctionTok{unique}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{id))}
+\NormalTok{T }\OtherTok{\textless{}{-}} \FunctionTok{length}\NormalTok{(}\FunctionTok{unique}\NormalTok{(dt}\SpecialCharTok{$}\NormalTok{time))}
 
 \CommentTok{\# estimator of Omega}
-\NormalTok{pols \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, dt)}
-\NormalTok{vhat \textless{}{-}}\StringTok{ }\NormalTok{pols}\OperatorTok{$}\NormalTok{residuals}
-\NormalTok{sigmav \textless{}{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(vhat}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)}\OperatorTok{/}\NormalTok{(N}\OperatorTok{*}\NormalTok{T }\OperatorTok{{-}}\StringTok{ }\NormalTok{k)}
+\NormalTok{pols }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(model, dt)}
+\NormalTok{vhat }\OtherTok{\textless{}{-}}\NormalTok{ pols}\SpecialCharTok{$}\NormalTok{residuals}
+\NormalTok{sigmav }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(vhat}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)}\SpecialCharTok{/}\NormalTok{(N}\SpecialCharTok{*}\NormalTok{T }\SpecialCharTok{{-}}\NormalTok{ k)}
 
-\NormalTok{sumuc \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{nrow =}\NormalTok{ N, }\DataTypeTok{ncol =}\NormalTok{ T}\DecValTok{{-}1}\NormalTok{)}
-\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{N) \{}
-  \ControlFlowTok{for}\NormalTok{ (t }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{T}\DecValTok{{-}1}\NormalTok{) \{}
-\NormalTok{    it \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i }\OperatorTok{\&}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{time }\OperatorTok{==}\StringTok{ }\NormalTok{t]}
-\NormalTok{    is \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i }\OperatorTok{\&}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{time }\OperatorTok{\textgreater{}}\StringTok{ }\NormalTok{t]}
-\NormalTok{    sumuc[i,t] \textless{}{-}}\StringTok{ }\NormalTok{vhat[it] }\OperatorTok{*}\StringTok{ }\KeywordTok{sum}\NormalTok{(vhat[is])}
+\NormalTok{sumuc }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\AttributeTok{nrow =}\NormalTok{ N, }\AttributeTok{ncol =}\NormalTok{ T}\DecValTok{{-}1}\NormalTok{)}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\NormalTok{N) \{}
+  \ControlFlowTok{for}\NormalTok{ (t }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\NormalTok{T}\DecValTok{{-}1}\NormalTok{) \{}
+\NormalTok{    it }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(dt))[dt}\SpecialCharTok{$}\NormalTok{id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{==}\NormalTok{ t]}
+\NormalTok{    is }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(dt))[dt}\SpecialCharTok{$}\NormalTok{id }\SpecialCharTok{==}\NormalTok{ i }\SpecialCharTok{\&}\NormalTok{ dt}\SpecialCharTok{$}\NormalTok{time }\SpecialCharTok{\textgreater{}}\NormalTok{ t]}
+\NormalTok{    sumuc[i,t] }\OtherTok{\textless{}{-}}\NormalTok{ vhat[it] }\SpecialCharTok{*} \FunctionTok{sum}\NormalTok{(vhat[is])}
 \NormalTok{  \}}
 \NormalTok{\}}
-\NormalTok{sigmac \textless{}{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(}\KeywordTok{colSums}\NormalTok{(sumuc))}\OperatorTok{/}\NormalTok{((N}\OperatorTok{*}\NormalTok{T}\OperatorTok{*}\NormalTok{(T}\DecValTok{{-}1}\NormalTok{))}\OperatorTok{/}\DecValTok{2}\OperatorTok{{-}}\NormalTok{k)}
-\NormalTok{sigmau \textless{}{-}}\StringTok{ }\NormalTok{sigmav }\OperatorTok{{-}}\StringTok{ }\NormalTok{sigmac}
+\NormalTok{sigmac }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(}\FunctionTok{colSums}\NormalTok{(sumuc))}\SpecialCharTok{/}\NormalTok{((N}\SpecialCharTok{*}\NormalTok{T}\SpecialCharTok{*}\NormalTok{(T}\DecValTok{{-}1}\NormalTok{))}\SpecialCharTok{/}\DecValTok{2}\SpecialCharTok{{-}}\NormalTok{k)}
+\NormalTok{sigmau }\OtherTok{\textless{}{-}}\NormalTok{ sigmav }\SpecialCharTok{{-}}\NormalTok{ sigmac}
 
-\NormalTok{i \textless{}{-}}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, T)}
-\NormalTok{Omega \textless{}{-}}\StringTok{ }\NormalTok{sigmau }\OperatorTok{*}\StringTok{ }\KeywordTok{diag}\NormalTok{(T) }\OperatorTok{+}\StringTok{ }\NormalTok{sigmac }\OperatorTok{*}\StringTok{ }\NormalTok{i }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(i)}
-\NormalTok{kroOmega \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(N) }\OperatorTok{\%x\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(Omega)}
+\NormalTok{i }\OtherTok{\textless{}{-}} \FunctionTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, T)}
+\NormalTok{Omega }\OtherTok{\textless{}{-}}\NormalTok{ sigmau }\SpecialCharTok{*} \FunctionTok{diag}\NormalTok{(T) }\SpecialCharTok{+}\NormalTok{ sigmac }\SpecialCharTok{*}\NormalTok{ i }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(i)}
+\NormalTok{kroOmega }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(N) }\SpecialCharTok{\%x\%} \FunctionTok{solve}\NormalTok{(Omega)}
 
 \CommentTok{\# Random effect}
-\NormalTok{bre \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{y}
+\NormalTok{bre }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ kroOmega }\SpecialCharTok{\%*\%}\NormalTok{ X) }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ kroOmega }\SpecialCharTok{\%*\%}\NormalTok{ y}
 \end{Highlighting}
 \end{Shaded}
 
 A consistent estimator of asymptotic variance of the RE estimator is
 given by \[
-  \hat{Avar}(\hat{\beta}_{RE}) = 
+  \hat{Asyvar}(\hat{\beta}_{RE}) = 
   \left( \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}.
 \]
 
@@ -786,8 +785,8 @@ compuate manually. The sample code is as follows:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{vcovre \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X)}
-\NormalTok{sere \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(vcovre))}
+\NormalTok{vcovre }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ kroOmega }\SpecialCharTok{\%*\%}\NormalTok{ X)}
+\NormalTok{sere }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(}\FunctionTok{diag}\NormalTok{(vcovre))}
 \end{Highlighting}
 \end{Shaded}
 
@@ -846,11 +845,11 @@ estimate the FE and RE model by the \texttt{plm} function.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{delta \textless{}{-}}\StringTok{ }\NormalTok{bre }\OperatorTok{{-}}\StringTok{ }\NormalTok{bfe}
-\NormalTok{diffv \textless{}{-}}\StringTok{ }\NormalTok{vcovre }\OperatorTok{{-}}\StringTok{ }\NormalTok{vcovfe}
-\NormalTok{H \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(delta) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(diffv) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{delta}
-\NormalTok{qtchi \textless{}{-}}\StringTok{ }\KeywordTok{qchisq}\NormalTok{(}\FloatTok{0.99}\NormalTok{, }\KeywordTok{nrow}\NormalTok{(delta))}
-\KeywordTok{paste}\NormalTok{(}\StringTok{"The test statistics of Hausman test is "}\NormalTok{, }\KeywordTok{round}\NormalTok{(H, }\DecValTok{3}\NormalTok{))}
+\NormalTok{delta }\OtherTok{\textless{}{-}}\NormalTok{ bre }\SpecialCharTok{{-}}\NormalTok{ bfe}
+\NormalTok{diffv }\OtherTok{\textless{}{-}}\NormalTok{ vcovre }\SpecialCharTok{{-}}\NormalTok{ vcovfe}
+\NormalTok{H }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(delta) }\SpecialCharTok{\%*\%} \FunctionTok{solve}\NormalTok{(diffv) }\SpecialCharTok{\%*\%}\NormalTok{ delta}
+\NormalTok{qtchi }\OtherTok{\textless{}{-}} \FunctionTok{qchisq}\NormalTok{(}\FloatTok{0.99}\NormalTok{, }\FunctionTok{nrow}\NormalTok{(delta))}
+\FunctionTok{paste}\NormalTok{(}\StringTok{"The test statistics of Hausman test is "}\NormalTok{, }\FunctionTok{round}\NormalTok{(H, }\DecValTok{3}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
 
@@ -860,7 +859,7 @@ estimate the FE and RE model by the \texttt{plm} function.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\KeywordTok{paste}\NormalTok{(}\StringTok{"The 1\% quantile value of chi{-}sq dist is"}\NormalTok{, }\KeywordTok{round}\NormalTok{(qtchi, }\DecValTok{3}\NormalTok{))}
+\FunctionTok{paste}\NormalTok{(}\StringTok{"The 1\% quantile value of chi{-}sq dist is"}\NormalTok{, }\FunctionTok{round}\NormalTok{(qtchi, }\DecValTok{3}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
 

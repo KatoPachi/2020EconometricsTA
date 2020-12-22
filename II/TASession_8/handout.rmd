@@ -83,8 +83,8 @@ model <- lwage ~ -1 + exp + sqexp
 We want to estimate the above regression equation by the OLS method.
 We will discuss assumptions for implementation.
 Let $\mathbf{X}_{it}$ be a $1 \times K$ (stochastic) explanatory vector.
-This vector contains `exp`, `sqexp`.
-Let $Y_{it}$ be a random variable of outcome, that is `lwage`.
+This vector contains `exp` and `sqexp`.
+Let $Y_{it}$ be a random variable of outcome, that is, `lwage`.
 Then, the linear panel data model can be rewritten as follows:
 
 $$
@@ -144,23 +144,23 @@ $$
 $$
 where $A = E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i]$ 
 and $B = E[\underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i]$.
-The consistent estimator of the asymptotic variance covariance matrix is given by 
+The consistent estimator of A and B is given by 
 $$
-  \hat{A}^{-1} \hat{B} \hat{A}^{-1} = 
-  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
-  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i \right)
-  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
+  \hat{A} = \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i,
+$$
+$$
+  \hat{B} = \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i.
 $$
 Thus, estimator of asymptotic variance of the pooled OLSE is 
 $$
-  \hat{Avar}(\hat{\beta}) =
+  \hat{Asyvar}(\hat{\beta}) =
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i \right)
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}.
 $$
 Using the full matrix notations, we can reformulate
 $$
-  \hat{Avar}(\hat{\beta}) =
+  \hat{Asyvar}(\hat{\beta}) =
   (\mathbf{X}' \mathbf{X})^{-1}
   (\mathbf{X}' U \mathbf{X})
   (\mathbf{X}' \mathbf{X})^{-1},
@@ -177,7 +177,7 @@ $$
 $$
 The standard errors calculated by this matrix is called *robust standard errors clustered by individuals*.
 
-In `R`, the `lm` and `plm` function provide the standard errors based on $\hat{Avar}(\hat{\beta}) = \hat{\sigma}^2 (X'X)^{-1}$,
+In `R`, the `lm` and `plm` function provide the standard errors based on $\hat{Asyvar}(\hat{\beta}) = \hat{\sigma}^2 (X'X)^{-1}$,
 where $\hat{\sigma}^2 = \hat{u}\hat{u}'/(nT - K)$ and $\hat{u} = Y - X \hat{\beta}$.
 There are two ways to obtain cluster robust standard errors.
 The first way is to caclulate by yourself.
@@ -233,7 +233,7 @@ allows for using the Generalized Ordinary Squares method.
 To implement, we assume 
 
 1. $E[\underline{X}_i \otimes \underline{u}_i] = 0$. A sufficient condition to satisfy this relationship is $E[ \underline{u}_i | \underline{X}_i] = 0$. This assumption implies $E[\underline{X}'_i \Omega^{-1} \underline{u}_i] = 0$ where $\Omega = E[\underline{u}_i\underline{u}'_i]$ is $T \times T$ matrix.
-1. $\Omega \succ 0$ and E[\underline{X}'_i \Omega^{-1} \underline{X}'_i] \succ 0$.
+1. $\Omega \succ 0$ and $E[\underline{X}'_i \Omega^{-1} \underline{X}'_i] \succ 0$.
 
 The GLS estimator is given by 
 $$
@@ -317,9 +317,9 @@ $$
   \hat{\Omega}^{-1} \underline{\mathbf{X}}_i,
 $$
 where $\underline{u}^{FLGS}_i = \underline{Y}_i - \underline{\mathbf{X}}_i \hat{\beta}_{FGLS}$.
-Thus, estimator of asymptotic variance of the pooled OLSE is 
+Thus, estimator of asymptotic variance of the FGLS estimator is 
 $$
-  \hat{Avar}(\hat{\beta}_{FGLS}) =
+  \hat{Asyvar}(\hat{\beta}_{FGLS}) =
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} 
   \underline{u}^{FLGS}_i \underline{u}^{FGLS'}_i 
@@ -328,7 +328,7 @@ $$
 $$
 Using the full matrix notations, 
 $$
-  \hat{Avar}(\hat{\beta}_{FGLS}) =
+  \hat{Asyvar}(\hat{\beta}_{FGLS}) =
   \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) \mathbf{X} \}^{-1}
   \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) U (I_n \otimes \hat{\Omega}^{-1}) \mathbf{X} \}^{-1}
   \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) \mathbf{X} \}^{-1},
@@ -482,7 +482,7 @@ $$
 $$
 The consistent estimator of the asymptotic variance of the FE estimator is 
 $$
-  \hat{Avar}(\hat{\beta}_{FE}) =
+  \hat{Asyvar}(\hat{\beta}_{FE}) =
   \hat{\sigma}_u^2 
   \left( \sum_{i=1}^n \ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{\mathbf{X}}}_i \right)^{-1} =
   \hat{\sigma}_u^2 (\ddot{X}' \ddot{X})^{-1},
@@ -614,7 +614,7 @@ bre <- solve(t(X) %*% kroOmega %*% X) %*% t(X) %*% kroOmega %*% y
 
 A consistent estimator of asymptotic variance of the RE estimator is given by 
 $$
-  \hat{Avar}(\hat{\beta}_{RE}) = 
+  \hat{Asyvar}(\hat{\beta}_{RE}) = 
   \left( \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}.
 $$
 
