@@ -1,0 +1,947 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+  12pt,
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Econometrics II TA Session \#8},
+  pdfauthor={Hiroki Kato},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\usepackage{zxjatype}
+\setCJKmainfont[BoldFont = IPAゴシック]{IPA明朝}
+\setCJKsansfont{IPAゴシック}
+\setCJKmonofont{IPAゴシック}
+\parindent = 1em
+\newcommand{\argmax}{\mathop{\rm arg~max}\limits}
+\newcommand{\argmin}{\mathop{\rm arg~min}\limits}
+\DeclareMathOperator*{\plim}{plim}
+\usepackage{xcolor}
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{Econometrics II TA Session \#8}
+\author{Hiroki Kato}
+\date{}
+
+\begin{document}
+\maketitle
+
+\hypertarget{empirical-application-of-panel-data-model-earnings-equation}{%
+\section{Empirical Application of Panel Data Model: Earnings
+Equation}\label{empirical-application-of-panel-data-model-earnings-equation}}
+
+\hypertarget{backgruond}{%
+\subsection{Backgruond}\label{backgruond}}
+
+A researcher wants to estimate the effect of full-time work experience
+on wages. He uses a \emph{balanced} panel of 595 individuals from 1976
+to 1982, taken from the Panel Study of Income Dynamics (PSID). The
+\emph{balanced} panel data means that we can observe all individuals
+every year.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"./data/wages.csv"}\NormalTok{)}
+\KeywordTok{head}\NormalTok{(dt, }\DecValTok{14}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    exp wks bluecol ind south smsa married  sex union ed black   lwage id time
+## 1    3  32      no   0   yes   no     yes male    no  9    no 5.56068  1    1
+## 2    4  43      no   0   yes   no     yes male    no  9    no 5.72031  1    2
+## 3    5  40      no   0   yes   no     yes male    no  9    no 5.99645  1    3
+## 4    6  39      no   0   yes   no     yes male    no  9    no 5.99645  1    4
+## 5    7  42      no   1   yes   no     yes male    no  9    no 6.06146  1    5
+## 6    8  35      no   1   yes   no     yes male    no  9    no 6.17379  1    6
+## 7    9  32      no   1   yes   no     yes male    no  9    no 6.24417  1    7
+## 8   30  34     yes   0    no   no     yes male    no 11    no 6.16331  2    1
+## 9   31  27     yes   0    no   no     yes male    no 11    no 6.21461  2    2
+## 10  32  33     yes   1    no   no     yes male   yes 11    no 6.26340  2    3
+## 11  33  30     yes   1    no   no     yes male    no 11    no 6.54391  2    4
+## 12  34  30     yes   1    no   no     yes male    no 11    no 6.69703  2    5
+## 13  35  37     yes   1    no   no     yes male    no 11    no 6.79122  2    6
+## 14  36  30     yes   1    no   no     yes male    no 11    no 6.81564  2    7
+\end{verbatim}
+
+The variable \texttt{id} and \texttt{time} indicate individual and time
+indexs. We use these two variables to apply panel data models.
+Additionally, we use the following variables:
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{exp}: years of full-time work experience
+\item
+  \texttt{sqexp}: squared value of \texttt{exp}
+\item
+  \texttt{lwage}: logarithm of wage
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{, }\StringTok{"exp"}\NormalTok{, }\StringTok{"lwage"}\NormalTok{)]}
+\NormalTok{dt}\OperatorTok{$}\NormalTok{sqexp \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{exp}\OperatorTok{\^{}}\DecValTok{2}
+\KeywordTok{summary}\NormalTok{(dt)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##        id           time        exp            lwage           sqexp       
+##  Min.   :  1   Min.   :1   Min.   : 1.00   Min.   :4.605   Min.   :   1.0  
+##  1st Qu.:149   1st Qu.:2   1st Qu.:11.00   1st Qu.:6.395   1st Qu.: 121.0  
+##  Median :298   Median :4   Median :18.00   Median :6.685   Median : 324.0  
+##  Mean   :298   Mean   :4   Mean   :19.85   Mean   :6.676   Mean   : 514.4  
+##  3rd Qu.:447   3rd Qu.:6   3rd Qu.:29.00   3rd Qu.:6.953   3rd Qu.: 841.0  
+##  Max.   :595   Max.   :7   Max.   :51.00   Max.   :8.537   Max.   :2601.0
+\end{verbatim}
+
+To examine the effect of labor experience on wages, we want to estimate
+the following linear panel data model:
+
+\[
+  \text{lwage}_{it} = 
+  \beta_1 \cdot \text{exp}_{it} +
+  \beta_2 \cdot \text{sqexp}_{it} + 
+  u_{it}.
+\]
+
+We can define the regression equation as the \texttt{formula} object in
+\texttt{R}. To exclude the intercept, we must specify \texttt{-1} in the
+rhs of regression equation. Thus, in \texttt{R}, we define the linear
+panel data model as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{model \textless{}{-}}\StringTok{ }\NormalTok{lwage }\OperatorTok{\textasciitilde{}}\StringTok{ }\DecValTok{{-}1} \OperatorTok{+}\StringTok{ }\NormalTok{exp }\OperatorTok{+}\StringTok{ }\NormalTok{sqexp}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{pooled-olse}{%
+\subsection{Pooled OLSE}\label{pooled-olse}}
+
+We want to estimate the above regression equation by the OLS method. We
+will discuss assumptions for implementation. Let \(\mathbf{X}_{it}\) be
+a \(1 \times K\) (stochastic) explanatory vector. This vector contains
+\texttt{exp} and \texttt{sqexp}. Let \(Y_{it}\) be a random variable of
+outcome, that is, \texttt{lwage}. Then, the linear panel data model can
+be rewritten as follows:
+
+\[
+  Y_{it} = \mathbf{X}_{it} \beta + u_{it}, \quad t = 1, \ldots, T, \quad i = 1, \ldots, n.
+\]
+
+Using notations
+\(\underline{\mathbf{X}}_i = (\mathbf{X}'_{i1}, \ldots, \mathbf{X}'_{iT})'\)
+and \(\underline{Y}_i = (Y_{i1}, \ldots, Y_{iT})'\), and
+\(\underline{u}_i = (u_{i1}, \ldots, u_{iT})'\), we can reformulate this
+model as follows:
+
+\[
+  \underline{Y}_i = \underline{\mathbf{X}}_i \beta + \underline{u}_i, \quad \forall i.
+\]
+
+Now, we assume
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  (contempraneous) exogneity assumption:
+  \(E[\mathbf{X}'_{it}u_{it}] = 0\), \(\forall i, t\).
+
+  \begin{itemize}
+  \tightlist
+  \item
+    This assumption,implies that \(u_{it}\) and \(\mathbf{X}_{it}\) are
+    orthogonal in the conditional mean sence,
+    \(E[u_{it} | \mathbf{X}_{it}] = 0\). However, this assumption does
+    not imply \(u_{it}\) is uncorrelated with the explanatory variables
+    in all time periods (strictly exogeneity), that is,
+    \(E[u_{it} | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}] = 0\). This
+    assumption palces no restriction on the relationship between
+    \(\mathbf{X}_{is}\) and \(u_{it}\) for \(s\not=t\).
+  \end{itemize}
+\item
+  \(E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i] \succ 0\).
+\end{enumerate}
+
+Under these two assumptions, the true parameter is given by \[
+  \beta = E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i]^{-1} E[\underline{\mathbf{X}}'_i\underline{Y}_i].
+\]
+
+Hence, the OLSE (pooled OLSE) is given by \[
+  \hat{\beta} 
+  = \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{Y}_i \right)
+  = \left( \frac{1}{n} \sum_{i=1}^n \sum_{t=1}^T \mathbf{X}'_{it} \mathbf{X}_{it} \right)^{-1}
+  \left( \frac{1}{n} \sum_{i=1}^n \sum_{t=1}^T \mathbf{X}'_{it} Y_{it} \right).
+\]
+
+Using the full matrix notation, the OLS estimator is \[
+  \hat{\beta} = (\mathbf{X}' \mathbf{X})^{-1} (\mathbf{X}' Y),
+\] where
+\(\mathbf{X} = (\underline{\mathbf{X}}_1, \ldots, \underline{\mathbf{X}}_n)'\)
+and \(Y = (\underline{Y}_1, \ldots, \underline{Y}_n)'\).
+
+In \texttt{R} programming, the \texttt{lm} function provides the pooled
+OLSE in the context of panel data model. Another way is the \texttt{plm}
+function in the package \texttt{plm}. When you want to estimate pooled
+OLS by the \texttt{plm} function, you need to specify
+\texttt{model\ =\ "pooling"}. Moreover, you should specify individual
+and time index using \texttt{index} augment. This augment passes
+\texttt{index\ =\ c("individual\ index",\ "time\ index")}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{bols1 \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt)}
+
+\KeywordTok{library}\NormalTok{(plm)}
+\NormalTok{bols2 \textless{}{-}}\StringTok{ }\KeywordTok{plm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{model =} \StringTok{"pooling"}\NormalTok{, }\DataTypeTok{index =} \KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+The pooled OLS estimator is consistent and asymptotically normally
+distributed. \[
+  \sqrt{n}(\hat{\beta} - \beta) \sim N_{\mathbb{R}^K}(0, A^{-1} B A^{-1}),
+\] where \(A = E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i]\)
+and
+\(B = E[\underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i]\).
+The consistent estimator of A and B is given by \[
+  \hat{A} = \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i,
+\] \[
+  \hat{B} = \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{\hat{u}}_i \underline{\hat{u}}'_i \underline{\mathbf{X}}_i.
+\] Thus, estimator of asymptotic variance of the pooled OLSE is \[
+  \widehat{Asyvar}(\hat{\beta}) =
+  \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
+  \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i \right)
+  \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}.
+\] Using the full matrix notations, we can reformulate \[
+  \widehat{Asyvar}(\hat{\beta}) =
+  (\mathbf{X}' \mathbf{X})^{-1}
+  (\mathbf{X}' U \mathbf{X})
+  (\mathbf{X}' \mathbf{X})^{-1},
+\] where \[
+  U = 
+  \begin{pmatrix}
+    \underline{\hat{u}}_1 \underline{\hat{u}}'_1 & \mathbf{0} & \cdots & \mathbf{0} \\
+    \mathbf{0} & \underline{\hat{u}}_2 \underline{\hat{u}}'_2 & \cdots & \mathbf{0} \\
+    \vdots & \vdots & \cdots & \vdots \\
+    \mathbf{0} & \mathbf{0} & \cdots & \underline{\hat{u}}_n \underline{\hat{u}}'_n
+  \end{pmatrix}.
+\] The standard errors calculated by this matrix is called \emph{robust
+standard errors clustered by individuals}.
+
+In \texttt{R}, the \texttt{lm} and \texttt{plm} function provide the
+standard errors based on
+\(\widehat{Asyvar}(\hat{\beta}) = \hat{\sigma}^2 (X'X)^{-1}\), where
+\(\hat{\sigma}^2 = \hat{u}\hat{u}'/(nT - K)\) and
+\(\hat{u} = Y - X \hat{\beta}\). There are two ways to obtain cluster
+robust standard errors. The first way is to caclulate by yourself. The
+second way is to use the \texttt{coeftest} function in the package
+\texttt{lmtest}. When you use this function, we should use the
+\texttt{plm} function to estimate the pooled OLSE, and the
+\texttt{vcovHC} function (the package \texttt{sandwich}) in the
+\texttt{vcov} augment of \texttt{coeftest} fucntion.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Setup}
+\NormalTok{N \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)); T \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{time))}
+\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(bols1); k \textless{}{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X)}
+
+\CommentTok{\# Inference}
+\NormalTok{uhat \textless{}{-}}\StringTok{ }\NormalTok{bols1}\OperatorTok{$}\NormalTok{residuals}
+\NormalTok{uhatset \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{nrow =} \KeywordTok{nrow}\NormalTok{(X), }\DataTypeTok{ncol =} \KeywordTok{nrow}\NormalTok{(X))}
+
+\NormalTok{i\_from \textless{}{-}}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\DecValTok{1}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{max}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)) \{}
+\NormalTok{  x \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i]}
+\NormalTok{  usq \textless{}{-}}\StringTok{ }\NormalTok{uhat[x] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(uhat[x])}
+\NormalTok{  i\_to \textless{}{-}}\StringTok{ }\NormalTok{i\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{nrow}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
+\NormalTok{  j\_to \textless{}{-}}\StringTok{ }\NormalTok{j\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{ncol}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
+\NormalTok{  uhatset[i\_from}\OperatorTok{:}\NormalTok{i\_to, j\_from}\OperatorTok{:}\NormalTok{j\_to] \textless{}{-}}\StringTok{ }\NormalTok{usq}
+\NormalTok{  i\_from \textless{}{-}}\StringTok{ }\NormalTok{i\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\NormalTok{j\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+\NormalTok{\}}
+
+\NormalTok{Ahat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
+\NormalTok{Bhat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{uhatset }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
+\NormalTok{vcovols \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Bhat }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat)}
+\NormalTok{seols \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(vcovols))}
+
+\CommentTok{\# Easy way}
+\KeywordTok{library}\NormalTok{(lmtest)}
+\KeywordTok{library}\NormalTok{(sandwich)}
+\NormalTok{easy\_cluster \textless{}{-}}\StringTok{ }\KeywordTok{coeftest}\NormalTok{(}
+\NormalTok{  bols2, }\DataTypeTok{vcov =} \KeywordTok{vcovHC}\NormalTok{(bols2, }\DataTypeTok{type =} \StringTok{"HC0"}\NormalTok{, }\DataTypeTok{cluster =} \StringTok{"group"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+The result is shown in the first column of Table \ref{pdm}. The partial
+effect of experience represents the percent change of wages. Thus, \[
+  (\text{\% Change of Wage}) = 64.6 - 2 \cdot 1.3 \cdot \text{exp}.
+\] For example, wages increase by 12.99\% at a mathematical mean of
+labor experience (\texttt{exp}). Moreover, this result implies
+diminishing marginal returns of labor experience.
+
+\hypertarget{feasible-glse}{%
+\subsection{Feasible GLSE}\label{feasible-glse}}
+
+Adding and assumption of the conditional variance of \(\underline{u}_i\)
+allows for using the Generalized Ordinary Squares method. To implement,
+we assume
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \(E[\underline{X}_i \otimes \underline{u}_i] = 0\). A sufficient
+  condition to satisfy this relationship is
+  \(E[ \underline{u}_i | \underline{X}_i] = 0\). This assumption implies
+  \(E[\underline{X}'_i \Omega^{-1} \underline{u}_i] = 0\) where
+  \(\Omega = E[\underline{u}_i\underline{u}'_i]\) is \(T \times T\)
+  matrix.
+\item
+  \(\Omega \succ 0\) and
+  \(E[\underline{X}'_i \Omega^{-1} \underline{X}'_i] \succ 0\).
+\end{enumerate}
+
+The GLS estimator is given by \[
+  \hat{\beta}_{GLS} 
+  = \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \Omega^{-1} \underline{\mathbf{X}}_i \right)^{-1}
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \Omega^{-1} \underline{Y}_i \right).
+\] Under two assumptions, this estimator is weakly consistent.
+
+In the feasible GLS method, we replace the unknown \(\Omega\) with a
+consistent estimator. Here, we consider the two-step FGLS: obtain the
+OLS estimator and residuals; replace \(\Omega\) by it. Then, the unknown
+\(\Omega\) is replaced by \[
+  \hat{\Omega} = \frac{1}{n} \sum_{i=1}^n \underline{\hat{u}}_i\underline{\hat{u}}'_i,
+\] where
+\(\underline{\hat{u}}_i = \underline{Y}_i - \underline{\mathbf{X}}_i \hat{\beta}_{OLS}\).
+
+Thus, the FGLS estimator is \[
+  \hat{\beta}_{FGLS} 
+  = \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{Y}_i \right).
+\] Using the full matrix notations, \[
+  \hat{\beta}_{FGLS}
+  = \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) \mathbf{X} \}^{-1}
+  \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) Y \}.
+\]
+
+In the \texttt{R} programming, there are two ways to obtain the FGLS
+estimator. The first way is to caclulate by yourself. The second way is
+to use the \texttt{pggls} function in the package \texttt{plm}. When you
+use the \texttt{pggls} function, you should specify individual and time
+indexs using \texttt{index} augment, and type in
+\texttt{model\ =\ "pooling"}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Setup}
+\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(model, dt); k \textless{}{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X)}
+\NormalTok{y \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{lwage}
+\NormalTok{N \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)); T \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{time))}
+
+\CommentTok{\# Estimator of Omega}
+\NormalTok{uhat \textless{}{-}}\StringTok{ }\NormalTok{bols1}\OperatorTok{$}\NormalTok{residuals}
+
+\NormalTok{Omega\_sum \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{ncol =}\NormalTok{ T, }\DataTypeTok{nrow =}\NormalTok{ T)}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{N) \{}
+\NormalTok{  x \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i]}
+\NormalTok{  Omega\_sum \textless{}{-}}\StringTok{ }\NormalTok{uhat[x] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(uhat[x]) }\OperatorTok{+}\StringTok{ }\NormalTok{Omega\_sum}
+\NormalTok{\}}
+\NormalTok{Omega \textless{}{-}}\StringTok{ }\NormalTok{Omega\_sum}\OperatorTok{/}\NormalTok{N}
+
+\CommentTok{\# FGLS estimator}
+\NormalTok{kroOmega \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(N) }\OperatorTok{\%x\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(Omega)}
+\NormalTok{bfgls \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{y)}
+
+\CommentTok{\# Easy way!!!}
+\NormalTok{easy\_fgls \textless{}{-}}\StringTok{ }\KeywordTok{pggls}\NormalTok{(}
+\NormalTok{  model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{index =} \KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{), }\DataTypeTok{model =} \StringTok{"pooling"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+The asymptotic distribution of the FGLS estimator is given by \[
+  \sqrt{n}(\hat{\beta}_{FGLS} - \beta) \sim N_{\mathbb{R}^K}(0, A^{-1} B A^{-1}),
+\] where
+\(A = E[\underline{\mathbf{X}}'_i \Omega^{-1} \underline{\mathbf{X}}_i]\)
+and
+\(B = E[\underline{\mathbf{X}}'_i \Omega^{-1} \underline{u}_i \underline{u}'_i \Omega^{-1} \underline{\mathbf{X}}_i]\).
+The consistent estimator of \(A\) and \(B\) is \[
+  \hat{A} = \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i,
+\] \[
+  \hat{B} 
+  = \frac{1}{n} \sum_{i=1}^n
+  \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} 
+  \underline{\hat{u}}^{FLGS}_i \underline{\hat{u}}^{FGLS'}_i 
+  \hat{\Omega}^{-1} \underline{\mathbf{X}}_i,
+\] where
+\(\underline{u}^{FLGS}_i = \underline{Y}_i - \underline{\mathbf{X}}_i \hat{\beta}_{FGLS}\).
+Thus, estimator of asymptotic variance of the FGLS estimator is \[
+  \widehat{Asyvar}(\hat{\beta}_{FGLS}) =
+  \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}
+  \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} 
+  \underline{u}^{FLGS}_i \underline{u}^{FGLS'}_i 
+  \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)
+  \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}.
+\] Using the full matrix notations, \[
+  \widehat{Asyvar}(\hat{\beta}_{FGLS}) =
+  \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) \mathbf{X} \}^{-1}
+  \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) U (I_n \otimes \hat{\Omega}^{-1}) \mathbf{X} \}^{-1}
+  \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) \mathbf{X} \}^{-1},
+\] where \[
+  U = 
+  \begin{pmatrix}
+    \underline{\hat{u}}^{FLGS}_1 \underline{\hat{u}}^{FGLS'}_1 & \mathbf{0} & \cdots & \mathbf{0} \\
+    \mathbf{0} & \underline{\hat{u}}^{FLGS}_2 \underline{\hat{u}}^{FGLS'}_2 & \cdots & \mathbf{0} \\
+    \vdots & \vdots & \cdots & \vdots \\
+    \mathbf{0} & \mathbf{0} & \cdots & \underline{\hat{u}}^{FLGS}_n \underline{\hat{u}}^{FGLS'}_n
+  \end{pmatrix}.
+\]
+
+In the \texttt{R} programming, you need to caclculate by yourself. The
+\texttt{pggls} function provides the FGLS estimator. However, this
+function calculates standard errors, assuming \emph{system
+homoskedasticity}, that is,
+\(E[\underline{\mathbf{X}}'_i \Omega^{-1} \underline{u}_i \underline{u}'_i \Omega^{-1} \underline{\mathbf{X}}_i] = E[\underline{\mathbf{X}}'_i \Omega^{-1} \underline{\mathbf{X}}_i]\).
+If you can rationale this assumption, the \texttt{bggls} fucntion is the
+easiest way to carry out statistical inference.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ufgls \textless{}{-}}\StringTok{ }\NormalTok{y }\OperatorTok{{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{bfgls}
+\NormalTok{uhatset \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{nrow =} \KeywordTok{nrow}\NormalTok{(X), }\DataTypeTok{ncol =} \KeywordTok{nrow}\NormalTok{(X))}
+\NormalTok{i\_from \textless{}{-}}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\DecValTok{1}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{max}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)) \{}
+\NormalTok{  x \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i]}
+\NormalTok{  usq \textless{}{-}}\StringTok{ }\NormalTok{uhat[x] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(uhat[x])}
+\NormalTok{  i\_to \textless{}{-}}\StringTok{ }\NormalTok{i\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{nrow}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
+\NormalTok{  j\_to \textless{}{-}}\StringTok{ }\NormalTok{j\_from }\OperatorTok{+}\StringTok{ }\KeywordTok{ncol}\NormalTok{(usq) }\OperatorTok{{-}}\StringTok{ }\DecValTok{1}
+\NormalTok{  uhatset[i\_from}\OperatorTok{:}\NormalTok{i\_to, j\_from}\OperatorTok{:}\NormalTok{j\_to] \textless{}{-}}\StringTok{ }\NormalTok{usq}
+\NormalTok{  i\_from \textless{}{-}}\StringTok{ }\NormalTok{i\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}\NormalTok{; j\_from \textless{}{-}}\StringTok{ }\NormalTok{j\_to }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+\NormalTok{\}}
+
+\NormalTok{Ahat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
+\NormalTok{Bhat \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{uhatset }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
+\NormalTok{vcovfgls \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Bhat }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(Ahat)}
+\NormalTok{sefgls \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(vcovfgls))}
+\end{Highlighting}
+\end{Shaded}
+
+The result is shown in the second column of Table \ref{pdm}. The partial
+effect of experience represents the percent change of wages. Thus, \[
+  (\text{\% Change of Wage}) = 52.9 - 2 \cdot 0.9 \cdot \text{exp}.
+\] For example, wages increase by 17.17\% at a mathematical mean of
+labor experience (\texttt{exp}).
+
+\hypertarget{fixed-effect-model}{%
+\subsection{Fixed Effect Model}\label{fixed-effect-model}}
+
+To examine the effect of labor experience on wages, we introduce
+unobserved heterogeneity such as ability. The unobserved effects model
+is given by \[
+  \text{lwage}_{it} = 
+  \beta_1 \cdot \text{exp}_{it} +
+  \beta_2 \cdot \text{sqexp}_{it} + 
+  c_i + u_{it},
+\] where \(c_i\) is unobserved component which is constant over time,
+\(u_{it}\) is the idiosyncratic error term. The fixed effect model
+treats \(c_i\) as a parameter to be estimated for each cross section
+unit \(i\).
+
+We generalize the unobserved effects model as follows: \[
+  Y_{it} = \mathbf{X}_{it} \beta + c_i + u_{it}, \quad t = 1, \ldots, T, \quad i = 1, \ldots, n.
+\] Using notations
+\(\underline{\mathbf{X}}_i = (\mathbf{X}'_{i1}, \ldots, \mathbf{X}'_{iT})'\)
+and \(\underline{Y}_i = (Y_{i1}, \ldots, Y_{iT})'\), and
+\(\underline{u}_i = (u_{i1}, \ldots, u_{iT})'\), we can reformulate this
+model as follows: \[
+  \underline{Y}_i = \underline{\mathbf{X}}_i \beta + \iota c_i + \underline{u}_i, \quad \forall i,
+\] where \(\iota = (1, \ldots, 1)'\) is \(T \times 1\) vector.
+
+To implement the fixed effect model, we assume the following three
+assumptions:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Strict exogeneity:
+  \(E[u_{it} | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = 0\).
+\item
+  Full rank:
+  \(rank(\sum_t E[\ddot{\mathbf{X}}'_{it}\ddot{\mathbf{X}}_{it}]) = rank(E[\ddot{\underline{\mathbf{X}}}'_i\ddot{\underline{\mathbf{X}}}_i]) = K\)
+  where
+  \(\ddot{\mathbf{X}}_{it} = \mathbf{X}_{it} - T^{-1}\sum_t \mathbf{X}_{it}\).
+\item
+  homoskedasticity:
+  \(E[\underline{u}_i \underline{u}'_i|\mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = \sigma^2_u I_T\).
+\end{enumerate}
+
+To obtain the FE estimator, we consider the within transformation first.
+Averaging the unobserved effects model for individual \(i\) and time
+\(t\) over time yields \[
+  \bar{Y}_i = \bar{\mathbf{X}}_i \beta + c_i + \bar{u}_i,
+\] where \(\bar{Y}_i = T^{-1} \sum_t Y_{it}\),
+\(\bar{\mathbf{X}}_i = T^{-1} \sum_t \mathbf{X}_{it}\), and
+\(\bar{u}_i = T^{-1} \sum_t u_{it}\). Subtracting this equation from the
+original one for each t yields \[
+  Y_{it} - \bar{Y}_i = (\mathbf{X}_{it} - \bar{\mathbf{X}}_i) \beta + (u_{it} - \bar{u}_i)
+  \Leftrightarrow
+  \ddot{Y}_{it} = \ddot{\mathbf{X}}_{it} \beta + \ddot{u}_{it}.
+\] Note that
+\(E[\ddot{u}_{it} | \ddot{\mathbf{X}}_{i1}, \ldots, \ddot{\mathbf{X}}_{iT}] = 0\)
+under the first assumption. Using the \(T\) system of equation, the
+within transformation is \[
+  Q_T \underline{Y}_i = Q_T \underline{\mathbf{X}}_i \beta + Q_T \underline{u}_i
+  \Leftrightarrow
+  \ddot{\underline{Y}}_i = \ddot{\underline{\mathbf{X}}}_i \beta + \ddot{\underline{u}}_i.
+\] where \(Q_T = I_T - \iota (\iota' \iota)^{-1} \iota\) is
+\emph{time-demeaning matrix}, and \(Q_T \iota = 0\). Using the matrix
+notations, the within transformation is \[
+  (I_n \otimes Q_t) Y = (I_n \otimes Q_t) X \beta + (I_n \otimes Q_t) u
+  \Leftrightarrow
+  \ddot{Y} = \ddot{X} \beta + \ddot{u}.
+\]
+
+Before showing the FE estimator, I will show
+\(Q_T \underline{Y}_i = Y_{it} - T^{-1} \sum_t Y_{it}\), using
+\texttt{R}. As an illustration, we caclulate time-demeaned outcome
+variable for \(i = 1\), \(\ddot{Y}_{1t}\). R snippet is as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# extract outcome variables for i = 1}
+\NormalTok{i \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\DecValTok{1}\NormalTok{]}
+\NormalTok{y1 \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{lwage[i]}
+
+\CommentTok{\# deviation from mean}
+\NormalTok{Ydev1 \textless{}{-}}\StringTok{ }\NormalTok{y1 }\OperatorTok{{-}}\StringTok{ }\KeywordTok{mean}\NormalTok{(y1)}
+\KeywordTok{print}\NormalTok{(}\StringTok{"Deviation from mean across time"}\NormalTok{); Ydev1}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Deviation from mean across time"
+\end{verbatim}
+
+\begin{verbatim}
+## [1] -0.40407857 -0.24444857  0.03169143  0.03169143  0.09670143  0.20903143
+## [7]  0.27941143
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# time demean{-}matrix}
+\NormalTok{T \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(y1)}
+\NormalTok{vec1 \textless{}{-}}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, T)}
+\NormalTok{Qt \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(T) }\OperatorTok{{-}}\StringTok{ }\NormalTok{vec1 }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(vec1) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{vec1) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(vec1)}
+\NormalTok{Ydev2 \textless{}{-}}\StringTok{ }\NormalTok{Qt }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{y1}
+\KeywordTok{print}\NormalTok{(}\StringTok{"Time{-}demeaning matrix"}\NormalTok{); Ydev2}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Time-demeaning matrix"
+\end{verbatim}
+
+\begin{verbatim}
+##             [,1]
+## [1,] -0.40407857
+## [2,] -0.24444857
+## [3,]  0.03169143
+## [4,]  0.03169143
+## [5,]  0.09670143
+## [6,]  0.20903143
+## [7,]  0.27941143
+\end{verbatim}
+
+The FE estimator is given by \[
+  \hat{\beta}_{FE} = 
+  \left( \frac{1}{n} \sum_{i=1}^n \ddot{\underline{\mathbf{X}}}'_i 
+  \ddot{\underline{\mathbf{X}}}_i \right)^{-1}
+  \left( \frac{1}{n} \sum_{i=1}^n \ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{Y}}_i \right)
+  = (\ddot{X}' \ddot{X})^{-1}(\ddot{X}' \ddot{Y}).
+\]
+
+In the \texttt{R} programming, there are two ways to obtain the FE
+estimator. The first way is to caclulate by yourself. The second way is
+to use the \texttt{plm} function. When you use the \texttt{plm}
+function, you need to specify \texttt{model\ =\ "within"} to implement
+the FE model.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Setup}
+\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(model, dt); k \textless{}{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X)}
+\NormalTok{y \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{lwage}
+\NormalTok{N \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id)); T \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{time))}
+
+\CommentTok{\# FE estimator}
+\NormalTok{i \textless{}{-}}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, T)}
+\NormalTok{Qt \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(T) }\OperatorTok{{-}}\StringTok{ }\NormalTok{i }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(i) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{i) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(i)}
+\NormalTok{Ydev \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(N) }\OperatorTok{\%x\%}\StringTok{ }\NormalTok{Qt }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{y}
+\NormalTok{Xdev \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(N) }\OperatorTok{\%x\%}\StringTok{ }\NormalTok{Qt }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}
+\NormalTok{bfe \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(Xdev) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Xdev) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(Xdev) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Ydev}
+
+\CommentTok{\# Awesome way !!!}
+\NormalTok{plmfe \textless{}{-}}\StringTok{ }\KeywordTok{plm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{index =} \KeywordTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"time"}\NormalTok{), }\DataTypeTok{model =} \StringTok{"within"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Under the third assumption, asymptotic distribution of the FE estimator
+is given by \[
+  \sqrt{n}(\hat{\beta}_{FE} - \beta) 
+  \sim N_{\mathbb{R}^K}(0, \sigma^2_u E[\ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{\mathbf{X}}}_i]).
+\] The consistent estimator of the asymptotic variance of the FE
+estimator is \[
+  \widehat{Asyvar}(\hat{\beta}_{FE}) =
+  \hat{\sigma}_u^2 
+  \left( \sum_{i=1}^n \ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{\mathbf{X}}}_i \right)^{-1} =
+  \hat{\sigma}_u^2 (\ddot{X}' \ddot{X})^{-1},
+\] where
+\(\hat{\sigma}_u^2 = \frac{1}{n(T-1)-K} \sum_i \sum_t \hat{\ddot{u}}_{it}\),
+and
+\(\hat{\ddot{u}}_{it} = \ddot{Y}_{it} - \ddot{\mathbf{X}}_{it} \hat{\beta}_{FE}\).
+
+In the \texttt{R} programming, the \texttt{plm} function also returns
+standard errors, \(\hat{\sigma}_u^2 (\ddot{X}' \ddot{X})^{-1}\). Of
+course, you can compute the standard errors manually. The sample code is
+as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{uhat \textless{}{-}}\StringTok{ }\NormalTok{Ydev }\OperatorTok{{-}}\StringTok{ }\NormalTok{Xdev }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{bfe}
+\NormalTok{sigmahat \textless{}{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(uhat}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)}\OperatorTok{/}\NormalTok{(N}\OperatorTok{*}\NormalTok{(T}\DecValTok{{-}1}\NormalTok{)}\OperatorTok{{-}}\NormalTok{k)}
+\NormalTok{vcovfe \textless{}{-}}\StringTok{ }\NormalTok{sigmahat }\OperatorTok{*}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(Xdev) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Xdev)}
+\NormalTok{sefe \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(vcovfe))}
+\end{Highlighting}
+\end{Shaded}
+
+The result is shown in the third column in Table \ref{pdm}. The partial
+effect of experience represents the percent change of wages. Thus, \[
+  (\text{\% Change of Wage}) = 11.4 - 2 \cdot 0.04 \cdot \text{exp}.
+\] For example, wages increase by 9.812\% at a mathematical mean of
+labor experience (\texttt{exp}).
+
+\hypertarget{random-effect-model}{%
+\subsection{Random Effect Model}\label{random-effect-model}}
+
+Again, consider the unobserved effects model: \[
+  Y_{it} = \mathbf{X}_{it} \beta + c_i + u_{it}, \quad t = 1, \ldots, T, \quad i = 1, \ldots, n.
+\] The random effect model treats \(c_i\) as a random variable. Thus,
+the variable \(c_i\) is put into the error term. We reformulate the
+model as follows: \[
+  Y_{it} = \mathbf{X}_{it} \beta + v_{it},
+\] where \(v_{it} = c_i + u_{it}\). Using notations
+\(\underline{\mathbf{X}}_i = (\mathbf{X}'_{i1}, \ldots, \mathbf{X}'_{iT})'\)
+and \(\underline{Y}_i = (Y_{i1}, \ldots, Y_{iT})'\), and
+\(\underline{u}_i = (u_{i1}, \ldots, u_{iT})'\), we can reformulate this
+model as follows: \[
+  \underline{Y}_i = \underline{\mathbf{X}}_i \beta + \underline{v}_i,
+\] where \(\underline{v}_i = \iota c_i + \underline{u}_i\), and
+\(\iota = (1, \ldots, 1)'\) is \(T \times 1\) vector.
+
+To implement the RE model, we assume
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Strict exogeneity:
+  \(E[u_{it} | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = 0\).
+\item
+  Orthogonality between \(c_i\) and \(\mathbf{X}_{it}\):
+  \(E[c_i | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}] = 0\).
+\item
+  Full rank:
+  \(rank(E[\underline{\mathbf{X}}'_i \Omega^{-1} \underline{\mathbf{X}}_i]) = K\).
+\item
+  \(E[\underline{u}_i\underline{u}'_i | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = \sigma_u^2 I_T\),
+  and
+  \(E[c_i^2 | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}] = \sigma_c^2\).
+\end{enumerate}
+
+Using the FGLS method through the introduction of \(\Sigma\), we can
+obtain the FGLS-type RE estimator as follows: \[
+  \hat{\beta}_{RE} = 
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}
+  \left( \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{Y}_i \right),
+\] where \[
+  \hat{\Omega} = \hat{\sigma}_u^2 I_T + \hat{\sigma}_c^2 \iota \iota' =
+  \begin{pmatrix}
+    \hat{\sigma}_c^2 + \hat{\sigma}_u^2 & \hat{\sigma}_c^2 & \cdots & \hat{\sigma}_c^2 \\
+    \hat{\sigma}_c^2 & \hat{\sigma}_c^2 + \hat{\sigma}_u^2 & \cdots & \hat{\sigma}_c^2 \\
+    \vdots & \vdots & \cdots & \vdots \\
+    \hat{\sigma}_c^2 & \hat{\sigma}_c^2 & \cdots & \hat{\sigma}_c^2 + \hat{\sigma}_u^2
+  \end{pmatrix}.
+\]
+
+The estimator \(\hat{\sigma}_u^2\) and \(\hat{\sigma}_c^2\) can be
+obtained by \[
+  \hat{\sigma}_u^2 = \hat{\sigma}_v^2 - \hat{\sigma}_c^2,
+\] \[
+  \hat{\sigma}_v^2 = \frac{1}{nT - K} \sum_{i=1}^n \sum_{t=1}^T \hat{v}_{it}^2,
+\] \[
+  \hat{\sigma}_c^2 = 
+  \frac{1}{nT(T-1)/2 - K} \sum_{i=1}^n \sum_{t=1}^{T-1} \sum_{s=t+1}^T \hat{v}_{it} \hat{v}_{is},
+\] \[
+  \hat{v}_{it} = Y_{it} - X_{it} \hat{\beta}_{OLS}.
+\]
+
+In the \texttt{R} programming, the \texttt{plm} function provides the
+random effect model. However, the procedure is not the feasible GLS
+method, but the OLS method on a dataset in which all variables are
+subject to quasi-demeaning \footnote{The RE estimator by the
+  quasi-demeaning method is simple. First, we calculate quasi-demeaned
+  variables as in \(\tilde{Y}_{it} = Y_{it} - \theta \bar{Y}_i\) where
+  \(\theta = 1 - (\sigma_u^2/(\sigma_u^2 + T \sigma_c^2))^{1/2}\). Using
+  the matrix notations,
+  \(\tilde{\underline{Y}}_i = \tilde{Q}_T \underline{Y}_i\) where
+  \(\tilde{Q}_T\) is the quasi-demeaning matrix, which is given by
+  \(\tilde{Q}_T = I_T - \theta \iota (\iota' \iota)^{-1} \iota\). After
+  transforming all variables, we estimate
+  \(\tilde{\underline{Y}}_i = \tilde{\underline{X}}_i \beta + \tilde{\underline{u}}_i\)
+  by OLS method. The variance-covariance matrix is
+  \(\hat{\sigma} (\sum_i \tilde{\underline{X}}_i \tilde{\underline{X}}'_i)^{-1}\)
+  where
+  \(\hat{\sigma} = \tilde{\underline{Y}}_i - \tilde{\underline{X}}_i \hat{\beta}\).
+  See
+  \url{http://ricardo.ecn.wfu.edu/~cottrell/gretl/random-effects.pdf} in
+  detail.}. The two procedures generate the same RE estimator. Moreover,
+the idiosyncratic error and the unobserved component are obtained by
+differenct approach. To implement the RE model described above, we
+compute manually.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Setup}
+\NormalTok{X \textless{}{-}}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(model, dt)}
+\NormalTok{y \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{lwage}
+\NormalTok{k \textless{}{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X)}
+\NormalTok{N \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{id))}
+\NormalTok{T \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(dt}\OperatorTok{$}\NormalTok{time))}
+
+\CommentTok{\# estimator of Omega}
+\NormalTok{pols \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, dt)}
+\NormalTok{vhat \textless{}{-}}\StringTok{ }\NormalTok{pols}\OperatorTok{$}\NormalTok{residuals}
+\NormalTok{sigmav \textless{}{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(vhat}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)}\OperatorTok{/}\NormalTok{(N}\OperatorTok{*}\NormalTok{T }\OperatorTok{{-}}\StringTok{ }\NormalTok{k)}
+
+\NormalTok{sumuc \textless{}{-}}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{nrow =}\NormalTok{ N, }\DataTypeTok{ncol =}\NormalTok{ T}\DecValTok{{-}1}\NormalTok{)}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{N) \{}
+  \ControlFlowTok{for}\NormalTok{ (t }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{T}\DecValTok{{-}1}\NormalTok{) \{}
+\NormalTok{    it \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i }\OperatorTok{\&}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{time }\OperatorTok{==}\StringTok{ }\NormalTok{t]}
+\NormalTok{    is \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\NormalTok{i }\OperatorTok{\&}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{time }\OperatorTok{\textgreater{}}\StringTok{ }\NormalTok{t]}
+\NormalTok{    sumuc[i,t] \textless{}{-}}\StringTok{ }\NormalTok{vhat[it] }\OperatorTok{*}\StringTok{ }\KeywordTok{sum}\NormalTok{(vhat[is])}
+\NormalTok{  \}}
+\NormalTok{\}}
+\NormalTok{sigmac \textless{}{-}}\StringTok{ }\KeywordTok{sum}\NormalTok{(}\KeywordTok{colSums}\NormalTok{(sumuc))}\OperatorTok{/}\NormalTok{((N}\OperatorTok{*}\NormalTok{T}\OperatorTok{*}\NormalTok{(T}\DecValTok{{-}1}\NormalTok{))}\OperatorTok{/}\DecValTok{2}\OperatorTok{{-}}\NormalTok{k)}
+\NormalTok{sigmau \textless{}{-}}\StringTok{ }\NormalTok{sigmav }\OperatorTok{{-}}\StringTok{ }\NormalTok{sigmac}
+
+\NormalTok{i \textless{}{-}}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, T)}
+\NormalTok{Omega \textless{}{-}}\StringTok{ }\NormalTok{sigmau }\OperatorTok{*}\StringTok{ }\KeywordTok{diag}\NormalTok{(T) }\OperatorTok{+}\StringTok{ }\NormalTok{sigmac }\OperatorTok{*}\StringTok{ }\NormalTok{i }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(i)}
+\NormalTok{kroOmega \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(N) }\OperatorTok{\%x\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(Omega)}
+
+\CommentTok{\# Random effect}
+\NormalTok{bre \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{y}
+\end{Highlighting}
+\end{Shaded}
+
+A consistent estimator of asymptotic variance of the RE estimator is
+given by \[
+  \widehat{Asyvar}(\hat{\beta}_{RE}) = 
+  \left( \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}.
+\]
+
+In the \texttt{R} programming, the \texttt{plm} function returns
+standard errors calculated by variance-covariance matrix of OLS on a
+quasi-demeaned data. To obtain the FGLS-type standard errors, we
+compuate manually. The sample code is as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{vcovre \textless{}{-}}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{kroOmega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X)}
+\NormalTok{sere \textless{}{-}}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(vcovre))}
+\end{Highlighting}
+\end{Shaded}
+
+The result is shown in the fourth column in Table \ref{pdm}. The partial
+effect of experience represents the percent change of wages. Thus, \[
+  (\text{\% Change of Wage}) = 39.5 - 2 \cdot 0.6 \cdot \text{exp}.
+\] For example, wages increase by 15.68\% at a mathematical mean of
+labor experience (\texttt{exp}).
+
+\begin{table}[t] \centering 
+  \caption{Effect of Experience on Wages (Standard errors are in parentheses)} 
+  \label{pdm} 
+\begin{tabular}{@{\extracolsep{5pt}}lcccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{4}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-5} 
+\\[-1.8ex] & \multicolumn{4}{c}{lwage} \\ 
+ & Pooled OLS & FGLS & Fixed Effect & Random Effect \\ 
+\\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
+\hline \\[-1.8ex] 
+ exp & 0.646 & 0.529 & 0.114 & 0.395 \\ 
+  & (0.011) & (0.010) & (0.002) & (0.006) \\ 
+  & & & & \\ 
+ sqexp & $-$0.013 & $-$0.009 & $-$0.0004 & $-$0.006 \\ 
+  & (0.0004) & (0.0004) & (0.0001) & (0.0002) \\ 
+  & & & & \\ 
+\hline \\[-1.8ex] 
+Observations & 4,165 & 4,165 & 4,165 & 4,165 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+\hypertarget{hausman-test}{%
+\subsection{Hausman Test}\label{hausman-test}}
+
+The Hausman test provides empirical evidence on choosing between FE and
+RE model. The null hypothesis of this test is \(\mathbf{X}_{it}\) and
+\(c_i\) are independent. If we can reject the null hypothesis, then the
+FE model is preferred. If we cannot reject the null hypothesis, then the
+RE model should be used.
+
+The test statistics is \[
+  \hat{H} = 
+  (\hat{\beta}_{RE} - \hat{\beta}_{FE})'
+  \{ \widehat{Var}(\hat{\beta}_{RE}) - \widehat{Var}(\hat{\beta}_{FE}) \}^{-1}
+  (\hat{\beta}_{RE} - \hat{\beta}_{FE}).
+\] The limiting distribution of this test statistics is
+\(\hat{H} \to \chi^2(K)\).
+
+In the \texttt{R} programming, the manual computation is very easy.
+Alternatively, the \texttt{phtest} function in the package \texttt{plm}
+provides the Hausman test. To use the \texttt{phtest}, we need to
+estimate the FE and RE model by the \texttt{plm} function.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{delta \textless{}{-}}\StringTok{ }\NormalTok{bre }\OperatorTok{{-}}\StringTok{ }\NormalTok{bfe}
+\NormalTok{diffv \textless{}{-}}\StringTok{ }\NormalTok{vcovre }\OperatorTok{{-}}\StringTok{ }\NormalTok{vcovfe}
+\NormalTok{H \textless{}{-}}\StringTok{ }\KeywordTok{t}\NormalTok{(delta) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(diffv) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{delta}
+\NormalTok{qtchi \textless{}{-}}\StringTok{ }\KeywordTok{qchisq}\NormalTok{(}\FloatTok{0.99}\NormalTok{, }\KeywordTok{nrow}\NormalTok{(delta))}
+\KeywordTok{paste}\NormalTok{(}\StringTok{"The test statistics of Hausman test is "}\NormalTok{, }\KeywordTok{round}\NormalTok{(H, }\DecValTok{3}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The test statistics of Hausman test is  3999.537"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{paste}\NormalTok{(}\StringTok{"The 1\% quantile value of chi{-}sq dist is"}\NormalTok{, }\KeywordTok{round}\NormalTok{(qtchi, }\DecValTok{3}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The 1% quantile value of chi-sq dist is 9.21"
+\end{verbatim}
+
+In this empirical application, we can reject the null hypothesis at 1\%
+significance level. This implies that we should use the FE model in this
+application beucase observed covariates and unobserved component are not
+independent.
+
+\end{document}
