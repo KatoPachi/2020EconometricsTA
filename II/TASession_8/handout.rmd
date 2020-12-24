@@ -411,7 +411,7 @@ To implement the fixed effect model,
 we assume the following three assumptions:
 
 1. Strict exogeneity: $E[u_{it} | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = 0$.
-1. Full rank: $rank(\sum_t E[\ddot{\mathbf{X}}'_{it}\ddot{\mathbf{X}}_{it}]) = rank(E[\ddot{\underline{\mathbf{X}}}'_i\ddot{\underline{\mathbf{X}}}_i]) = K$ where $\ddot{\mathbf{X}}_{it} = \mathbf{X}_{it} - T^{-1}\sum_t \mathbf{X}_{it}$ is *time-demeaning matrix*.
+1. Full rank: $rank(\sum_t E[\ddot{\mathbf{X}}'_{it}\ddot{\mathbf{X}}_{it}]) = rank(E[\ddot{\underline{\mathbf{X}}}'_i\ddot{\underline{\mathbf{X}}}_i]) = K$ where $\ddot{\mathbf{X}}_{it} = \mathbf{X}_{it} - T^{-1}\sum_t \mathbf{X}_{it}$.
 1. homoskedasticity: $E[\underline{u}_i \underline{u}'_i|\mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = \sigma^2_u I_T$.
 
 To obtain the FE estimator, we consider the within transformation first.
@@ -435,13 +435,36 @@ $$
   \Leftrightarrow
   \ddot{\underline{Y}}_i = \ddot{\underline{\mathbf{X}}}_i \beta + \ddot{\underline{u}}_i.
 $$
-where $Q_T = I_T - \iota (\iota' \iota)^{-1} \iota$ and $Q_T \iota = 0$.
+where $Q_T = I_T - \iota (\iota' \iota)^{-1} \iota$ is *time-demeaning matrix*, and $Q_T \iota = 0$.
 Using the matrix notations, the within transformation is 
 $$
   (I_n \otimes Q_t) Y = (I_n \otimes Q_t) X \beta + (I_n \otimes Q_t) u
   \Leftrightarrow
   \ddot{Y} = \ddot{X} \beta + \ddot{u}.
 $$
+
+Before showing the FE estimator,
+I will show $Q_T \underline{Y}_i = Y_{it} - T^{-1} \sum_t Y_{it}$,
+using `R`.
+As an illustration, we caclulate time-demeaned outcome variable for $i = 1$, $\ddot{Y}_{1t}$.
+R snippet is as follows:
+
+```{r time-demeaning matrix}
+# extract outcome variables for i = 1
+i <- as.numeric(rownames(dt))[dt$id == 1]
+y1 <- dt$lwage[i]
+
+# deviation from mean
+Ydev1 <- y1 - mean(y1)
+print("Deviation from mean across time"); Ydev1
+
+# time demean-matrix
+T <- length(y1)
+vec1 <- rep(1, T)
+Qt <- diag(T) - vec1 %*% solve(t(vec1) %*% vec1) %*% t(vec1)
+Ydev2 <- Qt %*% y1
+print("Time-demeaning matrix"); Ydev2
+```
 
 The FE estimator is given by 
 $$

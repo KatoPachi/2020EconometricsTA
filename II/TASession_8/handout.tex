@@ -569,8 +569,7 @@ assumptions:
   Full rank:
   \(rank(\sum_t E[\ddot{\mathbf{X}}'_{it}\ddot{\mathbf{X}}_{it}]) = rank(E[\ddot{\underline{\mathbf{X}}}'_i\ddot{\underline{\mathbf{X}}}_i]) = K\)
   where
-  \(\ddot{\mathbf{X}}_{it} = \mathbf{X}_{it} - T^{-1}\sum_t \mathbf{X}_{it}\)
-  is \emph{time-demeaning matrix}.
+  \(\ddot{\mathbf{X}}_{it} = \mathbf{X}_{it} - T^{-1}\sum_t \mathbf{X}_{it}\).
 \item
   homoskedasticity:
   \(E[\underline{u}_i \underline{u}'_i|\mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}, c_i] = \sigma^2_u I_T\).
@@ -594,13 +593,65 @@ within transformation is \[
   Q_T \underline{Y}_i = Q_T \underline{\mathbf{X}}_i \beta + Q_T \underline{u}_i
   \Leftrightarrow
   \ddot{\underline{Y}}_i = \ddot{\underline{\mathbf{X}}}_i \beta + \ddot{\underline{u}}_i.
-\] where \(Q_T = I_T - \iota (\iota' \iota)^{-1} \iota\) and
-\(Q_T \iota = 0\). Using the matrix notations, the within transformation
-is \[
+\] where \(Q_T = I_T - \iota (\iota' \iota)^{-1} \iota\) is
+\emph{time-demeaning matrix}, and \(Q_T \iota = 0\). Using the matrix
+notations, the within transformation is \[
   (I_n \otimes Q_t) Y = (I_n \otimes Q_t) X \beta + (I_n \otimes Q_t) u
   \Leftrightarrow
   \ddot{Y} = \ddot{X} \beta + \ddot{u}.
 \]
+
+Before showing the FE estimator, I will show
+\(Q_T \underline{Y}_i = Y_{it} - T^{-1} \sum_t Y_{it}\), using
+\texttt{R}. As an illustration, we caclulate time-demeaned outcome
+variable for \(i = 1\), \(\ddot{Y}_{1t}\). R snippet is as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# extract outcome variables for i = 1}
+\NormalTok{i \textless{}{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(dt))[dt}\OperatorTok{$}\NormalTok{id }\OperatorTok{==}\StringTok{ }\DecValTok{1}\NormalTok{]}
+\NormalTok{y1 \textless{}{-}}\StringTok{ }\NormalTok{dt}\OperatorTok{$}\NormalTok{lwage[i]}
+
+\CommentTok{\# deviation from mean}
+\NormalTok{Ydev1 \textless{}{-}}\StringTok{ }\NormalTok{y1 }\OperatorTok{{-}}\StringTok{ }\KeywordTok{mean}\NormalTok{(y1)}
+\KeywordTok{print}\NormalTok{(}\StringTok{"Deviation from mean across time"}\NormalTok{); Ydev1}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Deviation from mean across time"
+\end{verbatim}
+
+\begin{verbatim}
+## [1] -0.40407857 -0.24444857  0.03169143  0.03169143  0.09670143  0.20903143
+## [7]  0.27941143
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# time demean{-}matrix}
+\NormalTok{T \textless{}{-}}\StringTok{ }\KeywordTok{length}\NormalTok{(y1)}
+\NormalTok{vec1 \textless{}{-}}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, T)}
+\NormalTok{Qt \textless{}{-}}\StringTok{ }\KeywordTok{diag}\NormalTok{(T) }\OperatorTok{{-}}\StringTok{ }\NormalTok{vec1 }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(vec1) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{vec1) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(vec1)}
+\NormalTok{Ydev2 \textless{}{-}}\StringTok{ }\NormalTok{Qt }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{y1}
+\KeywordTok{print}\NormalTok{(}\StringTok{"Time{-}demeaning matrix"}\NormalTok{); Ydev2}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Time-demeaning matrix"
+\end{verbatim}
+
+\begin{verbatim}
+##             [,1]
+## [1,] -0.40407857
+## [2,] -0.24444857
+## [3,]  0.03169143
+## [4,]  0.03169143
+## [5,]  0.09670143
+## [6,]  0.20903143
+## [7,]  0.27941143
+\end{verbatim}
 
 The FE estimator is given by \[
   \hat{\beta}_{FE} = 
