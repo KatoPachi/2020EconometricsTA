@@ -17,7 +17,7 @@ rmarkdown::render(
 
 #' from Rmd to R
 knitr::purl(
-    input = "II/TAsession_6/handout.rmd",
-    output = "R/script/TASession_5.r",  
+    input = "II/TAsession_8/handout.rmd",
+    output = "R/script/TASession_8.r",  
     documentation = 1
 )

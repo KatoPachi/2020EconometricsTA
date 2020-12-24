@@ -95,6 +95,23 @@ vcovfgls <- solve(Ahat) %*% Bhat %*% solve(Ahat)
 sefgls <- sqrt(diag(vcovfgls))
 
 
+## ----time-demeaning matrix----------------------------------------------------
+# extract outcome variables for i = 1
+i <- as.numeric(rownames(dt))[dt$id == 1]
+y1 <- dt$lwage[i]
+
+# deviation from mean
+Ydev1 <- y1 - mean(y1)
+print("Deviation from mean across time"); Ydev1
+
+# time demean-matrix
+T <- length(y1)
+vec1 <- rep(1, T)
+Qt <- diag(T) - vec1 %*% solve(t(vec1) %*% vec1) %*% t(vec1)
+Ydev2 <- Qt %*% y1
+print("Time-demeaning matrix"); Ydev2
+
+
 ## ----FE estimator-------------------------------------------------------------
 # Setup
 X <- model.matrix(model, dt); k <- ncol(X)
@@ -156,25 +173,6 @@ vcovre <- solve(t(X) %*% kroOmega %*% X)
 sere <- sqrt(diag(vcovre))
 
 
-## ----easyREmodel, eval = FALSE, echo = FALSE----------------------------------
-## # reference: http://ricardo.ecn.wfu.edu/~cottrell/gretl/random-effects.pdf
-## library(plm)
-## test <- plm(lwage ~ -1 + exp + sqexp, data = dt, index = c("id", "time"), model = "random")
-## 
-## # underlying computation
-## # estimate
-## theta <- 1 - sqrt(sigmau/(sigmau + T*sigmac))
-## i <- rep(1, max(dt$time))
-## Qt <- diag(max(dt$time)) - theta * i %*% solve(t(i) %*% i) %*% t(i)
-## Ybar <- diag(max(dt$id)) %x% Qt %*% Y
-## Xbar <- diag(max(dt$id)) %x% Qt %*% X
-## bfe <- solve(t(Xbar) %*% Xbar) %*% t(Xbar) %*% Ybar
-## 
-## # inference
-## uhat <- Ybar - Xbar %*% bfe
-## sigmahat <- sum(uhat^2)/(N*T-k)
-## vcovfe <- sigmahat * solve(t(Xbar) %*% Xbar)
-## sefe <- sqrt(diag(vcovfe))
 
 
 ## ----table, results = "asis", echo = FALSE------------------------------------
@@ -188,7 +186,7 @@ stargazer(
   omit.table.layout = "n", table.placement = "t",
   header = FALSE,
   type = "latex",
-  title = "Panel Data Model: Effect of Experience on Wages",
+  title = "Effect of Experience on Wages (Standard errors are in parentheses)",
   label = "pdm"
 )
 
