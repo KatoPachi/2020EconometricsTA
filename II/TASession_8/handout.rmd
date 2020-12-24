@@ -599,10 +599,12 @@ $$
 In the `R` programming,
 the `plm` function provides the random effect model.
 However, the procedure is not the feasible GLS method, 
-but the OLS method on a dataset in which all variables are subject to quasi-demeaning.
+but the OLS method on a dataset in which all variables are subject to quasi-demeaning [^detail].
 The two procedures generate the same RE estimator.
 Moreover, the idiosyncratic error and the unobserved component are obtained by differenct approach.
 To implement the RE model described above, we compute manually.
+
+[^detail]: The RE estimator by the quasi-demeaning method is simple. First, we calculate quasi-demeaned variables as in $\tilde{Y}_{it} = Y_{it} - \theta \bar{Y}_i$ where $\theta = 1 - (\sigma_u^2/(\sigma_u^2 + T \sigma_c^2))^{1/2}$. Using the matrix notations, $\tilde{\underline{Y}}_i = \tilde{Q}_T \underline{Y}_i$ where $\tilde{Q}_T$ is the quasi-demeaning matrix, which is given by $\tilde{Q}_T =  I_T - \theta \iota (\iota' \iota)^{-1} \iota$. After transforming all variables, we estimate $\tilde{\underline{Y}}_i = \tilde{\underline{X}}_i \beta + \tilde{\underline{u}}_i$ by OLS method. The variance-covariance matrix is $\hat{\sigma} (\sum_i \tilde{\underline{X}}_i \tilde{\underline{X}}'_i)^{-1}$ where $\hat{\sigma} = \tilde{\underline{Y}}_i - \tilde{\underline{X}}_i \hat{\beta}$. See <http://ricardo.ecn.wfu.edu/~cottrell/gretl/random-effects.pdf> in detail.
 
 ```{r FGLS-type RE estimator}
 # Setup
@@ -661,7 +663,7 @@ $$
 $$
 For example, wages increase by `r 39.5 - 2*0.6*19.85`\% at a mathematical mean of labor experience (`exp`).
 
-```{r easyREmodel, eval = FALSE, echo = FALSE}
+```{r easyREmodel, eval = FALSE, echo = FALSE, purl = FALSE}
 # reference: http://ricardo.ecn.wfu.edu/~cottrell/gretl/random-effects.pdf
 library(plm)
 test <- plm(lwage ~ -1 + exp + sqexp, data = dt, index = c("id", "time"), model = "random")
