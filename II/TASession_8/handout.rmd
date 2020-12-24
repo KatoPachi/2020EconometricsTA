@@ -101,7 +101,8 @@ $$
 
 Now, we assume 
 
-1. $E[\mathbf{X}'_{it}u_{it}] = 0$, $\forall i, t$. This assumption, called *(contempraneous) exogneity assumption*, implies that $u_{it}$ and $\mathbf{X}_{it}$ are orthogonal in the conditional mean sence, $E[u_{it} | \mathbf{X}_{it}] = 0$. However, this assumption does not imply $u_{it}$ is uncorrelated with the explanatory variables in all time periods (strictly exogeneity), that is, $E[u_{it} | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}] = 0$. This assumption palces no restriction on the relationship between $\mathbf{X}_{is}$ and $u_{it}$ for $s\not=t$.
+1. (contempraneous) exogneity assumption: $E[\mathbf{X}'_{it}u_{it}] = 0$, $\forall i, t$. 
+     - This assumption,implies that $u_{it}$ and $\mathbf{X}_{it}$ are orthogonal in the conditional mean sence, $E[u_{it} | \mathbf{X}_{it}] = 0$. However, this assumption does not imply $u_{it}$ is uncorrelated with the explanatory variables in all time periods (strictly exogeneity), that is, $E[u_{it} | \mathbf{X}_{i1}, \ldots, \mathbf{X}_{iT}] = 0$. This assumption palces no restriction on the relationship between $\mathbf{X}_{is}$ and $u_{it}$ for $s\not=t$.
 1. $E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i] \succ 0$.
 
 Under these two assumptions, the true parameter is given by
@@ -140,7 +141,7 @@ bols2 <- plm(model, data = dt, model = "pooling", index = c("id", "time"))
 
 The pooled OLS estimator is consistent and asymptotically normally distributed.
 $$
-  \sqrt{n}(\hat{\beta} - \beta) \sim N(0, A^{-1} B A^{-1}),
+  \sqrt{n}(\hat{\beta} - \beta) \sim N_{\mathbb{R}^K}(0, A^{-1} B A^{-1}),
 $$
 where $A = E[\underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i]$ 
 and $B = E[\underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i]$.
@@ -149,18 +150,18 @@ $$
   \hat{A} = \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i,
 $$
 $$
-  \hat{B} = \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i.
+  \hat{B} = \frac{1}{n} \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{\hat{u}}_i \underline{\hat{u}}'_i \underline{\mathbf{X}}_i.
 $$
 Thus, estimator of asymptotic variance of the pooled OLSE is 
 $$
-  \hat{Asyvar}(\hat{\beta}) =
+  \widehat{Asyvar}(\hat{\beta}) =
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \underline{u}_i \underline{u}'_i \underline{\mathbf{X}}_i \right)
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i\underline{\mathbf{X}}_i \right)^{-1}.
 $$
 Using the full matrix notations, we can reformulate
 $$
-  \hat{Asyvar}(\hat{\beta}) =
+  \widehat{Asyvar}(\hat{\beta}) =
   (\mathbf{X}' \mathbf{X})^{-1}
   (\mathbf{X}' U \mathbf{X})
   (\mathbf{X}' \mathbf{X})^{-1},
@@ -169,15 +170,15 @@ where
 $$
   U = 
   \begin{pmatrix}
-    \underline{u}_1 \underline{u}'_1 & \mathbf{0} & \cdots & \mathbf{0} \\
-    \mathbf{0} & \underline{u}_2 \underline{u}'_2 & \cdots & \mathbf{0} \\
+    \underline{\hat{u}}_1 \underline{\hat{u}}'_1 & \mathbf{0} & \cdots & \mathbf{0} \\
+    \mathbf{0} & \underline{\hat{u}}_2 \underline{\hat{u}}'_2 & \cdots & \mathbf{0} \\
     \vdots & \vdots & \cdots & \vdots \\
-    \mathbf{0} & \mathbf{0} & \cdots & \underline{u}_n \underline{u}'_n
+    \mathbf{0} & \mathbf{0} & \cdots & \underline{\hat{u}}_n \underline{\hat{u}}'_n
   \end{pmatrix}.
 $$
 The standard errors calculated by this matrix is called *robust standard errors clustered by individuals*.
 
-In `R`, the `lm` and `plm` function provide the standard errors based on $\hat{Asyvar}(\hat{\beta}) = \hat{\sigma}^2 (X'X)^{-1}$,
+In `R`, the `lm` and `plm` function provide the standard errors based on $\widehat{Asyvar}(\hat{\beta}) = \hat{\sigma}^2 (X'X)^{-1}$,
 where $\hat{\sigma}^2 = \hat{u}\hat{u}'/(nT - K)$ and $\hat{u} = Y - X \hat{\beta}$.
 There are two ways to obtain cluster robust standard errors.
 The first way is to caclulate by yourself.
@@ -301,7 +302,7 @@ easy_fgls <- pggls(
 
 The asymptotic distribution of the FGLS estimator is given by 
 $$
-  \sqrt{n}(\hat{\beta}_{FGLS} - \beta) \sim N(0, A^{-1} B A^{-1}),
+  \sqrt{n}(\hat{\beta}_{FGLS} - \beta) \sim N_{\mathbb{R}^K}(0, A^{-1} B A^{-1}),
 $$
 where $A = E[\underline{\mathbf{X}}'_i \Omega^{-1} \underline{\mathbf{X}}_i]$ 
 and $B = E[\underline{\mathbf{X}}'_i \Omega^{-1} \underline{u}_i \underline{u}'_i \Omega^{-1} \underline{\mathbf{X}}_i]$.
@@ -313,13 +314,13 @@ $$
   \hat{B} 
   = \frac{1}{n} \sum_{i=1}^n
   \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} 
-  \underline{u}^{FLGS}_i \underline{u}^{FGLS'}_i 
+  \underline{\hat{u}}^{FLGS}_i \underline{\hat{u}}^{FGLS'}_i 
   \hat{\Omega}^{-1} \underline{\mathbf{X}}_i,
 $$
 where $\underline{u}^{FLGS}_i = \underline{Y}_i - \underline{\mathbf{X}}_i \hat{\beta}_{FGLS}$.
 Thus, estimator of asymptotic variance of the FGLS estimator is 
 $$
-  \hat{Asyvar}(\hat{\beta}_{FGLS}) =
+  \widehat{Asyvar}(\hat{\beta}_{FGLS}) =
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}
   \left( \sum_{i=1}^n \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} 
   \underline{u}^{FLGS}_i \underline{u}^{FGLS'}_i 
@@ -328,7 +329,7 @@ $$
 $$
 Using the full matrix notations, 
 $$
-  \hat{Asyvar}(\hat{\beta}_{FGLS}) =
+  \widehat{Asyvar}(\hat{\beta}_{FGLS}) =
   \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) \mathbf{X} \}^{-1}
   \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) U (I_n \otimes \hat{\Omega}^{-1}) \mathbf{X} \}^{-1}
   \{ \mathbf{X}'(I_n \otimes \hat{\Omega}^{-1}) \mathbf{X} \}^{-1},
@@ -337,10 +338,10 @@ where
 $$
   U = 
   \begin{pmatrix}
-    \underline{u}^{FLGS}_1 \underline{u}^{FGLS'}_1 & \mathbf{0} & \cdots & \mathbf{0} \\
-    \mathbf{0} & \underline{u}^{FLGS}_2 \underline{u}^{FGLS'}_2 & \cdots & \mathbf{0} \\
+    \underline{\hat{u}}^{FLGS}_1 \underline{\hat{u}}^{FGLS'}_1 & \mathbf{0} & \cdots & \mathbf{0} \\
+    \mathbf{0} & \underline{\hat{u}}^{FLGS}_2 \underline{\hat{u}}^{FGLS'}_2 & \cdots & \mathbf{0} \\
     \vdots & \vdots & \cdots & \vdots \\
-    \mathbf{0} & \mathbf{0} & \cdots & \underline{u}^{FLGS}_n \underline{u}^{FGLS'}_n
+    \mathbf{0} & \mathbf{0} & \cdots & \underline{\hat{u}}^{FLGS}_n \underline{\hat{u}}^{FGLS'}_n
   \end{pmatrix}.
 $$
 
@@ -478,11 +479,11 @@ plmfe <- plm(model, data = dt, index = c("id", "time"), model = "within")
 Under the third assumption, asymptotic distribution of the FE estimator is given by 
 $$
   \sqrt{n}(\hat{\beta}_{FE} - \beta) 
-  \sim N(0, \sigma^2_u E[\ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{\mathbf{X}}}_i]).
+  \sim N_{\mathbb{R}^K}(0, \sigma^2_u E[\ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{\mathbf{X}}}_i]).
 $$
 The consistent estimator of the asymptotic variance of the FE estimator is 
 $$
-  \hat{Asyvar}(\hat{\beta}_{FE}) =
+  \widehat{Asyvar}(\hat{\beta}_{FE}) =
   \hat{\sigma}_u^2 
   \left( \sum_{i=1}^n \ddot{\underline{\mathbf{X}}}'_i \ddot{\underline{\mathbf{X}}}_i \right)^{-1} =
   \hat{\sigma}_u^2 (\ddot{X}' \ddot{X})^{-1},
@@ -614,7 +615,7 @@ bre <- solve(t(X) %*% kroOmega %*% X) %*% t(X) %*% kroOmega %*% y
 
 A consistent estimator of asymptotic variance of the RE estimator is given by 
 $$
-  \hat{Asyvar}(\hat{\beta}_{RE}) = 
+  \widehat{Asyvar}(\hat{\beta}_{RE}) = 
   \left( \underline{\mathbf{X}}'_i \hat{\Omega}^{-1} \underline{\mathbf{X}}_i \right)^{-1}.
 $$
 
@@ -674,7 +675,7 @@ stargazer(
 )
 ```
 
-## Hasuman Test 
+## Hausman Test 
 
 The Hausman test provides empirical evidence on choosing between FE and RE model.
 The null hypothesis of this test is $\mathbf{X}_{it}$ and $c_i$ are independent.
@@ -685,7 +686,7 @@ The test statistics is
 $$
   \hat{H} = 
   (\hat{\beta}_{RE} - \hat{\beta}_{FE})'
-  \{ Var(\hat{\beta}_{RE}) - Var(\hat{\beta}_{FE}) \}^{-1}
+  \{ \widehat{Var}(\hat{\beta}_{RE}) - \widehat{Var}(\hat{\beta}_{FE}) \}^{-1}
   (\hat{\beta}_{RE} - \hat{\beta}_{FE}).
 $$
 The limiting distribution of this test statistics is $\hat{H} \to \chi^2(K)$.
