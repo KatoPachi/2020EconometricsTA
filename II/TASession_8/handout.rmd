@@ -670,7 +670,7 @@ stargazer(
   omit.table.layout = "n", table.placement = "t",
   header = FALSE,
   type = "latex",
-  title = "Panel Data Model: Effect of Experience on Wages",
+  title = "Effect of Experience on Wages (Standard errors are in parentheses)",
   label = "pdm"
 )
 ```
