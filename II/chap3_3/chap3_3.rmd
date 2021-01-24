@@ -456,4 +456,3 @@ stargazer(
 ```
 
 
-# Reference 
