@@ -7,6 +7,9 @@ knitr::opts_chunk$set(
   echo = TRUE, 
   cache = FALSE,
   fig.pos = "h")
+
+library(here)
+knitr::opts_knit$set(root.dir = paste(here::here(), "R", sep= "/"))
 ```
 
 # About TA Session
@@ -911,5 +914,3 @@ Second, we summarize asymptotic properties of MLE as follows (proof is omitted):
 > Under certain regularity conditions,
 > (i) The ML estimator is consistent, i.e., $\tilde{\theta} \overset{p}{\to} \theta$, and
 > (ii) The ML estimator is asymptotically normally distributed, i.e., $\tilde{\theta} \overset{d}{\to} N(\theta, I^{-1}(\theta))$
-
-# Reference 
