@@ -4762,6 +4762,861 @@ In this empirical application, we can reject the null hypothesis at 1\% signific
 This implies that we should use the FE model in this application
 beucase observed covariates and unobserved component are not independent.
 
+\hypertarget{generalized-method-of-moments}{%
+\section{Generalized Method of Moments}\label{generalized-method-of-moments}}
+
+\hypertarget{before-estimating}{%
+\subsection{Before Estimating}\label{before-estimating}}
+
+\hypertarget{background-and-data-7}{%
+\subsubsection{Background and Data}\label{background-and-data-7}}
+
+The data we use today originates from Harrison and Rubinfeld (1978) which investigates the methodological problems associated with the use of housing market data to measure the willingness to pay for clean air. It drew a conclusion that marginal air pollution damages are found to increase with the level of air pollution and with household income. But here we just use some variables of the original data to construct a multiple linear regression model focusing on how the attributes of communities affect housing prices(value) of Boston city. And this time, we will concentrate on the endogenous problem.
+
+We use an open data which is called as ``Boston Neighboorhood Housing Prices Dataset\footnote{data source: \url{http://biostat.mc.vanderbilt.edu/DataSets}. This linkage seems not to work very well so I have uploaded the csv file on CLE.}''. Although there exist many variables, this time, we take 6 of them: \texttt{value}, \texttt{crime}, \texttt{industrial}, \texttt{distance}, \texttt{black} and \texttt{ptratio}. And here come the descriptions.
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{value}: a continuous variable meaning value of owner-occupied homes in \$1000's.
+\item
+  \texttt{crime}: a continuous variable representing per capita crime rate by town.
+\item
+  \texttt{industrial}: a continuous variable showing proportion of non-retail business acres per town.
+\item
+  \texttt{distance}: a continuous variable revealing weighted distances to five Boston employment centres.
+\item
+  \texttt{black}: a continuous variable which is the black proportion of population, used as an instrument for \texttt{crime}.
+\item
+  \texttt{ptratio}: a continuous variable defined as pupil-teacher ratio by town school district, measuring public sector benefits and used as an instrument for \texttt{crime} as well.
+\end{itemize}
+
+As same as the last time, \texttt{value} is the dependent variable. Now, let's quickly build the dataset to use today.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(AER) }\CommentTok{\# Including lmtest, sandwich and ivreg(2SLS)}
+\KeywordTok{library}\NormalTok{(gmm) }\CommentTok{\# Including gmm function}
+\KeywordTok{library}\NormalTok{(MASS) }\CommentTok{\# Using ginv: generalized inverse operation}
+\KeywordTok{library}\NormalTok{(stargazer)}
+
+\CommentTok{\# Preparations }
+
+\NormalTok{dt =}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}
+\DataTypeTok{file =} \StringTok{"\textasciitilde{}/boston.csv"}\NormalTok{,}
+\DataTypeTok{header =} \OtherTok{TRUE}\NormalTok{, }\DataTypeTok{sep =} \StringTok{","}\NormalTok{, }\DataTypeTok{row.names =} \OtherTok{NULL}\NormalTok{, }\DataTypeTok{stringsAsFactors =} \OtherTok{FALSE}\NormalTok{)}
+\NormalTok{dt =}\StringTok{ }\NormalTok{dt[}\KeywordTok{complete.cases}\NormalTok{(dt),] }
+\CommentTok{\# complete.cases returns TURE if one row doesn\textquotesingle{}t contain NA}
+
+\NormalTok{n =}\StringTok{ }\KeywordTok{nrow}\NormalTok{(dt)}
+\KeywordTok{head}\NormalTok{(dt[, }\KeywordTok{c}\NormalTok{(}\StringTok{"value"}\NormalTok{, }\StringTok{"crime"}\NormalTok{, }\StringTok{"industrial"}\NormalTok{, }\StringTok{"distance"}\NormalTok{, }\StringTok{"black"}\NormalTok{,  }\StringTok{"ptratio"}\NormalTok{)])}
+\end{Highlighting}
+\end{Shaded}
+
+And the first few rows are shown as below.
+
+\begin{verbatim}
+      value  crime    industrial distance black    ptratio
+    1  24.0 0.00632       2.31   4.0900 0.0000000    15.3
+    2  21.6 0.02731       7.07   4.9671 0.0000000    17.8
+    3  34.7 0.02729       7.07   4.9671 0.3238495    17.8
+    4  33.4 0.03237       2.18   6.0622 0.1804159    18.7
+    5  36.2 0.06905       2.18   6.0622 0.0000000    18.7
+    6  28.7 0.02985       2.18   6.0622 0.2210220    18.7
+\end{verbatim}
+
+\hypertarget{the-idea-of-finding-an-instrumental-variable}{%
+\subsubsection{The idea of finding an instrumental variable}\label{the-idea-of-finding-an-instrumental-variable}}
+
+We say that when exogeneity condition is no longer satisfied(relaxization of Gauss Markov basic assumption), the ols estimator will lose consistency. To deal with such problem, IV(instrumental variable) method is a good solution. But how do we find an instrumental variable? Here are two main criteria for defining an IV:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  The instrument must be correlated with the endogenous explanatory variables, conditionally on the other covariates\footnote{But a weak correlation may provide misleading inferences about parameter estimates and standard errors (Nichols 2006) .}.
+\item
+  The instrument cannot be correlated with the error term in the explanatory equation, conditionally on the other covariates. The explanatory equation is that, taking a linear example, an equation which is given by \(\mathbf{\underline{Y}} = \mathbf{\underline{X}}\theta + \mathbf{\underline{U}}\)\footnote{"explanatory" is used because we want to know the causal effects between $\mathbf{\underline{Y}}$ and $\mathbf{\underline{X}}$}.
+\end{enumerate}
+
+To initialize today's empirical application, we think that \texttt{crime} may be an endogenous variable and want to deal with the problems resulting from endogeneity. Following the previous 2 criteria, \texttt{black} and \texttt{ptratio} are, in a way, correlated with crime rate(the original paper is published in 1978 and I mean no offense here). However, these two variables remain a probability of not functioning very well and that's called weak instruments problem which won't be talked today. If you are interested in such stuffs, please check Nichols (2006) on your own.
+
+Then, let's prepare the explanatory variables and instrumental variables in a matrix form with R for further estimations. Here, we denote the dimensions that \(dim(g) = L\) and \(dim(\theta) = d\). In this case, L = d + 1 = 5(containing constant). Remember that we detected heteroskedasticity and autocorrelation in TA session GLS with this dataset. So it provides us a good example to learn about 2SGMM(2 step GMM) method.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Extract varibales and instruments}
+\NormalTok{name\_x =}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"constant"}\NormalTok{, }\StringTok{"crime"}\NormalTok{, }\StringTok{"industrial"}\NormalTok{, }\StringTok{"distance"}\NormalTok{)}
+\NormalTok{name\_z =}\StringTok{ }\KeywordTok{c}\NormalTok{(}
+    \StringTok{"constant"}\NormalTok{, }\StringTok{"black"}\NormalTok{,  }\StringTok{"ptratio"}\NormalTok{, }\StringTok{"industrial"}\NormalTok{, }\StringTok{"distance"}
+\NormalTok{) }\CommentTok{\# means L = d + 1 = 5}
+\NormalTok{constant =}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, n)}
+
+\NormalTok{X =}\StringTok{ }\KeywordTok{cbind}\NormalTok{(constant, dt[, }\KeywordTok{c}\NormalTok{(}\StringTok{"crime"}\NormalTok{, }\StringTok{"industrial"}\NormalTok{, }\StringTok{"distance"}\NormalTok{)])}
+\KeywordTok{colnames}\NormalTok{(X) =}\StringTok{ }\NormalTok{name\_x}
+
+\NormalTok{Z =}\StringTok{ }\KeywordTok{cbind}\NormalTok{(constant, dt[, }\KeywordTok{c}\NormalTok{(}\StringTok{"black"}\NormalTok{, }\StringTok{"ptratio"}\NormalTok{, }\StringTok{"industrial"}\NormalTok{, }\StringTok{"distance"}\NormalTok{)])}
+\KeywordTok{colnames}\NormalTok{(Z) =}\StringTok{ }\NormalTok{name\_z}
+
+\NormalTok{Y =}\StringTok{ }\NormalTok{dt[, }\StringTok{"value"}\NormalTok{]   }
+\end{Highlighting}
+\end{Shaded}
+
+\newpage
+
+\hypertarget{numerical-2sgmm-method}{%
+\subsection{Numerical 2SGMM Method}\label{numerical-2sgmm-method}}
+
+\hypertarget{formulations-and-recalling-ha-robusted-ols}{%
+\subsubsection{Formulations and Recalling HA-Robusted Ols}\label{formulations-and-recalling-ha-robusted-ols}}
+
+Firstly, let's declare the linear model. The multiple regression model is easily written as below.
+
+\[
+    value_i = \beta_0 + \beta_1 crime_i + \beta_2 industrial_i + \beta_3 distance_i + u_i \quad \forall i = 1, \dots, n.
+\]
+
+Remember that when there exist heteroskedasticity and autocorrelation in the error term, we need to apply a NeweyWest(HAC) variance covariance estimator. Here, I just show you with the commands and don't display the results. The results will be summarized in a table as well as the 2 step estimates for comparision.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Numerical 2SGMM Method to A Simple Linear Over{-}identified case}
+
+\CommentTok{\# Since we tested out the heteroskedasticity, }
+\CommentTok{\# this dataset provides an appropriate example for studying 2SGMM.}
+
+
+\CommentTok{\# Firstly, recall HA{-}robust ols estimates for later comparison}
+\NormalTok{model =}\StringTok{ }\NormalTok{value }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{crime }\OperatorTok{+}\StringTok{ }\NormalTok{industrial }\OperatorTok{+}\StringTok{ }\NormalTok{distance}
+
+\NormalTok{ols =}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt)}
+\CommentTok{\#summary(ols)}
+\KeywordTok{coeftest}\NormalTok{(ols, }\DataTypeTok{vcov. =}\NormalTok{ NeweyWest)}
+
+\NormalTok{cov\_hac =}\StringTok{ }\KeywordTok{NeweyWest}\NormalTok{(ols)}
+\NormalTok{se\_hac =}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(cov\_hac))}
+
+\NormalTok{t\_hac =}\StringTok{ }\KeywordTok{coef}\NormalTok{(ols)}\OperatorTok{/}\NormalTok{se\_hac}
+\NormalTok{p\_hac =}\StringTok{ }\KeywordTok{pt}\NormalTok{(}\KeywordTok{abs}\NormalTok{(t\_hac), }\DataTypeTok{df =} \KeywordTok{nrow}\NormalTok{(dt) }\OperatorTok{{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X), }\DataTypeTok{lower.tail =} \OtherTok{FALSE}\NormalTok{)}\OperatorTok{*}\DecValTok{2}   
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{numerical-2sgmm}{%
+\subsubsection{Numerical 2SGMM}\label{numerical-2sgmm}}
+
+\hypertarget{step-1-of-the-2sgmm-method}{%
+\paragraph{Step 1 of the 2SGMM Method}\label{step-1-of-the-2sgmm-method}}
+
+Firstly, let's review the procedures of the 2 step estimation\footnote{For a better understanding of the codes I provided, I use the notations from class and modified them a little bit. Of course, stacked form is used as well.}.
+
+\noindent
+\textbf{\color{blue} Step 1 of the 2SGMM Method}
+
+\noindent
+\color{black} Choose the metric in the first step. The optimal metric is the inverse of the variance of the orthogonality conditions which are \(g(K_i, \theta) = (\mathbf{Z}_{i}^{IV})^T (Y_i - \mathbf{X}_i\theta) = (\mathbf{Z}_{i}^{IV})^T u_i\) for all i. And the population orthogonality condition(or so-called moment condition) is given by \(\mathbb{E}\left(g(K_i, \theta)\right) = \mathbf{0}\).
+
+Thus it is better to choose a metric in the first step, which is close to the optimal metric. To do so, we assume that homoskedasticity assumption is satisfied. For example,
+
+\[  \mathbb{E}[u_i^2 | \mathbf{Z}_{i}^{IV}] = \mathbb{E}[u_i^2] = \sigma^2. \]
+
+Then, the first step metric would be
+
+\begin{align*}
+    \widehat{Var}(g(K_i, \widehat{\theta}))_1 
+    & = \frac{1}{n}\sum_{i=1}^{n}(\mathbf{Z}_{i}^{IV})^T (\mathbf{Z}_{i}^{IV}),\\
+    & = \frac{1}{n} (\mathbf{\underline{Z}}^{IV})^T (\mathbf{\underline{Z}}^{IV}),\\
+    \widehat{W}_1 & = \left(\widehat{Var}(g(K_i, \widehat{\theta}))_1 \right)^{-1}.
+\end{align*}
+
+When this metric is applied, the first step estimator is then given by
+
+\begin{align*}
+    \hat{\theta}_1  = & \left\{
+    \left(\frac{1}{n}\sum_{i=1}^{n}((\mathbf{Z}_{i}^{IV})^T \mathbf{X}_{i}) \right)^T \widehat{W}_1 \left(\frac{1}{n}\sum_{i=1}^{n}((\mathbf{Z}_{i}^{IV})^T \mathbf{X}_{i}) \right) \right\}^{-1}\\
+    & \times\left(\frac{1}{n}\sum_{i=1}^{n}((\mathbf{Z}_{i}^{IV})^T \mathbf{X}_{i}) \right)^T \widehat{W}_1 \left(\frac{1}{n}\sum_{i=1}^{n}((\mathbf{Z}_{i}^{IV})^T \mathbf{Y}_{i}) \right),\\
+    = & \left\{\left((\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right)^T \widehat{W}_1 (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right\}^{-1} \left((\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right)^T \widehat{W}_1 (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{Y}},
+\end{align*}
+
+where \(\mathbf{\underline{Y}} = (Y_1, \dots, Y_n)^T\), \(\mathbf{\underline{X}} = (\mathbf{X}_{1}^T, \dots, \mathbf{X}_{n}^T)^T\) and \(\mathbf{\underline{Z}}^{IV} = ((\mathbf{Z}_{1}^{IV})^T, \dots, (\mathbf{Z}_{n}^{IV})^T)^T\). Such an estimator with the first step metric \(\widehat{W}_1\) is called as the \color{blue} 2 step instrumental variable \color{black} (2S-IV) estimator or the \color{blue} 2 step least square \color{black} (2SLS) estimator. After being calculated, this 2S-IV is then plugged in the second step of GMM.
+
+And the asmptotic variance covariance matrix can, according to the properties of GMM estimator (section \ref{appendix-properties-of-the-gmm-estimator}), be written as
+
+\begin{align*}
+    \mathbb{V}(\hat{\theta}_1) = 
+    & \left\{ \mathbb{E}\left[ (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right]^T W_0 \mathbb{E}\left[ (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}}\right] \right\}^{-1} \mathbb{E}\left[ (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right]^T W_0 Var\left( g(K_i, \theta_0)\right)\\
+    & \times W_0 \mathbb{E}\left[ (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right] \left\{ \mathbb{E}\left[ (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right]^T W_0 \mathbb{E}\left[ (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right] \right\}^{-1},
+\end{align*}
+
+where \(\theta_0\) is the true parameter with \(Var\left( g(K_i, \theta_0)\right) = \mathbb{E}\left[g(K_i, \theta_0)g(K_i, \theta_0)^T \right]\) and \(\widehat{W}_1 \stackrel{p}{\to} W_0\).
+
+And if we just take \(\widehat{W}_1\) and \(\widehat{Var}(g(K_i, \theta))_1\) as the empirical counterparts of \(W_0\) and \(Var\left( g(K_i, \theta_0)\right)\), respectively. We will have the covariance estimator as
+
+\begin{align*}
+    \widehat{\mathbb{V}}(\hat{\theta}_1) = 
+    & \left\{\left((\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right)^T \widehat{W}_1 (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right\}^{-1} \left((\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right)^T \widehat{W}_1 \widehat{W}_1^{-1}\\
+    & \times \widehat{W}_1 \left((\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right) \left\{\left((\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right)^T \widehat{W}_1 (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right\}^{-1},\\
+    = & \left\{\left((\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right)^T \widehat{W}_1 (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right\}^{-1}.
+\end{align*}
+
+Now, let's check the commands and runing results.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Secondly, perform 2SGMM and }
+\CommentTok{\# the 1st step is like follows (looks like 2SLS).}
+
+\NormalTok{Z =}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(Z)}
+\NormalTok{X =}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(X)}
+
+\NormalTok{ZX =}\StringTok{ }\KeywordTok{t}\NormalTok{(Z) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X}\OperatorTok{/}\NormalTok{n }\CommentTok{\# or ZX = crossprod(Z, X)/n}
+\NormalTok{ZY =}\StringTok{ }\KeywordTok{t}\NormalTok{(Z) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Y}\OperatorTok{/}\NormalTok{n}
+
+\NormalTok{var\_g\_}\DecValTok{1}\NormalTok{ =}\StringTok{ }\KeywordTok{t}\NormalTok{(Z) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Z}\OperatorTok{/}\NormalTok{n}
+
+\NormalTok{theta\_}\DecValTok{1}\NormalTok{ =}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(ZX) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(var\_g\_}\DecValTok{1}\NormalTok{) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{ZX) }\OperatorTok{\%*\%}\StringTok{ }
+\KeywordTok{t}\NormalTok{(ZX) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(var\_g\_}\DecValTok{1}\NormalTok{) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{ZY}
+
+\NormalTok{cov\_}\DecValTok{1}\NormalTok{   =}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(ZX) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(var\_g\_}\DecValTok{1}\NormalTok{) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{ZX)}
+
+
+\CommentTok{\# Caculate the estimates and check}
+\NormalTok{se\_}\DecValTok{1}\NormalTok{  =}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(cov\_}\DecValTok{1}\NormalTok{))}
+\NormalTok{t\_}\DecValTok{1}\NormalTok{   =}\StringTok{ }\NormalTok{theta\_}\DecValTok{1}\OperatorTok{/}\NormalTok{se\_}\DecValTok{1}
+\NormalTok{p\_}\DecValTok{1}\NormalTok{   =}\StringTok{ }\KeywordTok{pt}\NormalTok{(}\KeywordTok{abs}\NormalTok{(t\_}\DecValTok{1}\NormalTok{), }\DataTypeTok{df =} \KeywordTok{nrow}\NormalTok{(dt) }\OperatorTok{{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X), }\DataTypeTok{lower.tail =} \OtherTok{FALSE}\NormalTok{)}\OperatorTok{*}\DecValTok{2}
+
+\KeywordTok{print}\NormalTok{(}\StringTok{"1st step estimates:"}\NormalTok{); theta\_}\DecValTok{1}
+
+\KeywordTok{print}\NormalTok{(}\StringTok{"1st step se estimates:"}\NormalTok{); se\_}\DecValTok{1}
+
+\KeywordTok{print}\NormalTok{(}\StringTok{"T statistics :"}\NormalTok{); t\_}\DecValTok{1}
+
+\KeywordTok{print}\NormalTok{(}\StringTok{"P values:"}\NormalTok{); p\_}\DecValTok{1}
+\end{Highlighting}
+\end{Shaded}
+
+And the results are listed as
+
+\begin{verbatim}
+## [1] "1st step estimates:"
+##               [,1]
+## constant   37.7720297
+## crime      -1.1413414
+## industrial -0.4293433
+## distance   -1.6688765
+##
+## [1] "1st step se estimates:"
+## constant    crime     industrial distance 
+## 4.7137367  0.3971785  0.2482251  0.7364254
+## 
+## [1] "T statistics :"
+##               [,1]
+## constant    8.013182
+## crime      -2.873623
+## industrial -1.729653
+## distance   -2.266185
+##
+##[1] "P values:"
+##               [,1]
+## constant   7.881782e-15
+## crime      4.229911e-03
+## industrial 8.430688e-02
+## distance   2.386493e-02
+\end{verbatim}
+
+\hypertarget{step-2-of-2sgmm-method}{%
+\subsubsection{Step 2 of 2SGMM Method}\label{step-2-of-2sgmm-method}}
+
+Let's review the remaing part of the 2SGMM method,
+
+\noindent
+\textbf{\color{blue} Step 2 of the 2SGMM Method}
+
+\noindent
+\color{black}From step 1, we have the estimator \(\hat{\theta}_1\) in hand and if moments are assumed to be IID distributed, we have
+
+\begin{align*}
+    \widehat{Var}(g(K_i, \widehat{\theta}_1))_2 
+    & = \frac{1}{n}\sum_{i=1}^{n}(\mathbf{Z}_{i}^{IV})^T (Y_i - \mathbf{X}_i \hat{\theta}_1)^2 (\mathbf{Z}_{i}^{IV}),\\
+    & = \frac{1}{n} (\mathbf{\underline{Z}}^{IV})^T (\mathbf{\underline{Y}} - \mathbf{\underline{X}} \hat{\theta}_1) (\mathbf{\underline{Y}} - \mathbf{\underline{X}} \hat{\theta}_1)^T (\mathbf{\underline{Z}}^{IV}),\\
+    \widehat{W}_2 & = \left(\widehat{Var}(g(K_i, \widehat{\theta}_1))_2 \right)^{-1}.
+\end{align*}
+
+However, we already know that there exist heteroskedasticity and autocorrelation in this case, it's suggested by Chaussé (2010) that we should use a HAC variance covariance estimator. In this situation, denote \(\hat{\mathbf{\underline{u}}} = \mathbf{\underline{Y}} - \mathbf{\underline{X}} \hat{\theta}_1\), we have
+
+\begin{align*}
+    Var(g(\mathbf{\underline{K}}, \widehat{\theta}))_2 
+    & = Var\left((\mathbf{\underline{Z}}^{IV})^T \hat{\mathbf{\underline{u}}} \right),\\
+    & = (\mathbf{\underline{Z}}^{IV})^T Var(\hat{\mathbf{\underline{u}}}) \mathbf{\underline{Z}}^{IV}.
+\end{align*}
+
+Denote that \(\Omega = Var(\hat{\mathbf{\underline{u}}})\), if we have the NeweyWest covariance estimate of \(\hat{\theta}_1\) as \(Q\)(check section \ref{appendix-neweywest-variance-covariance-estimator} for definition), then
+
+\[  Q = \mathbf{\underline{X}}^T \widehat{\Omega} \mathbf{\underline{X}}. \]
+
+Therefore with the generalized inverse operation, \(\widehat{\Omega}\) can be calculated numerically by
+
+\[ \widehat{\Omega} = (\mathbf{\underline{X}}^T)^{-1} Q (\mathbf{\underline{X}})^{-1}. \]
+
+Or to make it more comfortable to see\footnote{Almostly same values were returned.},
+
+\[
+    \widehat{\Omega} = \left(\mathbf{\underline{X}}\mathbf{\underline{X}}^T \right)^{-1} \mathbf{\underline{X}} Q \mathbf{\underline{X}}^T \left(\mathbf{\underline{X}}\mathbf{\underline{X}}^T \right)^{-1}.
+\]
+
+With these conditions above, it's able to get
+
+\begin{align*}
+    \widehat{Var}(g(K_i, \widehat{\theta}_1))_2^{HAC} & 
+    = \frac{1}{n} (\mathbf{\underline{Z}}^{IV})^T \widehat{\Omega} \mathbf{\underline{Z}}^{IV},\\
+    \widehat{W}_2^{HAC} & 
+    = \left(\widehat{Var}(g(K_i, \widehat{\theta}_1))_2^{HAC} \right)^{-1}.
+\end{align*}
+
+Here, \(\widehat{W}_2\) is just the metric in sildes P201. But we finally use \(\widehat{W}_2^{HAC}\). The results of these two metrics are provided at the end of this section.
+
+The remaining parts are similar to those in step 1.
+
+\begin{align*}
+    \hat{\theta}_2  = & \left\{\left((\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right)^T \widehat{W}_2 (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right\}^{-1} \left((\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right)^T \widehat{W}_2 (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{Y}},\\
+    \mathbb{V}(\hat{\theta}_2) = 
+    & \left\{ \mathbb{E}\left[ (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right]^T W_0 \mathbb{E}\left[ (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}}\right] \right\}^{-1} \mathbb{E}\left[ (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right]^T W_0 Var\left( g(K_i, \theta_0)\right)\\
+    & \times W_0 \mathbb{E}\left[ (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right] \left\{ \mathbb{E}\left[ (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right]^T W_0 \mathbb{E}\left[ (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right] \right\}^{-1},\\
+     \widehat{\mathbb{V}}(\hat{\theta}_2) = 
+     & \left\{\left((\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right)^T \widehat{W}_2 (\mathbf{\underline{Z}}^{IV})^T \mathbf{\underline{X}} \right\}^{-1},
+\end{align*}
+where \(\theta_0\) is the true parameter with \(Var\left( g(K_i, \theta_0)\right) = \mathbb{E}\left[g(K_i, \theta_0)g(K_i, \theta_0)^T \right]\) and \(\widehat{W}_2 \stackrel{p}{\to} W_0\).
+
+As usual, I show you the codes and results as below.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Do 2nd step 2SGMM}
+
+\CommentTok{\# Theoretically, we should calculate the estimate of the variance with theta\_1 by}
+
+\NormalTok{Zu\_}\DecValTok{1}\NormalTok{    =}\StringTok{ }\KeywordTok{t}\NormalTok{(Z) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{(Y }\OperatorTok{{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{theta\_}\DecValTok{1}\NormalTok{)}
+\NormalTok{var\_g\_}\DecValTok{2}\NormalTok{ =}\StringTok{ }\NormalTok{Zu\_}\DecValTok{1} \OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(Zu\_}\DecValTok{1}\NormalTok{)}\OperatorTok{/}\NormalTok{n}
+\CommentTok{\# or var\_g\_1 = tcrossprod(Zu\_1, Zu\_1)/n}
+
+\CommentTok{\# But the previous var\_g\_2 is derived under the iid assumption. }
+\CommentTok{\# It is equal to set vcov = "iid" in gmm function, }
+\CommentTok{\# which would slow down the calculation.}
+
+\CommentTok{\# In practice, let\textquotesingle{}s build a HAC covariance estimate from 2sls residuals and X.}
+\CommentTok{\# For simplicity, set L = 10(\textless{}= n). }
+
+\NormalTok{u\_}\DecValTok{1}\NormalTok{ =}\StringTok{ }\NormalTok{Y }\OperatorTok{{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{theta\_}\DecValTok{1}
+\NormalTok{i =}\StringTok{ }\DecValTok{1}
+\NormalTok{l =}\StringTok{ }\DecValTok{1}
+\NormalTok{L =}\StringTok{ }\DecValTok{10}
+\NormalTok{weight =}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\DecValTok{0}\NormalTok{, L)}
+
+\NormalTok{Q =}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{nrow =} \KeywordTok{ncol}\NormalTok{(X), }\DataTypeTok{ncol =} \KeywordTok{ncol}\NormalTok{(X))}
+\NormalTok{Q\_}\DecValTok{1}\NormalTok{ =}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{nrow =} \KeywordTok{ncol}\NormalTok{(X), }\DataTypeTok{ncol =} \KeywordTok{ncol}\NormalTok{(X))}
+\NormalTok{Q\_}\DecValTok{2}\NormalTok{ =}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DataTypeTok{nrow =} \KeywordTok{ncol}\NormalTok{(X), }\DataTypeTok{ncol =} \KeywordTok{ncol}\NormalTok{(X))}
+
+\ControlFlowTok{for}\NormalTok{ (l }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{L) \{}
+\NormalTok{    weight[l] =}\StringTok{ }\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\NormalTok{l}\OperatorTok{/}\NormalTok{(L }\OperatorTok{+}\StringTok{ }\DecValTok{1}\NormalTok{)}
+\NormalTok{\}}
+
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{n) \{}
+\NormalTok{    Q\_}\DecValTok{1}\NormalTok{ =}\StringTok{ }\NormalTok{Q\_}\DecValTok{1} \OperatorTok{+}\StringTok{ }\NormalTok{u\_}\DecValTok{1}\NormalTok{[i]}\OperatorTok{\^{}}\DecValTok{2} \OperatorTok{*}\StringTok{ }\NormalTok{(X[i,] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(X[i,])) }\CommentTok{\# X[i,] here returns column vector}
+\NormalTok{\}}
+\NormalTok{Q\_}\DecValTok{1}\NormalTok{ =}\StringTok{ }\NormalTok{Q\_}\DecValTok{1}\OperatorTok{/}\NormalTok{n}
+
+\ControlFlowTok{for}\NormalTok{ (l }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{L) \{}
+    \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in}\NormalTok{ (l}\OperatorTok{+}\DecValTok{1}\NormalTok{)}\OperatorTok{:}\NormalTok{n) \{}
+\NormalTok{        Q\_}\DecValTok{2}\NormalTok{ =}\StringTok{ }\NormalTok{Q\_}\DecValTok{2} \OperatorTok{+}\StringTok{ }\NormalTok{weight[l]}\OperatorTok{*}\NormalTok{u\_}\DecValTok{1}\NormalTok{[i]}\OperatorTok{*}\NormalTok{u\_}\DecValTok{1}\NormalTok{[i}\OperatorTok{{-}}\NormalTok{l]}\OperatorTok{*}
+\StringTok{        }\NormalTok{(X[i,] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(X[i}\OperatorTok{{-}}\NormalTok{l,]) }\OperatorTok{+}\StringTok{ }\NormalTok{X[i}\OperatorTok{{-}}\NormalTok{l,] }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(X[i,]))}
+\NormalTok{    \}}
+\NormalTok{\}}
+\NormalTok{Q\_}\DecValTok{2}\NormalTok{ =}\StringTok{ }\NormalTok{Q\_}\DecValTok{2}\OperatorTok{/}\NormalTok{n}
+\NormalTok{Q =}\StringTok{ }\NormalTok{Q\_}\DecValTok{1} \OperatorTok{+}\StringTok{ }\NormalTok{Q\_}\DecValTok{2}
+
+\NormalTok{XXT =}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(X)}
+\NormalTok{omega =}\StringTok{ }\KeywordTok{ginv}\NormalTok{(XXT) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{(X }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Q }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{t}\NormalTok{(X)) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{ginv}\NormalTok{(XXT)}
+\CommentTok{\# Use ginv here to suppress error warnings from traditional inverse operation.}
+\CommentTok{\# omega = ginv(t(X)) \%*\% Q \%*\% ginv(X) returns almostly same values.}
+\NormalTok{var\_g\_}\DecValTok{2}\NormalTok{ =}\StringTok{ }\KeywordTok{t}\NormalTok{(Z) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{omega }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Z }\OperatorTok{/}\NormalTok{n}
+
+\NormalTok{theta\_}\DecValTok{2}\NormalTok{ =}\StringTok{ }\KeywordTok{ginv}\NormalTok{(}\KeywordTok{t}\NormalTok{(ZX) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{ginv}\NormalTok{(var\_g\_}\DecValTok{2}\NormalTok{) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{ZX) }\OperatorTok{\%*\%}\StringTok{ }
+\KeywordTok{t}\NormalTok{(ZX) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{ginv}\NormalTok{(var\_g\_}\DecValTok{2}\NormalTok{) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{ZY}
+
+\NormalTok{cov\_}\DecValTok{2}\NormalTok{   =}\StringTok{ }\KeywordTok{ginv}\NormalTok{(}\KeywordTok{t}\NormalTok{(ZX) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{ginv}\NormalTok{(var\_g\_}\DecValTok{2}\NormalTok{) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{ZX) }
+
+
+\CommentTok{\# Calculate the estimates and check}
+\NormalTok{se\_}\DecValTok{2}\NormalTok{  =}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(cov\_}\DecValTok{2}\NormalTok{))}
+\NormalTok{se\_}\DecValTok{2}\NormalTok{  =}\StringTok{ }\KeywordTok{as.vector}\NormalTok{(se\_}\DecValTok{2}\NormalTok{)}
+\NormalTok{t\_}\DecValTok{2}\NormalTok{   =}\StringTok{ }\NormalTok{theta\_}\DecValTok{2}\OperatorTok{/}\NormalTok{se\_}\DecValTok{2}
+\NormalTok{p\_}\DecValTok{2}\NormalTok{   =}\StringTok{ }\KeywordTok{pt}\NormalTok{(}\KeywordTok{abs}\NormalTok{(t\_}\DecValTok{2}\NormalTok{), }\DataTypeTok{df =} \KeywordTok{nrow}\NormalTok{(dt) }\OperatorTok{{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X), }\DataTypeTok{lower.tail =} \OtherTok{FALSE}\NormalTok{)}\OperatorTok{*}\DecValTok{2}
+
+\KeywordTok{print}\NormalTok{(}\StringTok{"2nd step estimates:"}\NormalTok{); theta\_}\DecValTok{2}
+
+\KeywordTok{print}\NormalTok{(}\StringTok{"2nd step se estimates:"}\NormalTok{); se\_}\DecValTok{2}
+
+\KeywordTok{print}\NormalTok{(}\StringTok{"T statistics :"}\NormalTok{); t\_}\DecValTok{2}
+
+\KeywordTok{print}\NormalTok{(}\StringTok{"P values:"}\NormalTok{); p\_}\DecValTok{2}
+
+\CommentTok{\# Finally, theta\_1 is not optimal}
+\NormalTok{se\_}\DecValTok{1} \OperatorTok{\textgreater{}=}\StringTok{ }\NormalTok{se\_}\DecValTok{2}
+\end{Highlighting}
+\end{Shaded}
+
+Firstly, let me show you what will happen if \(\widehat{W}_2\) in the \color{blue} IID case \color{black} is used.
+
+\begin{verbatim}
+## [1] "2nd step estimates:"
+##          [,1]
+## [1,]  0.1411261
+## [2,] -2.0908670
+## [3,] -0.1512835
+## [4,]  0.9792031
+##
+## [1] "2nd step se estimates:"
+## [1] 0.4575280 6.7785496 0.4904583 3.1745572
+##
+## [1] "T statistics :"
+##         [,1]
+## [1,]  0.3084534
+## [2,] -0.3084534
+## [3,] -0.3084534
+## [4,]  0.3084534
+##
+## [1] "P values:"
+##         [,1]
+## [1,] 0.7578653
+## [2,] 0.7578653
+## [3,] 0.7578653
+## [4,] 0.7578653
+\end{verbatim}
+
+As we can see, after the second step estimation, efficiency get worse than before and due to the sigularity of variance covariance matrix, we obtain the same but bad p values after generalized inverse operation is performed. Then, let's check the results using \color{blue} the NeweyWest covariance estimator \color{black}.
+
+\begin{verbatim}
+## [1] "2nd step estimates:"
+##         [,1]
+## [1,] 31.2124282
+## [2,] -0.7333242
+## [3,] -0.3499875
+## [4,] -0.6303447
+## 
+## [1] "2nd step se estimates:"
+## [1] 3.0612074 0.3907887 0.1751742 0.4126052
+## 
+## [1] "T statistics :"
+##         [,1]
+## [1,] 10.196117
+## [2,] -1.876524
+## [3,] -1.997940
+## [4,] -1.527719
+##
+## [1] "P values:"
+##         [,1]
+## [1,] 2.589106e-22
+## [2,] 6.116328e-02
+## [3,] 4.626223e-02
+## [4,] 1.272123e-01
+\end{verbatim}
+
+And we can check the optimality by logical operation command as
+
+\begin{verbatim}
+## se_1 >= se_2
+## constant   crime industrial   distance 
+## TRUE       TRUE       TRUE       TRUE 
+\end{verbatim}
+
+\hypertarget{displaying-the-results}{%
+\subsubsection{Displaying the results}\label{displaying-the-results}}
+
+All the estimation results are given in table \ref{Numeric} and I omit the interpretations because they are not different from those in OLS estimation.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Display the results}
+\KeywordTok{stargazer}\NormalTok{(}
+\NormalTok{ols, ols, ols, }
+\DataTypeTok{coef =} \KeywordTok{list}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ols), theta\_}\DecValTok{1}\NormalTok{, theta\_}\DecValTok{2}\NormalTok{), }\DataTypeTok{se =} \KeywordTok{list}\NormalTok{(se\_hac, se\_}\DecValTok{1}\NormalTok{, se\_}\DecValTok{2}\NormalTok{),}
+\DataTypeTok{t =} \KeywordTok{list}\NormalTok{(t\_hac, t\_}\DecValTok{1}\NormalTok{, t\_}\DecValTok{2}\NormalTok{), }\DataTypeTok{p =} \KeywordTok{list}\NormalTok{(p\_hac, p\_}\DecValTok{1}\NormalTok{, p\_}\DecValTok{2}\NormalTok{),}
+\DataTypeTok{t.auto =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{p.auto =} \OtherTok{FALSE}\NormalTok{,}
+\DataTypeTok{report =} \StringTok{"vcstp"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+\DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
+\KeywordTok{c}\NormalTok{(}\StringTok{"Type"}\NormalTok{, }\StringTok{"HA{-}Roubusted OLS"}\NormalTok{, }\StringTok{"1st step GMM"}\NormalTok{, }\StringTok{"2nd step GMM"}\NormalTok{)),}
+\DataTypeTok{title =} \StringTok{"Results of rols and numerical 2 step GMM"}\NormalTok{,}
+\DataTypeTok{label =} \StringTok{"Numeric"}\NormalTok{,}
+\DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{font.size =} \StringTok{"small"}\NormalTok{,}
+\DataTypeTok{table.placement =} \StringTok{"htb"}\NormalTok{, }\DataTypeTok{omit.table.layout =} \StringTok{"n"}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\newpage
+\begin{table}[htb] \centering 
+    \caption{Results of rols and numerical 2 step GMM} 
+    \label{Numeric} 
+    \small 
+    \begin{tabular}{@{\extracolsep{5pt}}lccc} 
+        \\[-1.8ex]\hline 
+        \hline \\[-1.8ex] 
+        & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+        \cline{2-4} 
+        \\[-1.8ex] & \multicolumn{3}{c}{value} \\ 
+        \\[-1.8ex] & (1) & (2) & (3)\\ 
+        \hline \\[-1.8ex] 
+        crime & $-$0.273 & $-$1.141 & $-$0.733 \\ 
+        & (0.055) & (0.397) & (0.391) \\ 
+        & t = $-$4.926 & t = $-$2.874 & t = $-$1.877 \\ 
+        & p = 0.00001 & p = 0.005 & p = 0.062 \\ 
+        & & & \\ 
+        industrial & $-$0.730 & $-$0.429 & $-$0.350 \\ 
+        & (0.142) & (0.248) & (0.175) \\ 
+        & t = $-$5.153 & t = $-$1.730 & t = $-$1.998 \\ 
+        & p = 0.00000 & p = 0.085 & p = 0.047 \\ 
+        & & & \\ 
+        distance & $-$1.016 & $-$1.669 & $-$0.630 \\ 
+        & (0.375) & (0.736) & (0.413) \\ 
+        & t = $-$2.710 & t = $-$2.266 & t = $-$1.528 \\ 
+        & p = 0.007 & p = 0.024 & p = 0.128 \\ 
+        & & & \\ 
+        Constant & 35.505 & 37.772 & 31.212 \\ 
+        & (2.984) & (4.714) & (3.061) \\ 
+        & t = 11.899 & t = 8.013 & t = 10.196 \\ 
+        & p = 0.000 & p = 0.000 & p = 0.000 \\ 
+        & & & \\ 
+        \hline \\[-1.8ex] 
+        Type & HA-Roubusted OLS & 1st step GMM & 2nd step GMM \\ 
+        Observations & 506 & 506 & 506 \\ 
+        \hline 
+        \hline \\[-1.8ex] 
+    \end{tabular} 
+\end{table}
+
+\newpage
+
+\hypertarget{sls-and-2sgmm-by-r}{%
+\subsection{2SLS and 2SGMM by R}\label{sls-and-2sgmm-by-r}}
+
+\hypertarget{sls-and-hausman-tests-for-endogeneity}{%
+\subsubsection{2SLS and Hausman Tests for Endogeneity}\label{sls-and-hausman-tests-for-endogeneity}}
+
+\hypertarget{sls-in-r}{%
+\paragraph{2SLS in R}\label{sls-in-r}}
+
+The works we did in section \ref{step-1-of-the-2sgmm-method} can be simply performed by \texttt{AER::ivreg} function in R. I just show you the codes here and the result remains to be talked about a little later.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Built{-}in R Functions}
+
+\CommentTok{\# 2SLS and Hausman Wu Test for Endogeneity (By ivreg).}
+\NormalTok{model\_iv =}\StringTok{ }\NormalTok{value }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{crime }\OperatorTok{+}\StringTok{ }\NormalTok{industrial }\OperatorTok{+}\StringTok{ }\NormalTok{distance }\OperatorTok{|}\StringTok{ }
+\StringTok{    }\NormalTok{black }\OperatorTok{+}\StringTok{ }\NormalTok{ptratio }\OperatorTok{+}\StringTok{ }\NormalTok{industrial }\OperatorTok{+}\StringTok{ }\NormalTok{distance}
+
+\NormalTok{twoSLS =}\StringTok{ }\KeywordTok{ivreg}\NormalTok{(model\_iv, }\DataTypeTok{data =}\NormalTok{ dt)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{durbin-wu-hausman-test-for-endogeneity}{%
+\paragraph{Durbin-Wu-Hausman Test for Endogeneity}\label{durbin-wu-hausman-test-for-endogeneity}}
+
+The DWH test looks similar to the Hausman test in chapter 5, talking about how to choose between FE model and RE model. Here, let me share a simple definition with you.
+
+\noindent
+\textbf{Durbin-Wu-Hausman Test}
+
+\noindent
+Assume that
+
+\[ y_i = \mathbf{X}_i \beta + u_i \quad \forall i = 1, \dots, N, \]
+
+where \(u_i\) is a 0-meaned error term and \(\mathbf{X}_i^T \in \mathbb{R}^K\).
+
+Declare the null hypothesis \(H_0: \mathbb{E}[\mathbf{X}_i^T u_i] = 0\)\footnote{Exogeneity condition meaning that all explanatory variables are exogenous.} and suppose that we have the ols estimator \(\hat{\beta}_{ols}\) and gmm estimator \(\hat{\beta}_{GMM}\), respectively. The test statistic is given by
+
+\[
+    \hat{H} = \left(\hat{\beta}_{ols} - \hat{\beta}_{GMM} \right)^T \left\{\widehat{Var}(\hat{\beta}_{GMM}) - \widehat{Var}(\hat{\beta}_{ols}) \right\}^{-1} \left(\hat{\beta}_{ols} - \hat{\beta}_{GMM} \right) \stackrel{d}{\to} \chi^2 (K)
+\]
+
+It is also known that
+
+\begin{itemize}
+\tightlist
+\item
+  Under the null hypothesis, the estimator \(\hat{\beta}_{ols}\) is efficient and the estimator \(\hat{\beta}_{GMM}\) is consistent but typically not efficient.
+\item
+  Under the alternative hypothesis, the estimator \(\hat{\beta}_{ols}\) is inconsistent, the estimator \(\hat{\beta}_{GMM}\) is consistent.
+\end{itemize}
+
+Apply this method in R\footnote{The original code is posted at "http://klein.uk/R/myfunctions.R" from professor Thilo Klein. And I modified it a little bit.}, we have the follows,
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Durbin{-}Wu{-}Hausman Test}
+\NormalTok{dwh.test =}\StringTok{ }\ControlFlowTok{function}\NormalTok{(model.iv, model.ols)\{}
+\NormalTok{    cf\_diff =}\StringTok{ }\KeywordTok{coef}\NormalTok{(model.iv) }\OperatorTok{{-}}\StringTok{ }\KeywordTok{coef}\NormalTok{(model.ols)}
+\NormalTok{    vc\_diff =}\StringTok{ }\KeywordTok{vcovHC}\NormalTok{(model.iv, }\StringTok{"HC0"}\NormalTok{) }\OperatorTok{{-}}\StringTok{ }\KeywordTok{vcovHC}\NormalTok{(model.ols, }\StringTok{"HC0"}\NormalTok{) }
+    \CommentTok{\# NeweyWest() doesn\textquotesingle{}t fit well to model.iv so we use the White estimator.}
+\NormalTok{    x2\_diff =}\StringTok{ }\KeywordTok{as.vector}\NormalTok{(}\KeywordTok{t}\NormalTok{(cf\_diff) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(vc\_diff) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{cf\_diff)}
+\NormalTok{    pvalue =}\StringTok{ }\KeywordTok{pchisq}\NormalTok{(}\DataTypeTok{q =}\NormalTok{ x2\_diff, }\DataTypeTok{df =} \KeywordTok{dim}\NormalTok{(vc\_diff)[}\DecValTok{1}\NormalTok{], }\DataTypeTok{lower.tail =}\NormalTok{ F)}
+    
+\NormalTok{    result =}\StringTok{ }\KeywordTok{list}\NormalTok{(x2\_diff, }\KeywordTok{dim}\NormalTok{(vc\_diff)[}\DecValTok{1}\NormalTok{], pvalue)}
+    \KeywordTok{names}\NormalTok{(result) =}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"DWH Statistic"}\NormalTok{, }\StringTok{"df"}\NormalTok{, }\StringTok{"P value"}\NormalTok{)}
+    \KeywordTok{return}\NormalTok{(result)}
+\NormalTok{\}}
+\KeywordTok{dwh.test}\NormalTok{(twoSLS, ols)}
+\end{Highlighting}
+\end{Shaded}
+
+And then, the results of applying this test to our framework are shown as
+
+\begin{verbatim}
+## $`DWH Statistic`
+## [1] 10.77423
+## 
+## $df
+## [1] 4
+## 
+## $P value
+## [1] 0.02922208
+\end{verbatim}
+
+From this result, we know that the null hypothesis is rejected and there exists at least one endogenous variable.
+
+\hypertarget{wu-hausman-test-in-r}{%
+\paragraph{Wu-Hausman Test in R}\label{wu-hausman-test-in-r}}
+
+Indeed, R has already encompassed the Wu-Hausman 2 step test for endogeneity. I don't clearly specify this test and anyone interested is suggested to refer to Wooldridge (2010) for details.\footnote{And be careful that the second step is replaced by the Fisher test in R but not the t test.}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# "http://klein.uk/R/myfunctions.R" from professor Thilo Klein.}
+\KeywordTok{dwh.test}\NormalTok{(twoSLS, ols) }
+
+\CommentTok{\# Use "diagnostics = TRUE" calls a Wu{-}Hausman(2 step) F test}
+\CommentTok{\# (available in Wooldridge(2003)).}
+\KeywordTok{summary}\NormalTok{(twoSLS, }\DataTypeTok{vcov. =}\NormalTok{ NeweyWest, }\DataTypeTok{df =} \OtherTok{Inf}\NormalTok{, }\DataTypeTok{diagnostics =} \OtherTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Let's check the result.
+
+\begin{verbatim}
+## Call:
+## ivreg(formula = model_iv, data = dt)
+##
+## Residuals:
+##   Min      1Q     Median    3Q     Max 
+## -16.515  -6.069  -1.965   2.639  84.315 
+##
+## Coefficients:
+##              Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)  37.7720     3.3464  11.287  < 2e-16 ***
+## crime        -1.1413     0.4339  -2.630 0.008527 ** 
+## industrial   -0.4293     0.2126  -2.019 0.043452 *  
+## distance     -1.6689     0.4852  -3.440 0.000582 ***
+##
+## Diagnostic tests:
+##                   df1 df2 statistic  p-value    
+## Weak instruments   2  501   5.921   0.00287 ** 
+## Wu-Hausman         1  501   15.498  9.43e-05 ***
+## Sargan             1  NA    17.923  2.30e-05 ***
+## ---
+## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+##
+## Residual standard error: 10.25 on Inf degrees of freedom
+## Multiple R-Squared: -0.2352, Adjusted R-squared: -0.2425 
+## Wald test: 35.98 on 3 DF,  p-value: 7.561e-08 
+\end{verbatim}
+
+Look at the Wu-Hausman row, the null hypothesis is rejected at 0.1\% level. And the endogenous variable is indeed \texttt{crime} because we specify the structure in the previous \color{blue} model\_iv \color{black}.
+
+\hypertarget{sgmm-and-the-sargan-hansen-sargans-j-test-in-r}{%
+\subsubsection{2SGMM and The Sargan-Hansen (Sargan's J) Test in R}\label{sgmm-and-the-sargan-hansen-sargans-j-test-in-r}}
+
+\hypertarget{sgmm-in-r}{%
+\paragraph{2SGMM in R}\label{sgmm-in-r}}
+
+The works we did in section 2 can also be conducted by \texttt{gmm::gmm} function in R. As usual, I just display the codes here.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# 2SGMM and Sargan\textquotesingle{}s J Test (By gmm)}
+\NormalTok{value =}\StringTok{ }\NormalTok{dt[, }\StringTok{"value"}\NormalTok{]}
+\NormalTok{crime =}\StringTok{ }\NormalTok{dt[, }\StringTok{"crime"}\NormalTok{]}
+\NormalTok{industrial =}\StringTok{ }\NormalTok{dt[, }\StringTok{"industrial"}\NormalTok{]}
+\NormalTok{distance =}\StringTok{ }\NormalTok{dt[, }\StringTok{"distance"}\NormalTok{]}
+
+\NormalTok{instruments =}\StringTok{ }\NormalTok{dt[, }\KeywordTok{c}\NormalTok{(}\StringTok{"black"}\NormalTok{, }\StringTok{"ptratio"}\NormalTok{, }\StringTok{"industrial"}\NormalTok{, }\StringTok{"distance"}\NormalTok{)]}
+
+\NormalTok{twoSGMM\_iid =}\StringTok{ }\KeywordTok{gmm}\NormalTok{(}\DataTypeTok{g =}\NormalTok{ model, }\DataTypeTok{x =}\NormalTok{ instruments, }\DataTypeTok{vcov =} \StringTok{"iid"}\NormalTok{)}
+\NormalTok{twoSGMM\_HAC =}\StringTok{ }\KeywordTok{gmm}\NormalTok{(}\DataTypeTok{g =}\NormalTok{ model, }\DataTypeTok{x =}\NormalTok{ instruments, }\DataTypeTok{vcov =} \StringTok{"HAC"}\NormalTok{)}
+
+\KeywordTok{summary}\NormalTok{(twoSGMM\_iid)}
+\KeywordTok{summary}\NormalTok{(twoSGMM\_HAC)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{the-sargan-hansen-test}{%
+\paragraph{The Sargan-Hansen Test}\label{the-sargan-hansen-test}}
+
+The Sargan-Hansen test is a statistical test used for testing over-identifying restrictions in a statistical model. It was proposed by Sargan (1958), and several variants were derived by Sargan (1988). Lars Peter Hansen re-worked through the derivations and showed that it can be extended to general non-linear GMM in a time series context (Hansen 1982).
+
+As same as the notations in the slides, we denote that \(dim(g) = L\) and \(dim(\theta) = d\). When we have more instruments than we need to identify an equation, we can test whether the additional instruments are valid in the sense that they are uncorrelated with the error term.
+
+In our case, we have the maybe endogenous explanatory variables and the exogenous instrumental variables as
+
+\begin{align*}
+    \mathbf{X}_i & = (constant_i, crime_i, industrial_i, distance_i),\\
+    \mathbf{Z}_i & = (constant_i, black_i, ptratio_i, industrial_i, distance_i),
+\end{align*}
+
+respectively. So conducting the Sargan-Hansen test means that we want to check whether \texttt{black} and \texttt{ptratio} are good instruments. By the way, you can take \texttt{industrial} and \texttt{distance} as instruments of their own. For more details, please refer to Wooldridge (2010).
+
+And then, with the statistical criterion \(\hat{\theta}_{GMM} = \mathop{\rm arg~max}\limits_{\theta \in \Theta}\left\{- (\frac{1}{n}\sum_{i =1}^{n}g(\mathbf{K}_i, \theta) )^T \widehat{W} (\frac{1}{n}\sum_{i =1}^{n}g(\mathbf{K}_i, \theta) )\right\}\), we are able to build the J statistic.
+
+The null hypothesis is that \(H_0: \exists \theta, \mathbb{E}[g(\mathbf{K}_i, \theta) ] = \mathbf{0}\), and the statistic is
+
+\[
+    \hat{J} = (\frac{1}{\sqrt{n}}\sum_{i =1}^{n}g(\mathbf{K}_i, \hat{\theta}) )^T \widehat{W} (\frac{1}{\sqrt{n}}\sum_{i =1}^{n}g(\mathbf{K}_i, \hat{\theta}) ) \stackrel{d}{\to} \chi^2 (L - d)
+\]
+
+The statistic is then based on the optimal GMM estimator.
+
+This test is already included in \texttt{gmm::gmm} function, to look for the result, please use `base::summary function.
+
+\begin{verbatim}
+## Call:
+## gmm(g = model, x = instruments, vcov = "HAC")
+##
+## Method:  twoStep 
+## 
+## Kernel:  Quadratic Spectral(with bw =  1.54322 )
+## 
+## Coefficients:
+##                Estimate     Std. Error   t value      Pr(>|t|)   
+## (Intercept)   3.8101e+01   3.2027e+00   1.1897e+01   1.2331e-32
+## crime        -1.1011e+00   3.4308e-01  -3.2095e+00   1.3297e-03
+## industrial   -4.6190e-01   1.8771e-01  -2.4607e+00   1.3867e-02
+## distance     -1.7307e+00   4.4494e-01  -3.8898e+00   1.0032e-04
+##
+## J-Test: degrees of freedom is 1 
+##                 J-test    P-value 
+## Test E(g)=0:    5.698567  0.016979
+##
+## 
+## Initial values of the coefficients
+## (Intercept)    crime     industrial   distance 
+## 37.7720297  -1.1413414  -0.4293433  -1.6688765 
+\end{verbatim}
+
+Focus on the ``J-Test'' part, since the p value is smaller than 0.02, we can say that the null hypothesis is rejected at 5\% level and this model specification is indeed not correct. Better instruments are wanted for making a proper estimation.
+
+\hypertarget{displaying-the-results-1}{%
+\paragraph{Displaying the results}\label{displaying-the-results-1}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Display}
+\KeywordTok{stargazer}\NormalTok{(}
+\NormalTok{twoSLS, twoSGMM\_iid, twoSGMM\_HAC,}
+\DataTypeTok{report =} \StringTok{"vcstp"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+\DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
+\KeywordTok{c}\NormalTok{(}\StringTok{"Type"}\NormalTok{, }\StringTok{"2SLS"}\NormalTok{, }\StringTok{"2SGMM(iid)"}\NormalTok{, }\StringTok{"2SGMM(HAC)"}\NormalTok{)),}
+\DataTypeTok{title =} \StringTok{"Results of 2SLS and 2SGMM by R"}\NormalTok{,}
+\DataTypeTok{label =} \StringTok{"byR"}\NormalTok{,}
+\DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{font.size =} \StringTok{"small"}\NormalTok{,}
+\DataTypeTok{table.placement =} \StringTok{"htb"}\NormalTok{, }\DataTypeTok{omit.table.layout =} \StringTok{"n"}
+\NormalTok{)}
+\KeywordTok{setwd}\NormalTok{(}\StringTok{"\textasciitilde{}"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\newpage
+\begin{table}[htb] \centering 
+    \caption{Results of 2SLS and 2SGMM by R} 
+    \label{byR} 
+    \small 
+    \begin{tabular}{@{\extracolsep{5pt}}lccc} 
+        \\[-1.8ex]\hline 
+        \hline \\[-1.8ex] 
+        & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+        \cline{2-4} 
+        \\[-1.8ex] & \multicolumn{3}{c}{value} \\ 
+        \textit{variable} & \multicolumn{3}{c}{\textit{}} \\ 
+        \\[-1.8ex] & (1) & (2) & (3)\\ 
+        \hline \\[-1.8ex] 
+        crime & $-$1.141 & $-$1.141 & $-$1.101 \\ 
+        & (0.181) & (0.180) & (0.343) \\ 
+        & t = $-$6.305 & t = $-$6.330 & t = $-$3.209 \\ 
+        & p = 0.000 & p = 0.000 & p = 0.002 \\ 
+        & & & \\ 
+        industrial & $-$0.429 & $-$0.429 & $-$0.462 \\ 
+        & (0.113) & (0.113) & (0.188) \\ 
+        & t = $-$3.795 & t = $-$3.810 & t = $-$2.461 \\ 
+        & p = 0.0002 & p = 0.0002 & p = 0.014 \\ 
+        & & & \\ 
+        distance & $-$1.669 & $-$1.669 & $-$1.731 \\ 
+        & (0.336) & (0.334) & (0.445) \\ 
+        & t = $-$4.972 & t = $-$4.992 & t = $-$3.890 \\ 
+        & p = 0.00000 & p = 0.00000 & p = 0.0002 \\ 
+        & & & \\ 
+        Constant & 37.772 & 37.772 & 38.101 \\ 
+        & (2.148) & (2.140) & (3.203) \\ 
+        & t = 17.582 & t = 17.652 & t = 11.897 \\ 
+        & p = 0.000 & p = 0.000 & p = 0.000 \\ 
+        & & & \\ 
+        \hline \\[-1.8ex] 
+        Type & 2SLS & 2SGMM(iid) & 2SGMM(HAC) \\ 
+        Observations & 506 & 506 & 506 \\ 
+        \hline 
+        \hline \\[-1.8ex] 
+    \end{tabular} 
+\end{table}
+
+Look at table \ref{byR}, you may find that 2SLS and 2SGMM(iid) returned similar estimates for that IID assumption is not satisfied in this case. And the reason why 2SGMM(HAC) didn't give the optimal estimates is that, by the Sargan-Hansen test, we know that our model specification is indeed not correct, therefore such results were returned.
+
+\hypertarget{appendix-properties-of-the-gmm-estimator}{%
+\subsection{(Appendix) Properties of the GMM estimator}\label{appendix-properties-of-the-gmm-estimator}}
+
+Under suitable conditions, the GMM estimator satisfies
+
+\begin{align*}
+    \hat{\theta} &  \stackrel{p}{\to} \theta_0,\\
+    \sqrt{n}(\hat{\theta} - \theta_0) & \stackrel{d}{\to} \mathcal{N}_{\mathbb{R}^{dim(\theta)}}(\mathbf{0}, \mathbb{V}(\hat{\theta})),
+\end{align*}
+
+with
+
+\[
+    \mathbb{V}(\hat{\theta}) = \left\{G^T W_0 G \right\}^{-1} G^T W_0 Var\left( g(K_i, \theta_0)\right) W_0 G\left\{G^T W_0 G \right\}^{-1},
+\]
+
+and
+
+\[
+     Var\left( g(K_i, \theta_0)\right) = \mathbb{E}\left[g(K_i, \theta_0)g(K_i, \theta_0)^T \right], \widehat{W} \stackrel{p}{\to} W_0.
+\]
+
+Be careful that G is the population level Jacobian
+
+\[
+    G = G(\theta_0) = \mathbb{E}\left[\nabla_\theta g(K_i, \theta_0) \right] \in \mathcal{M}_{dim(g)\times dim(\theta)}(\mathbb{R})
+\]
+
+\hypertarget{appendix-neweywest-variance-covariance-estimator}{%
+\subsection{(Appendix) NeweyWest Variance Covariance Estimator}\label{appendix-neweywest-variance-covariance-estimator}}
+
+According to Newey and West (1987), if \(\mathbf{X}_i\) is the 1\(\times\)d row vector and \(e_i\) is the residual, for all i = 1, \(\dots\), n.~Then NeweyWest estimator should be
+
+\begin{align*}
+    Q & = \frac{1}{n}\sum_{i=1}^{n}e_i^2 \mathbf{X}_i^T \mathbf{X}_i + \frac{1}{n}\sum_{l=1}^{L}\sum_{i = l+1}^{n}w_l e_i e_{i-l} \left(\mathbf{X}_i^T \mathbf{X}_{i-l} + \mathbf{X}_{i-l}^T \mathbf{X}_i \right),\\
+    w_l & = 1 - \frac{l}{L + 1},
+\end{align*}
+
+where \(w_l\) can be thought of as a ``weight''. Disturbances that are farther apart from each other are given lower weight, while those with equal subscripts are given a weight of 1.
+
 \hypertarget{reference}{%
 \section{Reference}\label{reference}}
 
@@ -4770,14 +5625,35 @@ beucase observed covariates and unobserved component are not independent.
 \leavevmode\hypertarget{ref-angrist2008mostly}{}%
 Angrist, Joshua D, and Jörn-Steffen Pischke. 2008. \emph{Mostly Harmless Econometrics: An Empiricist's Companion}. Princeton university press.
 
+\leavevmode\hypertarget{ref-gmmR}{}%
+Chaussé, Pierre. 2010. ``Computing Generalized Method of Moments and Generalized Empirical Likelihood with R.'' \emph{Journal of Statistical Software} 34 (i11). \url{https://doi.org/http://hdl.handle.net/10.}
+
+\leavevmode\hypertarget{ref-Hansen1982}{}%
+Hansen, Lars Peter. 1982. ``Large Sample Properties of Generalized Method of Moments Estimators.'' \emph{Econometrica} 50 (4): 1029--54. \url{http://www.jstor.org/stable/1912775}.
+
 \leavevmode\hypertarget{ref-Boston}{}%
 Harrison, David, and Daniel L Rubinfeld. 1978. ``Hedonic Housing Prices and the Demand for Clean Air.'' \emph{Journal of Environmental Economics and Management} 5 (1): 81--102. \url{https://doi.org/https://doi.org/10.1016/0095-0696(78)90006-2}.
 
 \leavevmode\hypertarget{ref-johnston1984econometric}{}%
 Johnston, J. 1984. \emph{Econometric Methods 3rd}. McGraw-Hill book co.
 
+\leavevmode\hypertarget{ref-NWe}{}%
+Newey, Whitney K., and Kenneth D. West. 1987. ``A Simple, Positive Semi-Definite, Heteroskedasticity and Autocorrelation Consistent Covariance Matrix.'' \emph{Econometrica} 55 (3): 703--8. \url{http://www.jstor.org/stable/1913610}.
+
+\leavevmode\hypertarget{ref-WeakIV}{}%
+Nichols, Austin. 2006. ``Weak Instruments: An Overview and New Techniques.'' North American Stata Users' Group Meetings 2006. Stata Users Group. \url{https://EconPapers.repec.org/RePEc:boc:asug06:3}.
+
+\leavevmode\hypertarget{ref-Sargan1958}{}%
+Sargan, J. D. 1958. ``The Estimation of Economic Relationships Using Instrumental Variables.'' \emph{Econometrica} 26 (3): 393--415. \url{http://www.jstor.org/stable/1907619}.
+
+\leavevmode\hypertarget{ref-Sargan1988}{}%
+---------. 1988. ``Testing for Misspecification After Estimating Using Instrumental Variables.'' In \emph{Contributions to Econometrics}, edited by E Maasoumi. Cambridge: Cambridge University Press.
+
 \leavevmode\hypertarget{ref-wasserman2013all}{}%
 Wasserman, Larry. 2013. \emph{All of Statistics: A Concise Course in Statistical Inference}. Springer Science \& Business Media.
+
+\leavevmode\hypertarget{ref-JMW10}{}%
+Wooldridge, Jeffrey M. 2010. \emph{Econometric Analysis of Cross Section and Panel Data}. MIT Press.
 \end{cslreferences}
 
 \end{document}

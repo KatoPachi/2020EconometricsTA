@@ -699,4 +699,3 @@ In this empirical application, we can reject the null hypothesis at 1\% signific
 This implies that we should use the FE model in this application 
 beucase observed covariates and unobserved component are not independent.
 
-# Reference 
