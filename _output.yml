@@ -1,0 +1,6 @@
+bookdown::pdf_book:
+  latex_engine: xelatex
+  md_extensions: +raw_attribute
+  number_sections: true
+  extra_dependencies: ["xcolor"]
+  keep_tex: yes
