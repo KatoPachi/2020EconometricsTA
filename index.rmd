@@ -5,6 +5,7 @@ author:
   - Pang Kan
 fontsize: 12pt
 header-includes:
+  - \usepackage{ascmac}
   - \usepackage{zxjatype}
   - \setCJKmainfont[BoldFont = IPAゴシック]{IPA明朝}
   - \setCJKsansfont{IPAゴシック}

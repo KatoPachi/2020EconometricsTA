@@ -1,7 +1,8 @@
 rmd_files:
-  - "draft.rmd"
+  - "index.rmd"
   - "II/chap1-2/chap1-2.Rmd"
   - "II/chap3_1/chap3_1.Rmd"
   - "II/chap3_2/chap3_2.Rmd"
   - "II/chap3_3/chap3_3.Rmd"
+  - "II/chap4/chap4.Rmd"
   - "II/chap5/chap5.Rmd"

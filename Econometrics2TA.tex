@@ -109,6 +109,7 @@
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \setcounter{secnumdepth}{5}
+\usepackage{ascmac}
 \usepackage{zxjatype}
 \setCJKmainfont[BoldFont = IPAゴシック]{IPA明朝}
 \setCJKsansfont{IPAゴシック}
@@ -3197,6 +3198,744 @@ Observations & 659 & 659 & 659 \\
 \end{tabular} 
 \end{table}
 
+\hypertarget{generalized-least-squares-method}{%
+\section{Generalized Least Squares Method}\label{generalized-least-squares-method}}
+
+\hypertarget{ols-estimation-with-hac-estimator}{%
+\subsection{OLS Estimation with HAC Estimator}\label{ols-estimation-with-hac-estimator}}
+
+\hypertarget{background-and-data-6}{%
+\subsubsection{Background and Data}\label{background-and-data-6}}
+
+The data we use today originates from Harrison and Rubinfeld (1978) which investigates the methodological problems associated with the use of housing market data to measure the willingness to pay for clean air. It drew a conclusion that marginal air pollution damages are found to increase with the level of air pollution and with household income. But here we just use some variables of the original data to construct a multiple linear regression model focusing on how the attributes of communities affect housing prices(value) of Boston city.
+
+We use an open data which is called as ``Boston Neighboorhood Housing Prices Dataset\footnote{data source: \url{http://biostat.mc.vanderbilt.edu/DataSets}.}''. Although there exist many variables, we just take 4 of them: \texttt{value}, \texttt{crime}, \texttt{industrial}, \texttt{distance}. And here come the descriptions.
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{value}: a continuous variable meaning value of owner-occupied homes in \$1000's.
+\item
+  \texttt{crime}: a continuous variable representing per capita crime rate by town.
+\item
+  \texttt{industrial}: a continuous variable showing proportion of non-retail business acres per town.
+\item
+  \texttt{distance}: a continuous variable revealing weighted distances to five Boston employment centres.
+\end{itemize}
+
+As I mentioned before, \texttt{value} is the dependent variable and the other three are independent variables. Firstly, let's bulid the dataset in R.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(AER) }\CommentTok{\# Including lmtest and sandwich}
+\KeywordTok{library}\NormalTok{(nlme) }\CommentTok{\# Do gls}
+
+\CommentTok{\# Preparations and preliminary tests}
+
+\NormalTok{dt =}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}
+\DataTypeTok{file =} \StringTok{"./boston.csv"}\NormalTok{,}
+\DataTypeTok{header =} \OtherTok{TRUE}\NormalTok{, }\DataTypeTok{sep =} \StringTok{","}\NormalTok{, }\DataTypeTok{row.names =} \OtherTok{NULL}\NormalTok{, }\DataTypeTok{stringsAsFactors =} \OtherTok{FALSE}\NormalTok{)}
+\NormalTok{dt =}\StringTok{ }\NormalTok{dt[}\KeywordTok{complete.cases}\NormalTok{(dt),] }\CommentTok{\# complete.cases returns TURE if one row doesn\textquotesingle{}t contain NA}
+\NormalTok{dt =}\StringTok{ }\NormalTok{dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"value"}\NormalTok{, }\StringTok{"crime"}\NormalTok{, }\StringTok{"industrial"}\NormalTok{, }\StringTok{"distance"}\NormalTok{)]}
+
+\NormalTok{n =}\StringTok{ }\KeywordTok{nrow}\NormalTok{(dt)}
+\KeywordTok{head}\NormalTok{(dt)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    value   crime     industrial distance
+## 1  24.0  0.00632       2.31      4.0900
+## 2  21.6  0.02731       7.07      4.9671
+## 3  34.7  0.02729       7.07      4.9671
+## 4  33.4  0.03237       2.18       6.0622
+## 5  36.2  0.06905       2.18      6.0622
+## 6  28.7  0.02985       2.18      6.0622
+\end{verbatim}
+
+\hypertarget{model-5}{%
+\subsubsection{Model}\label{model-5}}
+
+The multiple regression model is easily written as below.
+
+\[
+value_i = \beta_0 + \beta_1 crime_i + \beta_2 industrial_i + \beta_3 distance_i + u_i \quad \forall i = 1, \dots, n.
+\]
+
+And don't forget the assumptions.
+
+\begin{itembox}[1]{Assumptions of GLS}
+A linear regression model with heteroscedastic and autocorrelative error terms is defined as follows.
+
+$$
+    \underline{Y} = \underline{\mathbf{X}}\mathbf{\beta} + \underline{u}
+$$
+
+with assumptions:
+
+\begin{description}
+\item[GH1] $\mathbb{E}[\underline{u}|\underline{\mathbf{X}}] = 0$.
+\item[GH2] $Var(\underline{u}|\underline{\mathbf{X}}) = \Omega = \Sigma(\underline{\mathbf{X}}, \theta) \succ 0 $ . 
+\item[GH3]  $\underline{\mathbf{X}}^{T}\underline{\mathbf{X}} \succ 0$.
+\end{description}
+
+\end{itembox}
+
+\hypertarget{checking-heteroskedasticity-and-autocorrelation}{%
+\subsubsection{Checking heteroskedasticity and autocorrelation}\label{checking-heteroskedasticity-and-autocorrelation}}
+
+It is very common for us to apply ols to linear regressions. But with the previous assumptions GH1-GH3, OLS estimators do not own the BLUE property any more. To deal with the relaxations of Guass-Markov assumptions, one can use OLS method with a heteroscedasticity and autocorrelation consistent (HAC) covariance matrix estimator.
+Before we talk about HAC estimator, let me show you 2 tests which are helpful in checking heteroskedasticity and autocorrelation, respectively.
+Firstly, the Breusch=Pagan=Godfrey(BPG) test for heteroskedasticity.
+
+\begin{itembox}[1]{The BPG Test}
+
+Assume that in a linear regression model, the followings hold.
+
+\begin{align*}
+        y_i & = \mathbf{X}_i \mathbf{\beta} + u_i \quad u_i|\mathbf{X}_i \sim \mathcal{N}_{\mathbb{R}}(0, \sigma^2_i) \\
+        \sigma^2_i & = \mathbb{E}[u_i^2|\mathbf{X}_i] = \alpha_0 + \alpha_1 X_{1i} + \dots + \alpha_{p} X_{pi}  + v_i \quad \forall i = 1, \dots, n.
+\end{align*}
+
+where $v_i$ is a 0-meand and homoscedastic error term which is not correlated with $\mathbf{X}_i$, for all i.
+And then, the null hypothesis is $H_0 : \alpha_1 = \alpha_2 = \dots = \alpha_p = 0$(means homoscedasticity). To implement the test, one can use the three-step procedure.
+
+1. Apply OLS in the model $$y_i  = \mathbf{X}_i \mathbf{\beta} + u_i$$
+2. Compute the regression residuals, $\hat{u}_i$, square them, and estimate the auxiliary regression $$\hat{u}_i^2 = \alpha_0 + \alpha_1 X_{1i} + \dots + \alpha_{p} X_{pi}  + v_i$$. It is possible to use different covariates instead of $\mathbf{X}_i$.
+3. Multiply the coefficient of determination(R squared) derieved from the auxiliary regression in step 2 by sample size n to obtain the test satistic $$n R^2 \sim \chi^2_{p}$$
+
+For more details, please check @BPG.
+
+\end{itembox}
+
+Performing \texttt{bptest()} function from \texttt{lmtest} package. We have the followings.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# OLS}
+\NormalTok{model =}\StringTok{ }\NormalTok{value }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{crime }\OperatorTok{+}\StringTok{ }\NormalTok{industrial }\OperatorTok{+}\StringTok{ }\NormalTok{distance}
+\NormalTok{ols =}\StringTok{ }\KeywordTok{lm}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt)}
+\NormalTok{ols\_summary =}\StringTok{ }\KeywordTok{summary}\NormalTok{(ols)}
+
+\CommentTok{\# Breusch=Pagan=Godfrey test against heteroskedasticity.}
+
+\NormalTok{(}\DataTypeTok{bpgtest =} \KeywordTok{bptest}\NormalTok{(ols, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{studentize =}\NormalTok{ F)) }\CommentTok{\# from lmtest}
+\CommentTok{\# If studentize is set to TRUE Koenker\textquotesingle{}s studentized version of the test statistic will be used.}
+\end{Highlighting}
+\end{Shaded}
+
+And the result is returned as:
+
+\begin{verbatim}
+##          Breusch-Pagan test
+## data:  ols
+## BP = 28.757, df = 3, p-value = 2.519e-06
+\end{verbatim}
+
+Since the p-value is very small, it's known that the null hypothesis is rejected, there exists heteroscedasticity in this model.{[}48pt{]}
+
+Next, let me introduce the Durbin-Watson test to you.
+
+\begin{itembox}[1]{The Durbin-Watson Test}
+In statistics, the Durbin–Watson statistic is a test statistic used to detect the presence of autocorrelation at lag 1 in the residuals (prediction errors) from a regression analysis. It is named after James Durbin and Geoffrey Watson[@DW1; @DW2].
+Assume that
+
+\begin{align*}
+        y_i & = \mathbf{X}_i \mathbf{\beta} + u_i  \\
+        u_i & = \rho u_{i-1} + \epsilon_i \quad \forall i = 1, \dots, N.
+\end{align*}
+
+where $\epsilon_i$ is a 0-meand and homoscedastic error term which is not correlated with $u_i$, for all i. Durbin-Watson statistic states that null hypothesis: $\rho = 0$, alternative hypothesis $\rho \neq 0$, then if $\hat{u}_i$ is the OLS residual, the test statistic is 
+
+$$
+    dw = \cfrac{\sum_{i=2}^{N} (\hat{u}_i - \hat{u}_{i-1})^2}{\sum_{i=1}^{N} \hat{u}_i^2}
+$$
+
+where N is the number of observations. And there is a useful approximatate equation, $dw = 2(1-\hat{\rho})$ where $\hat{\rho}$ is the sample autocorrelation of the residuals. Besides, dw statistic can be interpreted as follows.
+With lower and upper critical values given as $dw_{L,\alpha}$ and $dw_{U,\alpha}$, to test for **positive autocorrelation** at significance $\alpha$, 
+
+- If dw < $dw_{L,\alpha}$, there is statistical evidence that the error terms are positively autocorrelated.
+- If dw > $dw_{U,\alpha}$, there is **no** statistical evidence that the error terms are positively autocorrelated.
+- If $dw_{L,\alpha}$ < dw < $dw_{U,\alpha} $, the test is inconclusive.
+
+And to test for **negative autocorrelation** at significance $\alpha$,
+
+- If 4-dw < $dw_{L,\alpha}$, there is statistical evidence that the error terms are negatively autocorrelated.
+- If 4-dw > $dw_{U,\alpha}$, there is **no** statistical evidence that the error terms are negatively autocorrelated.
+- If $dw_{L,\alpha}$ < 4-dw < $dw_{U,\alpha} $, the test is inconclusive.
+\end{itembox}
+
+Performing \texttt{dwtest()} function from \texttt{lmtest} package. We have the followings.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Durbin{-}Watson test for autocorrelation of disturbances.}
+    
+\NormalTok{(}\DataTypeTok{dwtest =} \KeywordTok{dwtest}\NormalTok{(ols, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{alternative =} \StringTok{"two.sided"}\NormalTok{)) }\CommentTok{\#alternative = c("greater", "two.sided", "less")}
+\end{Highlighting}
+\end{Shaded}
+
+And the result is:
+
+\begin{verbatim}
+##          Durbin-Watson test
+##  data:  ols
+##  DW = 0.77642, p-value < 2.2e-16
+##  alternative hypothesis: true autocorrelation is not 0
+\end{verbatim}
+
+Obviously, autocorrelation exists.
+
+Let's learn how to read the statistic table in case you may only have the DW statistic sometime. When you are faced with a table of DW test statistics, please pay attention to whether there is an intercept and the number of covariates in the original linear model \(y_i = \mathbf{X}_i \mathbf{\beta} + u_i\). For example, in our case, we should refer to the table which clearly tells that there are 3 covaritates and an intercept. However, a statistic table marked by 3 covariates but no intercept is totally different from the previous one.
+
+\begin{table}[htb] \centering 
+    \caption{Durbin-Watson Statistic: 1 Percent Significance Points of dL and dU(with an intercept)} 
+    \label{DWintercept} 
+    \small 
+    \begin{tabular}{@{}ccccccc@{}}
+        \cmidrule(r){1-7}
+        & \multicolumn{2}{c}{k' = 3}                  & \multicolumn{2}{c}{k' = 5}                  & \multicolumn{2}{c}{k' = 10}                 \\ \cmidrule(r){1-7}
+        n                    & dL                   & dU                   & dL                   & dU                   & dL                   & dU                   \\
+        10                   & 0.340                & 1.733                & 0.150                & 2.690                & NA                   & NA                   \\
+        25                   & 0.906                & 1.408                & 0.756                & 1.645                & 0.409                & 2.362                \\
+        50                   & 1.245                & 1.491                & 1.206                & 1.537                & 0.955                & 1.864                \\
+        100                  & 1.482                & 1.604                & 1.441                & 1.647                & 1.335                & 1.765                \\
+        200                  & 1.643                & 1.704                & 1.633                & 1.715                & 1.571                & 1.779                \\ \cmidrule(r){1-7}
+    \end{tabular}
+\end{table}
+
+\begin{table}[htb] \centering 
+    \caption{Durbin-Watson Statistic: 1 Percent Significance Points of dL and dU(with no intercept)} 
+    \label{DWnointercept} 
+    \small 
+    \begin{tabular}{@{}ccccccc@{}}
+        \cmidrule(r){1-7}
+        & \multicolumn{2}{c}{K = 3}                   & \multicolumn{2}{c}{K = 5}                   & \multicolumn{2}{c}{K = 10}                  \\ \cmidrule(r){1-7}
+        n                    & dL                   & dU                   & dL                   & dU                   & dL                   & dU                   \\
+        10                   & 0.223                & 2.121                & 0.070                & 1.224                & NA                   & NA                   \\
+        25                   & 0.839                & 2.518                & 0.693                & 2.282                & 0.361                & 1.572                \\
+        50                   & 1.208                & 2.471                & 1.128                & 2.374                & 0.921                & 2.098                \\
+        100                  & 1.463                & 2.377                & 1.422                & 2.333                & 1.317                & 2.215                \\
+        200                  & 1.634                & 2.286                & 1.613                & 2.265                & 1.561                & 2.211                \\ \cmidrule(r){1-7}
+    \end{tabular}
+\end{table}
+
+In the previous 2 tables, both k' and K represent the number of covariates. And in our case, we choose table \ref{DWintercept}. Because lower bound is monotonically increasing and DW = 0.77642 \textless{} 1.643, it's clear that there exists positive autocorrelation at 1\% significane level.
+
+\hypertarget{ols-method-with-hac-covariance-matrix-estirmator}{%
+\subsubsection{OLS method with HAC covariance matrix estirmator}\label{ols-method-with-hac-covariance-matrix-estirmator}}
+
+When it comes to autocorrelation, we can't simply apply ols method with the White estimator. An estimator, overcoming heteroscedasticity and autocorrelation at the same time, is called as HAC(Heteroscedasticity and Autocorrelation Consistent) covariance matrix estirmator. Today, I show you the most famous one, Newey--West estimator.
+
+\begin{itembox}[1]{Newey–West estimator}
+The Newey–West estimator was devised by [@NWe], , although there are a number of later variants. The estimator is used to try to overcome autocorrelation (also called serial correlation), and heteroskedasticity in the error terms in the models, often for regressions applied to time series data.
+The general approach is to use $\underline{\mathbf{X}}$ and $\mathbf{e}$ to devise an estimator of $Q^{*}$,  a matrix of sums of squares and cross products that involves $\sigma_{ij}$ and the rows of $\underline{\mathbf{X}}$. The least squares estimator $\mathbf{b}$ is a consistent estimator of $\mathbf{\beta}$, which implies that the least squares residuals $\mathbf{e_i}$ are "point-wise" consistent estimators of their population counterparts.
+
+\begin{align*}
+    Q^{*} & = \frac{1}{T}\sum_{t=1}^{T}e_t^2 x_t x_t ' + \frac{1}{T}\sum_{\ell=1}^{L}\sum_{t=\ell+1}^{T}\omega_{\ell}e_t e_{t-\ell}(x_t x_{t-\ell}' + x_{t-\ell}' x_t ) \\
+    \omega_{\ell} & = 1 - \frac{\ell}{L+1}
+\end{align*}
+
+$\omega_{\ell}$ can be thought of as a "weight". Disturbances that are farther apart from each other are given lower weight, while those with equal subscripts are given a weight of 1. This ensures that second term converges (in some appropriate sense) to a finite matrix. This weighting scheme also ensures that the resulting covariance matrix is positive semi-definite.
+\end{itembox}
+
+Because numerical caculation is a little bit difficult, we directly use \texttt{sandwich::NeweyWest\}()} function to obtain Newey-West covariance estimate. Following are the commands and results.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# OLS method with HAC covariance matrix estirmator}
+
+\NormalTok{cov\_hac =}\StringTok{ }\KeywordTok{NeweyWest}\NormalTok{(ols)}
+\NormalTok{se\_hac =}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(cov\_hac))}
+
+\NormalTok{t\_hac =}\StringTok{ }\KeywordTok{coef}\NormalTok{(ols)}\OperatorTok{/}\NormalTok{se\_hac}
+\NormalTok{p\_hac =}\StringTok{ }\KeywordTok{pt}\NormalTok{(}\KeywordTok{abs}\NormalTok{(t\_hac), }\DataTypeTok{df =} \KeywordTok{nrow}\NormalTok{(dt) }\OperatorTok{{-}}\StringTok{ }\DecValTok{4}\NormalTok{, }\DataTypeTok{lower.tail =} \OtherTok{FALSE}\NormalTok{)}\OperatorTok{*}\DecValTok{2}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"NeweyWest covariance matrix estimate:"}\NormalTok{); cov\_hac}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Verbatim}
+##      [1] "NeweyWest covariance matrix estimate:"
+##              (Intercept)   crime       industrial   distance
+## (Intercept)  8.90329265 -0.025862361 -0.327823433 -1.012079887
+## crime       -0.02586236  0.003067065 -0.002275065  0.005972089
+## industrial  -0.32782343 -0.002275065  0.020075383  0.027409192
+## distance    -1.01207989  0.005972089  0.027409192  0.140507641
+\end{Verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"NeweyWest se estimates:"}\NormalTok{); se\_hac}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "NeweyWest se estimates:"
+## (Intercept)   crime    industrial    distance 
+## 2.98383858  0.05538109  0.14168763  0.37484349 
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"T statistics by NeweyWest covariance:"}\NormalTok{); t\_hac}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "T statistics by NeweyWest covariance:"
+## (Intercept)   crime    industrial    distance 
+##  11.899262   -4.926366   -5.153366   -2.709985 
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"P values:"}\NormalTok{); p\_hac}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "P values:"
+## (Intercept)      crime       industrial    distance 
+##  6.200717e-29 1.139249e-06 3.684529e-07 6.958822e-03 
+\end{verbatim}
+
+The previous steps can be easily realized by using \texttt{lmtest::coeftest\}()} function. Here, I give the commands and display the results.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Comparing with lmtest::coeftest }
+\KeywordTok{print}\NormalTok{(}\StringTok{"Test using NeweyWest estimator:"}\NormalTok{); }\KeywordTok{coeftest}\NormalTok{(ols, }\DataTypeTok{vcov. =}\NormalTok{ NeweyWest)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Verbatim}
+## [1] "Test using NeweyWest estimator:"
+
+## t test of coefficients:
+## 
+##      Estimate  Std. Error t value  Pr(>|t|)    
+## (Intercept) 35.505478   2.983839 11.8993 < 2.2e-16 ***
+## crime       -0.272828   0.055381 -4.9264 1.139e-06 ***
+## industrial  -0.730168   0.141688 -5.1534 3.685e-07 ***
+## distance    -1.015820   0.374843 -2.7100  0.006959 ** 
+## ---
+## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+\end{Verbatim}
+
+\hypertarget{numerical-fgls}{%
+\subsection{Numerical FGLS}\label{numerical-fgls}}
+
+In statistics, generalized least squares (GLS) is a technique for estimating the unknown parameters in a linear regression model when there are a certain degree of correlation between the residuals and(or) heteroscedasticity in a regression model. The estimators are summarized as follows.
+
+\begin{itembox}[1]{Esitmators of GLS Method}
+With assumptions GH1-GH3, the GLS estimators for the parameters and covariance matrix are denoted like follows.
+
+\begin{align*}
+    \hat{\mathbf{\beta}}_{GLS} & = \left(\underline{\mathbf{X}}^{T} \Omega^{-1} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \Omega^{-1} \underline{Y}\\
+    Var[\hat{\mathbf{\beta}}_{GLS} | \underline{\mathbf{X}}] & = \left(\underline{\mathbf{X}}^{T} \Omega^{-1} \underline{\mathbf{X}} \right)^{-1}
+\end{align*}
+
+\end{itembox}
+
+\hypertarget{simple-fgls}{%
+\subsubsection{Simple FGLS}\label{simple-fgls}}
+
+If the covariance of the errors \(\Omega\) is unknown, one can get a consistent estimate of \(\Omega\). say \(\hat{\Omega}\), using an implementable version of GLS known as the feasible generalized least squares (FGLS) estimator. In FGLS, modeling proceeds in two stages:
+
+\begin{description}
+\item[Step 1] the model is estimated by OLS or another consistent (but inefficient) estimator, and the residuals are used to build a consistent estimator of the errors covariance matrix (to do so, one often needs to add additional constraints).
+\item[Step 2] using the consistent estimator of the covariance matrix of the errors, one can implement GLS ideas.
+\end{description}
+
+To perfrom the previous steps, the main problem is that how we construct a consisten estimator \(\hat{\Omega}\). For simplicity, we assume that \(\Omega\) is a diagonal matrix which is \(\begin{bmatrix} \sigma_1^2 & \dots & 0 \\ \vdots & \ddots & \vdots \\ 0 & \dots & \sigma_n^2 \end{bmatrix}\), and replace each diagonal element by squared OLS residuals(\(\hat{u}_i^2\)), which means that \(\hat{\Omega} = \begin{bmatrix} \hat{u}_1^2 & \dots & 0 \\ \vdots & \ddots & \vdots \\ 0 & \dots & \hat{u}_n^2 \end{bmatrix}\).
+
+Here are commands.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# FGLS method by numerical calculation}
+
+\NormalTok{X =}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(}\KeywordTok{cbind}\NormalTok{(}\KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, n), dt}\OperatorTok{$}\NormalTok{crime, dt}\OperatorTok{$}\NormalTok{industrial, dt}\OperatorTok{$}\NormalTok{distance))}
+\NormalTok{label =}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"(Intercept)"}\NormalTok{, }\StringTok{"crime"}\NormalTok{, }\StringTok{"industrial"}\NormalTok{, }\StringTok{"distance"}\NormalTok{)}
+\KeywordTok{colnames}\NormalTok{(X) =}\StringTok{ }\NormalTok{label}
+
+\NormalTok{Y =}\StringTok{ }\KeywordTok{as.vector}\NormalTok{(dt[, }\StringTok{"value"}\NormalTok{])}
+
+\CommentTok{\# Using HCCME(HC\_0)}
+
+\NormalTok{cov\_hat =}\StringTok{ }\KeywordTok{diag}\NormalTok{(}\KeywordTok{resid}\NormalTok{(ols)}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)}
+
+
+\CommentTok{\# Deriving estimates by closed{-}form estimators }
+\NormalTok{b\_fgls =}\StringTok{  }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(cov\_hat) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(cov\_hat) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Y)}
+\NormalTok{cov\_fgls =}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(cov\_hat) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X)}
+
+\NormalTok{se\_fgls =}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(cov\_fgls))}
+\NormalTok{t\_fgls =}\StringTok{ }\NormalTok{b\_fgls}\OperatorTok{/}\NormalTok{se\_fgls}
+\NormalTok{p\_fgls =}\StringTok{ }\KeywordTok{pt}\NormalTok{(}\KeywordTok{abs}\NormalTok{(t\_fgls), }\DataTypeTok{df =}\NormalTok{ n }\OperatorTok{{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X), }\DataTypeTok{lower.tail =} \OtherTok{FALSE}\NormalTok{)}\OperatorTok{*}\DecValTok{2}
+\end{Highlighting}
+\end{Shaded}
+
+And we can use the following commands to check the results.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"FGLS covariance matrix estimate:"}\NormalTok{); cov\_fgls}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Verbatim}
+##      [1] "FGLS covariance matrix estimate:"
+##       (Intercept)        crime     industrial     distance
+## (Intercept)  4.211767e-03 -8.010524e-05 -1.199272e-04 -8.757138e-04
+## crime       -8.010524e-05  5.611015e-05 -1.415095e-06  1.594712e-05
+## industrial  -1.199272e-04 -1.415095e-06  6.642517e-06  1.865562e-05
+## distance    -8.757138e-04  1.594712e-05  1.865562e-05  2.076158e-04
+\end{Verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"FGLS se estimates:"}\NormalTok{); se\_fgls}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Verbatim}
+##    [1] "FGLS se estimates:"
+## (Intercept)       crime  industrial    distance 
+## 0.064898124 0.007490671 0.002577308 0.014408881 
+\end{Verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"T statistics by FGLS covariance:"}\NormalTok{); t\_fgls}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Verbatim}
+## [1] "T statistics by FGLS covariance:"
+##      [,1]
+## (Intercept)  547.28832
+## crime        -36.71753
+## industrial  -283.84251
+## distance     -70.21385
+\end{Verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"P values:"}\NormalTok{); p\_fgls}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Verbatim}
+## [1] "P values:"
+##      [,1]
+## (Intercept)  0.000000e+00
+## crime       2.666154e-144
+## industrial   0.000000e+00
+## distance    9.426943e-262
+\end{Verbatim}
+
+\hypertarget{iterative-fgls-method}{%
+\subsubsection{Iterative FGLS Method}\label{iterative-fgls-method}}
+
+Sometimes, in order to improve the accuracy of the estimators in finite samples, we use iteration, i.e.~taking the residuals from FGLS to update the errors covariance estimator, and then updating the FGLS estimation, applying the same idea iteratively until the estimators vary less than some tolerance. But this method does not necessarily improve the efficiency of the estimator very much if the original sample was small.
+
+Now let me briefly introduce the key steps to you. The OLS estimator is calculated as usual by
+
+\[
+\hat{\mathbf{\beta}}_{OLS} = \left(\underline{\mathbf{X}}^{T} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \underline{Y}
+\]
+
+and estimates of the residuals \(\hat{u}_j = (\underline{Y} - \underline{\mathbf{X}} \hat{\mathbf{\beta}}_{OLS})_j\) are constructed.
+
+Assuming diagonal covariance matrix \(\Omega\),
+we build \(\hat{\Omega}_{OLS} = diag(\hat{\sigma}^2_1, \hat{\sigma}^2_2, \ldots, \hat{\sigma}^2_n)\).
+
+Then we estimate
+\(\mathbf{\beta}_{FGLS1}\) using \(\hat{\Omega}_{OLS}\). With \(\mathbf{\beta}_{FGLS1}\), performing the following steps.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \(\hat{\mathbf{\beta}}_{FGLS1} = \left(\underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{OLS} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{OLS} \underline{Y}\)
+\item
+  \(\hat{\mathbf{u}}_{FGLS1} = \underline{Y} - \underline{\mathbf{X}}\hat{\mathbf{\beta}}_{FGLS1}\) \label{step2}
+\item
+  \(\hat{\Omega}_{FGLS1} = diag(\hat{\sigma}^2_{FGLS1,1}, \hat{\sigma}^2_{FGLS1,2}, \dots, \hat{\sigma}^2_{FGLS1,n} )\)
+\item
+  \(\hat{\mathbf{\beta}}_{FGLS2} = \left(\underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{FGLS1} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{FGLS1} \underline{Y}\)
+\end{enumerate}
+
+Repeating step2 to step4 until the convergence of \(\hat{\Omega}\).
+
+Let's check the commands.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Iterative numerical method}
+
+\NormalTok{termination =}\StringTok{ }\ControlFlowTok{function}\NormalTok{(b, omega)\{}
+\NormalTok{    grad =}\StringTok{ }\DecValTok{{-}2} \OperatorTok{*}\StringTok{ }\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(omega) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{(Y }\OperatorTok{{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{b)}
+\NormalTok{    Inner =}\StringTok{ }\KeywordTok{t}\NormalTok{(grad) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{grad}
+\NormalTok{    Inner\_sqrt =}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(Inner)}
+    \KeywordTok{return}\NormalTok{(Inner\_sqrt)}
+\NormalTok{\}}
+
+\NormalTok{b\_loop =}\StringTok{ }\NormalTok{b\_fgls }\CommentTok{\# step1}
+\NormalTok{cov\_u =}\StringTok{ }\NormalTok{cov\_hat}
+\NormalTok{n\_loop =}\StringTok{ }\DecValTok{0}
+
+\ControlFlowTok{while}\NormalTok{ (}\KeywordTok{termination}\NormalTok{(b\_loop, cov\_u) }\OperatorTok{\textgreater{}}\StringTok{ }\DecValTok{10}\OperatorTok{\^{}{-}}\DecValTok{12}\NormalTok{) \{ }\CommentTok{\# judge}
+\NormalTok{    u\_hat =}\StringTok{ }\KeywordTok{as.vector}\NormalTok{(Y }\OperatorTok{{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{b\_loop) }\CommentTok{\# step2}
+\NormalTok{    cov\_u =}\StringTok{ }\KeywordTok{diag}\NormalTok{(u\_hat}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)   }\CommentTok{\# step3}
+\NormalTok{    cov\_b\_loop =}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(cov\_u) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X)}
+\NormalTok{    b\_loop =}\StringTok{  }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(cov\_u) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(cov\_u) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Y) }\CommentTok{\# step4}
+\NormalTok{    n\_loop =}\StringTok{ }\NormalTok{n\_loop }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+\NormalTok{\}}
+
+
+\NormalTok{se\_loop =}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{diag}\NormalTok{(cov\_b\_loop))}
+\NormalTok{t\_loop =}\StringTok{ }\NormalTok{b\_loop}\OperatorTok{/}\NormalTok{se\_loop}
+\NormalTok{p\_loop =}\StringTok{ }\KeywordTok{pt}\NormalTok{(}\KeywordTok{abs}\NormalTok{(t\_loop), }\DataTypeTok{df =}\NormalTok{ n }\OperatorTok{{-}}\StringTok{ }\KeywordTok{ncol}\NormalTok{(X), }\DataTypeTok{lower.tail =} \OtherTok{FALSE}\NormalTok{)}\OperatorTok{*}\DecValTok{2}
+\end{Highlighting}
+\end{Shaded}
+
+And the results\footnote{Indeed, we didn't reach convergence because $\hat{\Omega}_{FGLS}$ turned out to be computationally sigular after 2 times of iterations.}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"Number of iterations:"}\NormalTok{); n\_loop}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Verbatim}
+## [1] "Number of iterations:"
+## [1] 2
+\end{Verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"FGLS covariance matrix estimate:"}\NormalTok{); cov\_b\_loop}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Verbatim}
+## [1] "FGLS covariance matrix estimate:"
+##      (Intercept)         crime    industrial      distance
+## (Intercept)  1.036975e-04 -6.721951e-05 -3.911968e-06 -1.146902e-05
+## crime       -6.721951e-05  4.795889e-05  1.298768e-06  8.942851e-06
+## industrial  -3.911968e-06  1.298768e-06  5.092477e-07 -1.687944e-08
+## distance    -1.146902e-05  8.942851e-06 -1.687944e-08  1.832846e-06
+\end{Verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"FGLS se estimates:"}\NormalTok{); se\_loop}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Verbatim}
+## [1] "FGLS se estimates:"
+## (Intercept)        crime   industrial     distance 
+## 0.0101831954 0.0069252360 0.0007136159 0.0013538264 
+\end{Verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"T statistics by FGLS covariance:"}\NormalTok{); t\_loop}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Verbatim}
+## [1] "T statistics by FGLS covariance:"
+##      [,1]
+## (Intercept)  3488.42343
+## crime         -41.94157
+## industrial  -1027.18612
+## distance     -744.37635
+\end{Verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\StringTok{"P values:"}\NormalTok{); p\_loop}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Verbatim}
+## [1] "P values:"
+##      [,1]
+## (Intercept)  0.000000e+00
+## crime       3.533637e-166
+## industrial   0.000000e+00
+## distance     0.000000e+00
+\end{Verbatim}
+
+\hypertarget{built-in-r-function}{%
+\subsection{Built-in R Function}\label{built-in-r-function}}
+
+\hypertarget{nlmegls-function}{%
+\subsubsection{nlme::gls Function}\label{nlmegls-function}}
+
+In fact, we don't need to repeat the previous section when estimating because we have \texttt{nlme::gls()} function. And to use this function, please pay attention to the following 2 arguments.
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{correlation}: We should assign an argument describing the correlation structure of the error terms. In this case, we use \texttt{corAR1(rho)} which provides a AR(1) DGP and rho is derieved from dw test statistic.
+\item
+  \textbf{weights}: We should assign an argument describing the heteroscedasticity structure of the error terms. In this case, just use \texttt{varPower()}\footnote{an varFunc object in R and for more details, use help(varPower) and help(varFunc) }.
+\end{itemize}
+
+Commands and results are displayed as follows.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Estimating by nlme::gls }
+
+\CommentTok{\# Caculating AR(1) estimate from dwtest}
+\NormalTok{rho =}\StringTok{ }\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\FloatTok{0.5} \OperatorTok{*}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(dwtest}\OperatorTok{$}\NormalTok{statistic)}
+
+\CommentTok{\# Estimating}
+\NormalTok{gls\_esti =}\StringTok{ }\KeywordTok{gls}\NormalTok{(model, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{correlation =} \KeywordTok{corAR1}\NormalTok{(rho), }\DataTypeTok{weights =} \KeywordTok{varPower}\NormalTok{())}
+
+\NormalTok{(}\DataTypeTok{gls\_summary =} \KeywordTok{summary}\NormalTok{(gls\_esti))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Verbatim}
+## Generalized least squares fit by REML
+## Model: model 
+## Data: dt 
+## AIC      BIC      logLik
+## 3259.125 3288.655 -1622.562
+##
+## Correlation Structure: AR(1)
+## Formula: ~1 
+## Parameter estimate(s):
+## Phi 
+## 0.6622399 
+## Variance function:
+## Structure: Power of variance covariate
+## Formula: ~fitted(.) 
+## Parameter estimates:
+## power 
+## 0.4333236 
+##
+## Coefficients:
+##      Value Std.Error   t-value p-value
+## (Intercept) 31.310565 2.5770092 12.149962  0.0000
+## crime       -0.107077 0.0298874 -3.582697  0.0004
+## industrial  -0.588257 0.1110842 -5.295590  0.0000
+## distance    -0.514168 0.3808652 -1.349999  0.1776
+## 
+## Correlation: 
+##     (Intr) crime  indstr
+## crime      -0.105              
+## industrial -0.843 -0.053       
+## distance   -0.851  0.119  0.585
+##
+## Standardized residuals:
+## Min         Q1        Med         Q3        Max 
+## -1.6892209 -0.6198956 -0.1628794  0.3536828  4.2750494 
+## 
+## Residual standard error: 2.078919 
+## Degrees of freedom: 506 total; 502 residual
+\end{Verbatim}
+
+\hypertarget{results-of-all-methods}{%
+\subsubsection{Results of all methods}\label{results-of-all-methods}}
+
+Use \texttt{stargazer} function to make a table displaying the results of each model.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Making a table to show each model}
+\KeywordTok{library}\NormalTok{(stargazer)}
+
+\NormalTok{R2\_fgls =}\StringTok{ }\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{crossprod}\NormalTok{(Y }\OperatorTok{{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{b\_fgls)) }\OperatorTok{/}\StringTok{ }\KeywordTok{sum}\NormalTok{((Y }\OperatorTok{{-}}\StringTok{ }\KeywordTok{mean}\NormalTok{(Y))}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)}
+\NormalTok{R2\_loop =}\StringTok{ }\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{crossprod}\NormalTok{(Y }\OperatorTok{{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{b\_loop)) }\OperatorTok{/}\StringTok{ }\KeywordTok{sum}\NormalTok{((Y }\OperatorTok{{-}}\StringTok{ }\KeywordTok{mean}\NormalTok{(Y))}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)}
+\NormalTok{R2\_byR  =}\StringTok{ }\DecValTok{1} \OperatorTok{{-}}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{crossprod}\NormalTok{(Y }\OperatorTok{{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{coef}\NormalTok{(gls\_esti))) }\OperatorTok{/}\StringTok{ }\KeywordTok{sum}\NormalTok{((Y }\OperatorTok{{-}}\StringTok{ }\KeywordTok{mean}\NormalTok{(Y))}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)}
+
+\NormalTok{se\_byR  =}\StringTok{ }\KeywordTok{coef}\NormalTok{(gls\_summary)[, }\StringTok{"Std.Error"}\NormalTok{]}
+\NormalTok{t\_byR   =}\StringTok{ }\KeywordTok{coef}\NormalTok{(gls\_summary)[, }\StringTok{"t{-}value"}\NormalTok{]}
+\NormalTok{p\_byR   =}\StringTok{ }\KeywordTok{coef}\NormalTok{(gls\_summary)[, }\StringTok{"p{-}value"}\NormalTok{]}
+
+\KeywordTok{stargazer}\NormalTok{(}
+\NormalTok{ols, gls\_esti, gls\_esti, gls\_esti, }
+\DataTypeTok{coef =} \KeywordTok{list}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ols), b\_fgls, b\_loop, }\KeywordTok{coef}\NormalTok{(gls\_esti)), }\DataTypeTok{se =} \KeywordTok{list}\NormalTok{(se\_hac, se\_fgls, se\_loop, se\_byR),}
+\DataTypeTok{t =} \KeywordTok{list}\NormalTok{(t\_hac, t\_fgls, t\_loop, t\_byR), }\DataTypeTok{p =} \KeywordTok{list}\NormalTok{(p\_hac, p\_fgls, p\_loop, p\_byR),}
+\DataTypeTok{t.auto =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{p.auto =} \OtherTok{FALSE}\NormalTok{,}
+\DataTypeTok{report =} \StringTok{"vcstp"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
+\DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
+\KeywordTok{c}\NormalTok{(}\StringTok{"Type"}\NormalTok{, }\StringTok{"HA{-}Roubusted OLS"}\NormalTok{, }\StringTok{"fgls"}\NormalTok{, }\StringTok{"fgls\_loop"}\NormalTok{, }\StringTok{"Built{-}in R gls"}\NormalTok{),}
+\KeywordTok{c}\NormalTok{(}\StringTok{"R{-}Squared"}\NormalTok{, }\KeywordTok{round}\NormalTok{(ols\_summary}\OperatorTok{$}\NormalTok{r.squared, }\DecValTok{4}\NormalTok{), }\KeywordTok{round}\NormalTok{(R2\_fgls, }\DecValTok{4}\NormalTok{), }\KeywordTok{round}\NormalTok{(R2\_loop, }\DecValTok{4}\NormalTok{), }\KeywordTok{round}\NormalTok{(R2\_byR, }\DecValTok{4}\NormalTok{))),}
+\DataTypeTok{title =} \StringTok{"Results of linear model estimations"}\NormalTok{,}
+\DataTypeTok{label =} \StringTok{"LS"}\NormalTok{,}
+\DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{font.size =} \StringTok{"small"}\NormalTok{,}
+\DataTypeTok{table.placement =} \StringTok{"htb"}\NormalTok{, }\DataTypeTok{omit.table.layout =} \StringTok{"n"}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+For results, check table \ref{LS}.
+
+\hypertarget{summary-and-which-method-to-choose}{%
+\subsubsection{Summary and Which Method to Choose}\label{summary-and-which-method-to-choose}}
+
+Looking at table \ref{LS}, we know that compared with OLS using HAC estimates, numerical gls (2) and (3) obviously return more efficient estimates. And by iteration, accuracy did increase to some extent. But with a more correctly specified structure of errors covariance matrix, \texttt{gls()} in R didn't give optimal estiamtes(slightly better than OLSe).{[}8pt{]}
+
+Whereas GLS is more efficient than OLS under heteroscedasticity or autocorrelation, this is not true for FGLS. The feasible estimator is, provided the errors covariance matrix is consistently estimated, asymptotically more efficient, but for a small or medium size sample, it can be actually less efficient than OLS. This is why, some authors prefer to use OLS, and reformulate their inferences by simply considering an alternative estimator for the variance of the estimator robust to heteroscedasticity or serial autocorrelation(HCCME or HACE). But for large samples FGLS is preferred over OLS under heteroskedasticity or serial correlation\footnote{A cautionary note is that the FGLS estimator is not always {\color{red} consistent}. One case in which FGLS might be inconsistent is if there are individual specific fixed effects [@Hansen2007].}.
+
+\newpage
+\begin{table}[htb] \centering 
+    \caption{Results of linear model estimations} 
+    \label{LS} 
+    \small 
+    \begin{tabular}{@{\extracolsep{5pt}}lcccc} 
+        \\[-1.8ex]\hline 
+        \hline \\[-1.8ex] 
+        & \multicolumn{4}{c}{\textit{Dependent variable:}} \\ 
+        \cline{2-5} 
+        \\[-1.8ex] & \multicolumn{4}{c}{value} \\ 
+        \\[-1.8ex] & \textit{OLS} & \multicolumn{3}{c}{\textit{generalized}} \\ 
+        & \textit{} & \multicolumn{3}{c}{\textit{least squares}} \\ 
+        \\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
+        \hline \\[-1.8ex] 
+        crime & $-$0.273 & $-$0.275 & $-$0.290 & $-$0.107 \\ 
+        & (0.055) & (0.007) & (0.007) & (0.030) \\ 
+        & t = $-$4.926 & t = $-$36.718 & t = $-$41.942 & t = $-$3.583 \\ 
+        & p = 0.00001 & p = 0.000 & p = 0.000 & p = 0.0004 \\ 
+        & & & & \\ 
+        industrial & $-$0.730 & $-$0.732 & $-$0.733 & $-$0.588 \\ 
+        & (0.142) & (0.003) & (0.001) & (0.111) \\ 
+        & t = $-$5.153 & t = $-$283.843 & t = $-$1,027.186 & t = $-$5.296 \\ 
+        & p = 0.00000 & p = 0.000 & p = 0.000 & p = 0.00000 \\ 
+        & & & & \\ 
+        distance & $-$1.016 & $-$1.012 & $-$1.008 & $-$0.514 \\ 
+        & (0.375) & (0.014) & (0.001) & (0.381) \\ 
+        & t = $-$2.710 & t = $-$70.214 & t = $-$744.376 & t = $-$1.350 \\ 
+        & p = 0.007 & p = 0.000 & p = 0.000 & p = 0.178 \\ 
+        & & & & \\ 
+        Constant & 35.505 & 35.518 & 35.523 & 31.311 \\ 
+        & (2.984) & (0.065) & (0.010) & (2.577) \\ 
+        & t = 11.899 & t = 547.288 & t = 3,488.423 & t = 12.150 \\ 
+        & p = 0.000 & p = 0.000 & p = 0.000 & p = 0.000 \\ 
+        & & & & \\ 
+        \hline \\[-1.8ex] 
+        Type & HA-Roubusted OLS & fgls & fgls\_loop & Built-in R gls \\ 
+        R-Squared & 0.3044 & 0.3044 & 0.3041 & 0.2732 \\ 
+        Observations & 506 & 506 & 506 & 506 \\ 
+        \hline 
+        \hline \\[-1.8ex] 
+    \end{tabular} 
+\end{table}
+
 \hypertarget{panel-data-model}{%
 \section{Panel Data Model}\label{panel-data-model}}
 
@@ -4030,6 +4769,9 @@ beucase observed covariates and unobserved component are not independent.
 \begin{cslreferences}
 \leavevmode\hypertarget{ref-angrist2008mostly}{}%
 Angrist, Joshua D, and Jörn-Steffen Pischke. 2008. \emph{Mostly Harmless Econometrics: An Empiricist's Companion}. Princeton university press.
+
+\leavevmode\hypertarget{ref-Boston}{}%
+Harrison, David, and Daniel L Rubinfeld. 1978. ``Hedonic Housing Prices and the Demand for Clean Air.'' \emph{Journal of Environmental Economics and Management} 5 (1): 81--102. \url{https://doi.org/https://doi.org/10.1016/0095-0696(78)90006-2}.
 
 \leavevmode\hypertarget{ref-johnston1984econometric}{}%
 Johnston, J. 1984. \emph{Econometric Methods 3rd}. McGraw-Hill book co.

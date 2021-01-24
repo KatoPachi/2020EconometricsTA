@@ -20,7 +20,7 @@ rmarkdown::render(
 
 # pdf (bookdown)
 bookdown::render_book(
-    input = "draft.rmd",
+    input = "index.rmd",
     output_format = "bookdown::pdf_book",
     output_dir = ".",
     output_file = "Econometrics2TA.pdf",
