@@ -24,7 +24,8 @@ library(nlme) # Do gls
 dt = read.csv(
 file = "./boston.csv",
 header = TRUE, sep = ",", row.names = NULL, stringsAsFactors = FALSE)
-dt = dt[complete.cases(dt),] # complete.cases returns TURE if one row doesn't contain NA
+# complete.cases returns TURE if one row doesn't contain NA
+dt = dt[complete.cases(dt),] 
 dt = dt[,c("value", "crime", "industrial", "distance")]
 
 n = nrow(dt)
@@ -89,13 +90,12 @@ where $v_i$ is a 0-meand and homoscedastic error term which is not correlated wi
 And then, the null hypothesis is $H_0 : \alpha_1 = \alpha_2 = \dots = \alpha_p = 0$(means homoscedasticity). To implement the test, one can use the three-step procedure.
 
 1. Apply OLS in the model $$y_i  = \mathbf{X}_i \mathbf{\beta} + u_i$$
-2. Compute the regression residuals, $\hat{u}_i$, square them, and estimate the auxiliary regression $$\hat{u}_i^2 = \alpha_0 + \alpha_1 X_{1i} + \dots + \alpha_{p} X_{pi}  + v_i$$. It is possible to use different covariates instead of $\mathbf{X}_i$.
+2. Compute the regression residuals, $\hat{u}_i$, square them, and estimate the auxiliary regression $$\hat{u}_i^2 = \alpha_0 + \alpha_1 X_{1i} + \dots + \alpha_{p} X_{pi}  + v_i.$$ It is possible to use different covariates instead of $\mathbf{X}_i$.
 3. Multiply the coefficient of determination(R squared) derieved from the auxiliary regression in step 2 by sample size n to obtain the test satistic $$n R^2 \sim \chi^2_{p}$$
-
-For more details, please check @BPG.
 
 \end{itembox}
 
+For more details, please check @BPG.
 Performing `bptest()` function from `lmtest` package. We have the followings.
 
 ```{r, eval = FALSE}
@@ -107,7 +107,8 @@ ols_summary = summary(ols)
 # Breusch=Pagan=Godfrey test against heteroskedasticity.
 
 (bpgtest = bptest(ols, data = dt, studentize = F)) # from lmtest
-# If studentize is set to TRUE Koenker's studentized version of the test statistic will be used.
+# If studentize is set to TRUE 
+# Koenker's studentized version of the test statistic will be used.
 ```
 
 And the result is returned as:
@@ -118,12 +119,12 @@ And the result is returned as:
 ## BP = 28.757, df = 3, p-value = 2.519e-06
 \end{verbatim}
 
-Since the p-value is very small, it's known that the null hypothesis is rejected, there exists heteroscedasticity in this model.[48pt]
+Since the p-value is very small, it's known that the null hypothesis is rejected, there exists heteroscedasticity in this model.
 
-Next, let me introduce the Durbin-Watson test to you.
+Next, let me introduce the Durbin-Watson test [@DW1; @DW2] to you.
 
 \begin{itembox}[1]{The Durbin-Watson Test}
-In statistics, the Durbin–Watson statistic is a test statistic used to detect the presence of autocorrelation at lag 1 in the residuals (prediction errors) from a regression analysis. It is named after James Durbin and Geoffrey Watson[@DW1; @DW2].
+In statistics, the Durbin–Watson statistic is a test statistic used to detect the presence of autocorrelation at lag 1 in the residuals (prediction errors) from a regression analysis. It is named after James Durbin and Geoffrey Watson.
 Assume that
 
 \begin{align*}
@@ -138,25 +139,31 @@ $$
 $$
 
 where N is the number of observations. And there is a useful approximatate equation, $dw = 2(1-\hat{\rho})$ where $\hat{\rho}$ is the sample autocorrelation of the residuals. Besides, dw statistic can be interpreted as follows.
-With lower and upper critical values given as $dw_{L,\alpha}$ and $dw_{U,\alpha}$, to test for **positive autocorrelation** at significance $\alpha$, 
+With lower and upper critical values given as $dw_{L,\alpha}$ and $dw_{U,\alpha}$, to test for \textbf{positive autocorrelation} at significance $\alpha$, 
 
-- If dw < $dw_{L,\alpha}$, there is statistical evidence that the error terms are positively autocorrelated.
-- If dw > $dw_{U,\alpha}$, there is **no** statistical evidence that the error terms are positively autocorrelated.
-- If $dw_{L,\alpha}$ < dw < $dw_{U,\alpha} $, the test is inconclusive.
+\begin{itemize}
+\item If dw < $dw_{L,\alpha}$, there is statistical evidence that the error terms are positively autocorrelated.
+\item If dw > $dw_{U,\alpha}$, there is \textbf{no} statistical evidence that the error terms are positively autocorrelated.
+\item If $dw_{L,\alpha}$ < dw < $dw_{U,\alpha} $, the test is inconclusive.
+\end{itemize}
 
-And to test for **negative autocorrelation** at significance $\alpha$,
+And to test for \textbf{negative autocorrelation} at significance $\alpha$,
 
-- If 4-dw < $dw_{L,\alpha}$, there is statistical evidence that the error terms are negatively autocorrelated.
-- If 4-dw > $dw_{U,\alpha}$, there is **no** statistical evidence that the error terms are negatively autocorrelated.
-- If $dw_{L,\alpha}$ < 4-dw < $dw_{U,\alpha} $, the test is inconclusive.
+\begin{itemize}
+\item If 4-dw < $dw_{L,\alpha}$, there is statistical evidence that the error terms are negatively autocorrelated.
+\item If 4-dw > $dw_{U,\alpha}$, there is \textbf{no} statistical evidence that the error terms are negatively autocorrelated.
+\item If $dw_{L,\alpha}$ < 4-dw < $dw_{U,\alpha} $, the test is inconclusive.
+\end{itemize}
+
 \end{itembox}
 
 Performing `dwtest()` function from `lmtest` package. We have the followings.
 
 ```{r, eval = FALSE}
 # Durbin-Watson test for autocorrelation of disturbances.
+# alternative = c("greater", "two.sided", "less")
 	
-(dwtest = dwtest(ols, data = dt, alternative = "two.sided")) #alternative = c("greater", "two.sided", "less")
+(dwtest = dwtest(ols, data = dt, alternative = "two.sided")) 
 ```
  
 And the result is:
@@ -212,9 +219,11 @@ In the previous 2 tables, both k' and K represent the number of covariates. And 
 ### OLS method with HAC covariance matrix estirmator
 
 When it comes to autocorrelation, we can't simply apply ols method with the White estimator. An estimator, overcoming heteroscedasticity and autocorrelation at the same time, is called as HAC(Heteroscedasticity and Autocorrelation Consistent) covariance matrix estirmator. Today, I show you the most famous one, Newey–West estimator.
+The Newey–West estimator was devised by @NWe, 
+although there are a number of later variants. 
 
 \begin{itembox}[1]{Newey–West estimator}
-The Newey–West estimator was devised by [@NWe], , although there are a number of later variants. The estimator is used to try to overcome autocorrelation (also called serial correlation), and heteroskedasticity in the error terms in the models, often for regressions applied to time series data.
+The estimator is used to try to overcome autocorrelation (also called serial correlation), and heteroskedasticity in the error terms in the models, often for regressions applied to time series data.
 The general approach is to use $\underline{\mathbf{X}}$ and $\mathbf{e}$ to devise an estimator of $Q^{*}$,  a matrix of sums of squares and cross products that involves $\sigma_{ij}$ and the rows of $\underline{\mathbf{X}}$. The least squares estimator $\mathbf{b}$ is a consistent estimator of $\mathbf{\beta}$, which implies that the least squares residuals $\mathbf{e_i}$ are "point-wise" consistent estimators of their population counterparts.
 
 \begin{align*}
@@ -311,8 +320,8 @@ In statistics, generalized least squares (GLS) is a technique for estimating the
 With assumptions GH1-GH3, the GLS estimators for the parameters and covariance matrix are denoted like follows.
 
 \begin{align*}
-    \hat{\mathbf{\beta}}_{GLS} & = \left(\underline{\mathbf{X}}^{T} \Omega^{-1} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \Omega^{-1} \underline{Y}\\
-    Var[\hat{\mathbf{\beta}}_{GLS} | \underline{\mathbf{X}}] & = \left(\underline{\mathbf{X}}^{T} \Omega^{-1} \underline{\mathbf{X}} \right)^{-1}
+    \hat{\beta}_{GLS} & = \left(\underline{\mathbf{X}}^{T} \Omega^{-1} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \Omega^{-1} \underline{Y}\\
+    Var[\hat{\beta}_{GLS} | \underline{\mathbf{X}}] & = \left(\underline{\mathbf{X}}^{T} \Omega^{-1} \underline{\mathbf{X}} \right)^{-1}
 \end{align*}
 
 \end{itembox}
@@ -420,7 +429,7 @@ Sometimes, in order to improve the accuracy of the estimators in finite samples,
 Now let me briefly introduce the key steps to you. The OLS estimator is calculated as usual by
 
 $$
-\hat{\mathbf{\beta}}_{OLS} = \left(\underline{\mathbf{X}}^{T} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \underline{Y}
+\hat{\beta}_{OLS} = \left(\underline{\mathbf{X}}^{T} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \underline{Y}
 $$
 
 and estimates of the residuals $\hat{u}_j = (\underline{Y} - \underline{\mathbf{X}} \hat{\mathbf{\beta}}_{OLS})_j$ are constructed.
@@ -431,10 +440,10 @@ we build \(\hat{\Omega}_{OLS} = diag(\hat{\sigma}^2_1, \hat{\sigma}^2_2, \ldots,
 Then we estimate 
 $\mathbf{\beta}_{FGLS1}$ using $\hat{\Omega}_{OLS}$. With $\mathbf{\beta}_{FGLS1}$, performing the following steps.
 
-1. \(\hat{\mathbf{\beta}}_{FGLS1} = \left(\underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{OLS} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{OLS} \underline{Y}\)
-2. \(\hat{\mathbf{u}}_{FGLS1} = \underline{Y} - \underline{\mathbf{X}}\hat{\mathbf{\beta}}_{FGLS1}\) \label{step2}
+1. \(\hat{\beta}_{FGLS1} = \left(\underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{OLS} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{OLS} \underline{Y}\)
+2. \(\hat{\mathbf{u}}_{FGLS1} = \underline{Y} - \underline{\mathbf{X}}\hat{\beta}_{FGLS1}\) \label{step2}
 3. \(\hat{\Omega}_{FGLS1} = diag(\hat{\sigma}^2_{FGLS1,1}, \hat{\sigma}^2_{FGLS1,2}, \dots, \hat{\sigma}^2_{FGLS1,n} ) \)
-4. \(\hat{\mathbf{\beta}}_{FGLS2} = \left(\underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{FGLS1} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{FGLS1} \underline{Y} \)
+4. \(\hat{\beta}_{FGLS2} = \left(\underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{FGLS1} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{FGLS1} \underline{Y} \)
 
 Repeating step2 to step4 until the convergence of $\hat{\Omega}$. 
 
@@ -458,7 +467,8 @@ while (termination(b_loop, cov_u) > 10^-12) { # judge
 	u_hat = as.vector(Y - X %*% b_loop) # step2
 	cov_u = diag(u_hat^2)   # step3
 	cov_b_loop = solve(t(X) %*% solve(cov_u) %*% X)
-	b_loop =  solve(t(X) %*% solve(cov_u) %*% X) %*% (t(X) %*% solve(cov_u) %*% Y) # step4
+	b_loop =  solve(t(X) %*% solve(cov_u) %*% X) %*% 
+		(t(X) %*% solve(cov_u) %*% Y) # step4
 	n_loop = n_loop + 1
 }
 
@@ -612,13 +622,17 @@ p_byR   = coef(gls_summary)[, "p-value"]
 
 stargazer(
 ols, gls_esti, gls_esti, gls_esti, 
-coef = list(coef(ols), b_fgls, b_loop, coef(gls_esti)), se = list(se_hac, se_fgls, se_loop, se_byR),
-t = list(t_hac, t_fgls, t_loop, t_byR), p = list(p_hac, p_fgls, p_loop, p_byR),
+coef = list(coef(ols), b_fgls, b_loop, coef(gls_esti)), 
+se = list(se_hac, se_fgls, se_loop, se_byR),
+t = list(t_hac, t_fgls, t_loop, t_byR), 
+p = list(p_hac, p_fgls, p_loop, p_byR),
 t.auto = FALSE, p.auto = FALSE,
 report = "vcstp", keep.stat = c("n"),
 add.lines = list(
-c("Type", "HA-Roubusted OLS", "fgls", "fgls_loop", "Built-in R gls"),
-c("R-Squared", round(ols_summary$r.squared, 4), round(R2_fgls, 4), round(R2_loop, 4), round(R2_byR, 4))),
+	c("Type", "HA-Roubusted OLS", "fgls", "fgls_loop", "Built-in R gls"),
+	c("R-Squared", round(ols_summary$r.squared, 4), round(R2_fgls, 4), 
+		round(R2_loop, 4), round(R2_byR, 4))
+),
 title = "Results of linear model estimations",
 label = "LS",
 type = "latex", header = FALSE, font.size = "small",
@@ -630,13 +644,13 @@ For results, check table \ref{LS}.
 
 
 ### Summary and Which Method to Choose
-Looking at table \ref{LS}, we know that compared with OLS using HAC estimates, numerical gls (2) and (3) obviously return more efficient estimates. And by iteration, accuracy did increase to some extent. But with a more correctly specified structure of errors covariance matrix, `gls()` in R didn't give optimal estiamtes(slightly better than OLSe).[8pt]
+Looking at table \ref{LS}, we know that compared with OLS using HAC estimates, numerical gls (2) and (3) obviously return more efficient estimates. And by iteration, accuracy did increase to some extent. But with a more correctly specified structure of errors covariance matrix, `gls()` in R didn't give optimal estiamtes(slightly better than OLSe).
 
-Whereas GLS is more efficient than OLS under heteroscedasticity or autocorrelation, this is not true for FGLS. The feasible estimator is, provided the errors covariance matrix is consistently estimated, asymptotically more efficient, but for a small or medium size sample, it can be actually less efficient than OLS. This is why, some authors prefer to use OLS, and reformulate their inferences by simply considering an alternative estimator for the variance of the estimator robust to heteroscedasticity or serial autocorrelation(HCCME or HACE). But for large samples FGLS is preferred over OLS under heteroskedasticity or serial correlation\footnote{A cautionary note is that the FGLS estimator is not always {\color{red} consistent}. One case in which FGLS might be inconsistent is if there are individual specific fixed effects [@Hansen2007].}.
+Whereas GLS is more efficient than OLS under heteroscedasticity or autocorrelation, this is not true for FGLS. The feasible estimator is, provided the errors covariance matrix is consistently estimated, asymptotically more efficient, but for a small or medium size sample, it can be actually less efficient than OLS. This is why, some authors prefer to use OLS, and reformulate their inferences by simply considering an alternative estimator for the variance of the estimator robust to heteroscedasticity or serial autocorrelation(HCCME or HACE). But for large samples FGLS is preferred over OLS under heteroskedasticity or serial correlation[^nonconsistent].
+
+[^nonconsistent]: A cautionary note is that the FGLS estimator is not always \color{red} consistent \color{black}. One case in which FGLS might be inconsistent is if there are individual specific fixed effects [@Hansen2007].
 
 
-
-\newpage
 \begin{table}[htb] \centering 
 	\caption{Results of linear model estimations} 
 	\label{LS} 

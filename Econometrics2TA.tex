@@ -3235,7 +3235,8 @@ As I mentioned before, \texttt{value} is the dependent variable and the other th
 \NormalTok{dt =}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}
 \DataTypeTok{file =} \StringTok{"./boston.csv"}\NormalTok{,}
 \DataTypeTok{header =} \OtherTok{TRUE}\NormalTok{, }\DataTypeTok{sep =} \StringTok{","}\NormalTok{, }\DataTypeTok{row.names =} \OtherTok{NULL}\NormalTok{, }\DataTypeTok{stringsAsFactors =} \OtherTok{FALSE}\NormalTok{)}
-\NormalTok{dt =}\StringTok{ }\NormalTok{dt[}\KeywordTok{complete.cases}\NormalTok{(dt),] }\CommentTok{\# complete.cases returns TURE if one row doesn\textquotesingle{}t contain NA}
+\CommentTok{\# complete.cases returns TURE if one row doesn\textquotesingle{}t contain NA}
+\NormalTok{dt =}\StringTok{ }\NormalTok{dt[}\KeywordTok{complete.cases}\NormalTok{(dt),] }
 \NormalTok{dt =}\StringTok{ }\NormalTok{dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"value"}\NormalTok{, }\StringTok{"crime"}\NormalTok{, }\StringTok{"industrial"}\NormalTok{, }\StringTok{"distance"}\NormalTok{)]}
 
 \NormalTok{n =}\StringTok{ }\KeywordTok{nrow}\NormalTok{(dt)}
@@ -3301,13 +3302,12 @@ where $v_i$ is a 0-meand and homoscedastic error term which is not correlated wi
 And then, the null hypothesis is $H_0 : \alpha_1 = \alpha_2 = \dots = \alpha_p = 0$(means homoscedasticity). To implement the test, one can use the three-step procedure.
 
 1. Apply OLS in the model $$y_i  = \mathbf{X}_i \mathbf{\beta} + u_i$$
-2. Compute the regression residuals, $\hat{u}_i$, square them, and estimate the auxiliary regression $$\hat{u}_i^2 = \alpha_0 + \alpha_1 X_{1i} + \dots + \alpha_{p} X_{pi}  + v_i$$. It is possible to use different covariates instead of $\mathbf{X}_i$.
+2. Compute the regression residuals, $\hat{u}_i$, square them, and estimate the auxiliary regression $$\hat{u}_i^2 = \alpha_0 + \alpha_1 X_{1i} + \dots + \alpha_{p} X_{pi}  + v_i.$$ It is possible to use different covariates instead of $\mathbf{X}_i$.
 3. Multiply the coefficient of determination(R squared) derieved from the auxiliary regression in step 2 by sample size n to obtain the test satistic $$n R^2 \sim \chi^2_{p}$$
-
-For more details, please check @BPG.
 
 \end{itembox}
 
+For more details, please check Breusch and Pagan (1979).
 Performing \texttt{bptest()} function from \texttt{lmtest} package. We have the followings.
 
 \begin{Shaded}
@@ -3320,7 +3320,8 @@ Performing \texttt{bptest()} function from \texttt{lmtest} package. We have the 
 \CommentTok{\# Breusch=Pagan=Godfrey test against heteroskedasticity.}
 
 \NormalTok{(}\DataTypeTok{bpgtest =} \KeywordTok{bptest}\NormalTok{(ols, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{studentize =}\NormalTok{ F)) }\CommentTok{\# from lmtest}
-\CommentTok{\# If studentize is set to TRUE Koenker\textquotesingle{}s studentized version of the test statistic will be used.}
+\CommentTok{\# If studentize is set to TRUE }
+\CommentTok{\# Koenker\textquotesingle{}s studentized version of the test statistic will be used.}
 \end{Highlighting}
 \end{Shaded}
 
@@ -3332,12 +3333,12 @@ And the result is returned as:
 ## BP = 28.757, df = 3, p-value = 2.519e-06
 \end{verbatim}
 
-Since the p-value is very small, it's known that the null hypothesis is rejected, there exists heteroscedasticity in this model.{[}48pt{]}
+Since the p-value is very small, it's known that the null hypothesis is rejected, there exists heteroscedasticity in this model.
 
-Next, let me introduce the Durbin-Watson test to you.
+Next, let me introduce the Durbin-Watson test (Durbin and Watson 1950, 1951) to you.
 
 \begin{itembox}[1]{The Durbin-Watson Test}
-In statistics, the Durbin–Watson statistic is a test statistic used to detect the presence of autocorrelation at lag 1 in the residuals (prediction errors) from a regression analysis. It is named after James Durbin and Geoffrey Watson[@DW1; @DW2].
+In statistics, the Durbin–Watson statistic is a test statistic used to detect the presence of autocorrelation at lag 1 in the residuals (prediction errors) from a regression analysis. It is named after James Durbin and Geoffrey Watson.
 Assume that
 
 \begin{align*}
@@ -3352,17 +3353,22 @@ $$
 $$
 
 where N is the number of observations. And there is a useful approximatate equation, $dw = 2(1-\hat{\rho})$ where $\hat{\rho}$ is the sample autocorrelation of the residuals. Besides, dw statistic can be interpreted as follows.
-With lower and upper critical values given as $dw_{L,\alpha}$ and $dw_{U,\alpha}$, to test for **positive autocorrelation** at significance $\alpha$, 
+With lower and upper critical values given as $dw_{L,\alpha}$ and $dw_{U,\alpha}$, to test for \textbf{positive autocorrelation} at significance $\alpha$, 
 
-- If dw < $dw_{L,\alpha}$, there is statistical evidence that the error terms are positively autocorrelated.
-- If dw > $dw_{U,\alpha}$, there is **no** statistical evidence that the error terms are positively autocorrelated.
-- If $dw_{L,\alpha}$ < dw < $dw_{U,\alpha} $, the test is inconclusive.
+\begin{itemize}
+\item If dw < $dw_{L,\alpha}$, there is statistical evidence that the error terms are positively autocorrelated.
+\item If dw > $dw_{U,\alpha}$, there is \textbf{no} statistical evidence that the error terms are positively autocorrelated.
+\item If $dw_{L,\alpha}$ < dw < $dw_{U,\alpha} $, the test is inconclusive.
+\end{itemize}
 
-And to test for **negative autocorrelation** at significance $\alpha$,
+And to test for \textbf{negative autocorrelation} at significance $\alpha$,
 
-- If 4-dw < $dw_{L,\alpha}$, there is statistical evidence that the error terms are negatively autocorrelated.
-- If 4-dw > $dw_{U,\alpha}$, there is **no** statistical evidence that the error terms are negatively autocorrelated.
-- If $dw_{L,\alpha}$ < 4-dw < $dw_{U,\alpha} $, the test is inconclusive.
+\begin{itemize}
+\item If 4-dw < $dw_{L,\alpha}$, there is statistical evidence that the error terms are negatively autocorrelated.
+\item If 4-dw > $dw_{U,\alpha}$, there is \textbf{no} statistical evidence that the error terms are negatively autocorrelated.
+\item If $dw_{L,\alpha}$ < 4-dw < $dw_{U,\alpha} $, the test is inconclusive.
+\end{itemize}
+
 \end{itembox}
 
 Performing \texttt{dwtest()} function from \texttt{lmtest} package. We have the followings.
@@ -3370,8 +3376,9 @@ Performing \texttt{dwtest()} function from \texttt{lmtest} package. We have the 
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{\# Durbin{-}Watson test for autocorrelation of disturbances.}
+\CommentTok{\# alternative = c("greater", "two.sided", "less")}
     
-\NormalTok{(}\DataTypeTok{dwtest =} \KeywordTok{dwtest}\NormalTok{(ols, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{alternative =} \StringTok{"two.sided"}\NormalTok{)) }\CommentTok{\#alternative = c("greater", "two.sided", "less")}
+\NormalTok{(}\DataTypeTok{dwtest =} \KeywordTok{dwtest}\NormalTok{(ols, }\DataTypeTok{data =}\NormalTok{ dt, }\DataTypeTok{alternative =} \StringTok{"two.sided"}\NormalTok{)) }
 \end{Highlighting}
 \end{Shaded}
 
@@ -3426,9 +3433,11 @@ In the previous 2 tables, both k' and K represent the number of covariates. And 
 \subsubsection{OLS method with HAC covariance matrix estirmator}\label{ols-method-with-hac-covariance-matrix-estirmator}}
 
 When it comes to autocorrelation, we can't simply apply ols method with the White estimator. An estimator, overcoming heteroscedasticity and autocorrelation at the same time, is called as HAC(Heteroscedasticity and Autocorrelation Consistent) covariance matrix estirmator. Today, I show you the most famous one, Newey--West estimator.
+The Newey--West estimator was devised by Newey and West (1987),
+although there are a number of later variants.
 
 \begin{itembox}[1]{Newey–West estimator}
-The Newey–West estimator was devised by [@NWe], , although there are a number of later variants. The estimator is used to try to overcome autocorrelation (also called serial correlation), and heteroskedasticity in the error terms in the models, often for regressions applied to time series data.
+The estimator is used to try to overcome autocorrelation (also called serial correlation), and heteroskedasticity in the error terms in the models, often for regressions applied to time series data.
 The general approach is to use $\underline{\mathbf{X}}$ and $\mathbf{e}$ to devise an estimator of $Q^{*}$,  a matrix of sums of squares and cross products that involves $\sigma_{ij}$ and the rows of $\underline{\mathbf{X}}$. The least squares estimator $\mathbf{b}$ is a consistent estimator of $\mathbf{\beta}$, which implies that the least squares residuals $\mathbf{e_i}$ are "point-wise" consistent estimators of their population counterparts.
 
 \begin{align*}
@@ -3536,8 +3545,8 @@ In statistics, generalized least squares (GLS) is a technique for estimating the
 With assumptions GH1-GH3, the GLS estimators for the parameters and covariance matrix are denoted like follows.
 
 \begin{align*}
-    \hat{\mathbf{\beta}}_{GLS} & = \left(\underline{\mathbf{X}}^{T} \Omega^{-1} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \Omega^{-1} \underline{Y}\\
-    Var[\hat{\mathbf{\beta}}_{GLS} | \underline{\mathbf{X}}] & = \left(\underline{\mathbf{X}}^{T} \Omega^{-1} \underline{\mathbf{X}} \right)^{-1}
+    \hat{\beta}_{GLS} & = \left(\underline{\mathbf{X}}^{T} \Omega^{-1} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \Omega^{-1} \underline{Y}\\
+    Var[\hat{\beta}_{GLS} | \underline{\mathbf{X}}] & = \left(\underline{\mathbf{X}}^{T} \Omega^{-1} \underline{\mathbf{X}} \right)^{-1}
 \end{align*}
 
 \end{itembox}
@@ -3648,7 +3657,7 @@ Sometimes, in order to improve the accuracy of the estimators in finite samples,
 Now let me briefly introduce the key steps to you. The OLS estimator is calculated as usual by
 
 \[
-\hat{\mathbf{\beta}}_{OLS} = \left(\underline{\mathbf{X}}^{T} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \underline{Y}
+\hat{\beta}_{OLS} = \left(\underline{\mathbf{X}}^{T} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \underline{Y}
 \]
 
 and estimates of the residuals \(\hat{u}_j = (\underline{Y} - \underline{\mathbf{X}} \hat{\mathbf{\beta}}_{OLS})_j\) are constructed.
@@ -3663,13 +3672,13 @@ Then we estimate
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \(\hat{\mathbf{\beta}}_{FGLS1} = \left(\underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{OLS} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{OLS} \underline{Y}\)
+  \(\hat{\beta}_{FGLS1} = \left(\underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{OLS} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{OLS} \underline{Y}\)
 \item
-  \(\hat{\mathbf{u}}_{FGLS1} = \underline{Y} - \underline{\mathbf{X}}\hat{\mathbf{\beta}}_{FGLS1}\) \label{step2}
+  \(\hat{\mathbf{u}}_{FGLS1} = \underline{Y} - \underline{\mathbf{X}}\hat{\beta}_{FGLS1}\) \label{step2}
 \item
   \(\hat{\Omega}_{FGLS1} = diag(\hat{\sigma}^2_{FGLS1,1}, \hat{\sigma}^2_{FGLS1,2}, \dots, \hat{\sigma}^2_{FGLS1,n} )\)
 \item
-  \(\hat{\mathbf{\beta}}_{FGLS2} = \left(\underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{FGLS1} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{FGLS1} \underline{Y}\)
+  \(\hat{\beta}_{FGLS2} = \left(\underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{FGLS1} \underline{\mathbf{X}} \right)^{-1} \underline{\mathbf{X}}^{T} \hat{\Omega}^{-1}_{FGLS1} \underline{Y}\)
 \end{enumerate}
 
 Repeating step2 to step4 until the convergence of \(\hat{\Omega}\).
@@ -3695,7 +3704,8 @@ Let's check the commands.
 \NormalTok{    u\_hat =}\StringTok{ }\KeywordTok{as.vector}\NormalTok{(Y }\OperatorTok{{-}}\StringTok{ }\NormalTok{X }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{b\_loop) }\CommentTok{\# step2}
 \NormalTok{    cov\_u =}\StringTok{ }\KeywordTok{diag}\NormalTok{(u\_hat}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{)   }\CommentTok{\# step3}
 \NormalTok{    cov\_b\_loop =}\StringTok{ }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(cov\_u) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X)}
-\NormalTok{    b\_loop =}\StringTok{  }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(cov\_u) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(cov\_u) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Y) }\CommentTok{\# step4}
+\NormalTok{    b\_loop =}\StringTok{  }\KeywordTok{solve}\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(cov\_u) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{X) }\OperatorTok{\%*\%}\StringTok{ }
+\StringTok{        }\NormalTok{(}\KeywordTok{t}\NormalTok{(X) }\OperatorTok{\%*\%}\StringTok{ }\KeywordTok{solve}\NormalTok{(cov\_u) }\OperatorTok{\%*\%}\StringTok{ }\NormalTok{Y) }\CommentTok{\# step4}
 \NormalTok{    n\_loop =}\StringTok{ }\NormalTok{n\_loop }\OperatorTok{+}\StringTok{ }\DecValTok{1}
 \NormalTok{\}}
 
@@ -3868,13 +3878,17 @@ Use \texttt{stargazer} function to make a table displaying the results of each m
 
 \KeywordTok{stargazer}\NormalTok{(}
 \NormalTok{ols, gls\_esti, gls\_esti, gls\_esti, }
-\DataTypeTok{coef =} \KeywordTok{list}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ols), b\_fgls, b\_loop, }\KeywordTok{coef}\NormalTok{(gls\_esti)), }\DataTypeTok{se =} \KeywordTok{list}\NormalTok{(se\_hac, se\_fgls, se\_loop, se\_byR),}
-\DataTypeTok{t =} \KeywordTok{list}\NormalTok{(t\_hac, t\_fgls, t\_loop, t\_byR), }\DataTypeTok{p =} \KeywordTok{list}\NormalTok{(p\_hac, p\_fgls, p\_loop, p\_byR),}
+\DataTypeTok{coef =} \KeywordTok{list}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ols), b\_fgls, b\_loop, }\KeywordTok{coef}\NormalTok{(gls\_esti)), }
+\DataTypeTok{se =} \KeywordTok{list}\NormalTok{(se\_hac, se\_fgls, se\_loop, se\_byR),}
+\DataTypeTok{t =} \KeywordTok{list}\NormalTok{(t\_hac, t\_fgls, t\_loop, t\_byR), }
+\DataTypeTok{p =} \KeywordTok{list}\NormalTok{(p\_hac, p\_fgls, p\_loop, p\_byR),}
 \DataTypeTok{t.auto =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{p.auto =} \OtherTok{FALSE}\NormalTok{,}
 \DataTypeTok{report =} \StringTok{"vcstp"}\NormalTok{, }\DataTypeTok{keep.stat =} \KeywordTok{c}\NormalTok{(}\StringTok{"n"}\NormalTok{),}
 \DataTypeTok{add.lines =} \KeywordTok{list}\NormalTok{(}
-\KeywordTok{c}\NormalTok{(}\StringTok{"Type"}\NormalTok{, }\StringTok{"HA{-}Roubusted OLS"}\NormalTok{, }\StringTok{"fgls"}\NormalTok{, }\StringTok{"fgls\_loop"}\NormalTok{, }\StringTok{"Built{-}in R gls"}\NormalTok{),}
-\KeywordTok{c}\NormalTok{(}\StringTok{"R{-}Squared"}\NormalTok{, }\KeywordTok{round}\NormalTok{(ols\_summary}\OperatorTok{$}\NormalTok{r.squared, }\DecValTok{4}\NormalTok{), }\KeywordTok{round}\NormalTok{(R2\_fgls, }\DecValTok{4}\NormalTok{), }\KeywordTok{round}\NormalTok{(R2\_loop, }\DecValTok{4}\NormalTok{), }\KeywordTok{round}\NormalTok{(R2\_byR, }\DecValTok{4}\NormalTok{))),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"Type"}\NormalTok{, }\StringTok{"HA{-}Roubusted OLS"}\NormalTok{, }\StringTok{"fgls"}\NormalTok{, }\StringTok{"fgls\_loop"}\NormalTok{, }\StringTok{"Built{-}in R gls"}\NormalTok{),}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"R{-}Squared"}\NormalTok{, }\KeywordTok{round}\NormalTok{(ols\_summary}\OperatorTok{$}\NormalTok{r.squared, }\DecValTok{4}\NormalTok{), }\KeywordTok{round}\NormalTok{(R2\_fgls, }\DecValTok{4}\NormalTok{), }
+        \KeywordTok{round}\NormalTok{(R2\_loop, }\DecValTok{4}\NormalTok{), }\KeywordTok{round}\NormalTok{(R2\_byR, }\DecValTok{4}\NormalTok{))}
+\NormalTok{),}
 \DataTypeTok{title =} \StringTok{"Results of linear model estimations"}\NormalTok{,}
 \DataTypeTok{label =} \StringTok{"LS"}\NormalTok{,}
 \DataTypeTok{type =} \StringTok{"latex"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{font.size =} \StringTok{"small"}\NormalTok{,}
@@ -3888,11 +3902,10 @@ For results, check table \ref{LS}.
 \hypertarget{summary-and-which-method-to-choose}{%
 \subsubsection{Summary and Which Method to Choose}\label{summary-and-which-method-to-choose}}
 
-Looking at table \ref{LS}, we know that compared with OLS using HAC estimates, numerical gls (2) and (3) obviously return more efficient estimates. And by iteration, accuracy did increase to some extent. But with a more correctly specified structure of errors covariance matrix, \texttt{gls()} in R didn't give optimal estiamtes(slightly better than OLSe).{[}8pt{]}
+Looking at table \ref{LS}, we know that compared with OLS using HAC estimates, numerical gls (2) and (3) obviously return more efficient estimates. And by iteration, accuracy did increase to some extent. But with a more correctly specified structure of errors covariance matrix, \texttt{gls()} in R didn't give optimal estiamtes(slightly better than OLSe).
 
-Whereas GLS is more efficient than OLS under heteroscedasticity or autocorrelation, this is not true for FGLS. The feasible estimator is, provided the errors covariance matrix is consistently estimated, asymptotically more efficient, but for a small or medium size sample, it can be actually less efficient than OLS. This is why, some authors prefer to use OLS, and reformulate their inferences by simply considering an alternative estimator for the variance of the estimator robust to heteroscedasticity or serial autocorrelation(HCCME or HACE). But for large samples FGLS is preferred over OLS under heteroskedasticity or serial correlation\footnote{A cautionary note is that the FGLS estimator is not always {\color{red} consistent}. One case in which FGLS might be inconsistent is if there are individual specific fixed effects [@Hansen2007].}.
+Whereas GLS is more efficient than OLS under heteroscedasticity or autocorrelation, this is not true for FGLS. The feasible estimator is, provided the errors covariance matrix is consistently estimated, asymptotically more efficient, but for a small or medium size sample, it can be actually less efficient than OLS. This is why, some authors prefer to use OLS, and reformulate their inferences by simply considering an alternative estimator for the variance of the estimator robust to heteroscedasticity or serial autocorrelation(HCCME or HACE). But for large samples FGLS is preferred over OLS under heteroskedasticity or serial correlation\footnote{A cautionary note is that the FGLS estimator is not always \color{red} consistent \color{black}. One case in which FGLS might be inconsistent is if there are individual specific fixed effects (Hansen 2007).}.
 
-\newpage
 \begin{table}[htb] \centering 
     \caption{Results of linear model estimations} 
     \label{LS} 
@@ -4862,8 +4875,6 @@ Then, let's prepare the explanatory variables and instrumental variables in a ma
 \end{Highlighting}
 \end{Shaded}
 
-\newpage
-
 \hypertarget{numerical-2sgmm-method}{%
 \subsection{Numerical 2SGMM Method}\label{numerical-2sgmm-method}}
 
@@ -5252,7 +5263,6 @@ All the estimation results are given in table \ref{Numeric} and I omit the inter
 \end{Highlighting}
 \end{Shaded}
 
-\newpage
 \begin{table}[htb] \centering 
     \caption{Results of rols and numerical 2 step GMM} 
     \label{Numeric} 
@@ -5292,8 +5302,6 @@ All the estimation results are given in table \ref{Numeric} and I omit the inter
         \hline \\[-1.8ex] 
     \end{tabular} 
 \end{table}
-
-\newpage
 
 \hypertarget{sls-and-2sgmm-by-r}{%
 \subsection{2SLS and 2SGMM by R}\label{sls-and-2sgmm-by-r}}
@@ -5533,7 +5541,6 @@ Focus on the ``J-Test'' part, since the p value is smaller than 0.02, we can say
 \end{Highlighting}
 \end{Shaded}
 
-\newpage
 \begin{table}[htb] \centering 
     \caption{Results of 2SLS and 2SGMM by R} 
     \label{byR} 
@@ -5625,8 +5632,20 @@ where \(w_l\) can be thought of as a ``weight''. Disturbances that are farther a
 \leavevmode\hypertarget{ref-angrist2008mostly}{}%
 Angrist, Joshua D, and Jörn-Steffen Pischke. 2008. \emph{Mostly Harmless Econometrics: An Empiricist's Companion}. Princeton university press.
 
+\leavevmode\hypertarget{ref-BPG}{}%
+Breusch, T. S., and A. R. Pagan. 1979. ``A Simple Test for Heteroscedasticity and Random Coefficient Variation.'' \emph{Econometrica} 47 (5): 1287--94. \url{http://www.jstor.org/stable/1911963}.
+
 \leavevmode\hypertarget{ref-gmmR}{}%
 Chaussé, Pierre. 2010. ``Computing Generalized Method of Moments and Generalized Empirical Likelihood with R.'' \emph{Journal of Statistical Software} 34 (i11). \url{https://doi.org/http://hdl.handle.net/10.}
+
+\leavevmode\hypertarget{ref-DW1}{}%
+Durbin, J., and G. S. Watson. 1950. ``Testing for Serial Correlation in Least Squares Regression: I.'' \emph{Biometrika} 37 (3/4): 409--28. \url{http://www.jstor.org/stable/2332391}.
+
+\leavevmode\hypertarget{ref-DW2}{}%
+---------. 1951. ``Testing for Serial Correlation in Least Squares Regression. II.'' \emph{Biometrika} 38 (1/2): 159--77. \url{http://www.jstor.org/stable/2332325}.
+
+\leavevmode\hypertarget{ref-Hansen2007}{}%
+Hansen, Christian B. 2007. ``Generalized Least Squares Inference in Panel and Multilevel Models with Serial Correlation and Fixed Effects.'' \emph{Journal of Econometrics} 140 (2): 670--94. \url{https://doi.org/https://doi.org/10.1016/j.jeconom.2006.07.011}.
 
 \leavevmode\hypertarget{ref-Hansen1982}{}%
 Hansen, Lars Peter. 1982. ``Large Sample Properties of Generalized Method of Moments Estimators.'' \emph{Econometrica} 50 (4): 1029--54. \url{http://www.jstor.org/stable/1912775}.

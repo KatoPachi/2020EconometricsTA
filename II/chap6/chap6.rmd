@@ -79,7 +79,6 @@ Y = dt[, "value"]
 ```
 
 
-\newpage
 ## Numerical 2SGMM Method
 
 ### Formulations and Recalling HA-Robusted Ols
@@ -449,7 +448,7 @@ table.placement = "htb", omit.table.layout = "n"
 )
 ```
 
-\newpage
+
 \begin{table}[htb] \centering 
 	\caption{Results of rols and numerical 2 step GMM} 
 	\label{Numeric} 
@@ -492,7 +491,7 @@ table.placement = "htb", omit.table.layout = "n"
 
 
 
-\newpage
+
 ## 2SLS and 2SGMM by R
 
 ### 2SLS and Hausman Tests for Endogeneity
@@ -701,7 +700,7 @@ table.placement = "htb", omit.table.layout = "n"
 setwd("~")
 ```
 
-\newpage
+
 \begin{table}[htb] \centering 
 	\caption{Results of 2SLS and 2SGMM by R} 
 	\label{byR} 
