@@ -32,3 +32,146 @@ knitr::opts_chunk$set(
 knitr::opts_knit$set(root.dir = paste(here(), "/R", sep = ""))
 ```
 
+# Empirical Application of Time Series Model: Nikkei 225 
+
+## Background and Data
+
+The "Nikkei225" is a stock price index published by Nihon Keizai Shimbun (hereafter, NIKKEI).
+NIKKEI calculates this price index based on 225 high liquid brands listed with first section of the Tokyo Stock Exchange.
+We use daily data of the Nikkei 225 index taken from the yahoo finance 
+(<https://stocks.finance.yahoo.co.jp/stocks/detail/?code=998407.O>).
+The time length is from January 4th 2020 to January 22 2021.
+We have 498 observations.
+We call a csv data which recodes the Nikkei 225 dairy index, using the `read.csv` function in `R`.
+Since `R` recognize a time variable (e.g., `2021/01/22`) as a character string,
+we need to define a time variable, using `as.Date()` function.
+The data structure is as follows:
+
+```{r nikkeidata}
+dt <- read.csv("data/nikkei225.csv", stringsAsFactor = FALSE)
+dt$date <- as.Date(dt$date, format = "%Y/%m/%d")
+head(dt)
+```
+
+There are five variables:
+
+- `date`: date variable
+- `open_price`: open price in day $t$
+- `high_price`: high price in day $t$
+- `low_price`: low price in day $t$
+- `close_price`: close price in day $t$
+
+Mainly, we use the `date` and `close_price`.
+
+```{r TimeSeriesPlot, echo = FALSE, fig.cap = "Time Series Data of Nikkei 225", out.width="90%", fig.align = 'center'}
+library(tidyverse)
+
+ggplot(dt, aes(x = date, y = close_price)) + 
+  geom_line(color = "blue") +
+  geom_vline(aes(xintercept = as.Date("2019/12/31")), linetype = 2) +
+  geom_vline(aes(xintercept = as.Date("2020/01/16")), linetype = 2) +
+  geom_vline(aes(xintercept = as.Date("2020/11/07")), linetype = 2) +
+  annotate(
+    geom = "rect",
+    xmin = as.Date("2020/04/07"), xmax = as.Date("2020/05/25"), 
+    ymin = -Inf, ymax = Inf,
+    fill = "grey80", alpha = 0.4
+  ) +
+  annotate(
+    geom = "text", 
+    x = as.Date("2020/05/20"), y = 27500, 
+    label = "First declaration of \n a state of emergency \n in Japan", 
+    hjust = "center"
+  ) +
+  annotate(
+    geom = "segment", 
+    x = as.Date("2019/11/30"), y = 27500, 
+    xend = as.Date("2019/12/31"), yend = 27500, 
+    arrow = arrow(length = unit(2, "mm"))
+  ) +
+  annotate(
+    geom = "text", 
+    x = as.Date("2019/11/29"), y = 27500, 
+    label = "First case of Covid-19 in China", 
+    hjust = "right"
+  ) +
+  annotate(
+    geom = "segment", 
+    x = as.Date("2019/11/30"), y = 26500, 
+    xend = as.Date("2020/01/16"), yend = 26500, 
+    arrow = arrow(length = unit(2, "mm"))
+  ) +
+  annotate(
+    geom = "text", 
+    x = as.Date("2019/11/29"), y = 26500, 
+    label = "First case of Covid-19 in Japan", 
+    hjust = "right"
+  ) +
+  annotate(
+    geom = "segment", 
+    x = as.Date("2020/10/07"), y = 25500, 
+    xend = as.Date("2020/11/07"), yend = 25500, 
+    arrow = arrow(length = unit(2, "mm"))
+  ) +
+  annotate(
+    geom = "text", 
+    x = as.Date("2020/10/06"), y = 25500, 
+    label = "U.S. Presidential Election", 
+    hjust = "right"
+  ) +
+  scale_x_date(date_breaks = "2 months", date_labels = "%y/%m") +
+  labs(x = "Date (Year/Month)", y = "Close price") +
+  theme_minimal() +
+  theme(
+    # setting: background
+    plot.background = element_rect(
+      #fill="#87CEEB50", 
+      color = "transparent"
+    ),
+    
+    # setting: plot
+    panel.border = element_rect(color = "white", fill = NA),
+    panel.background = element_rect(fill = "white"),   
+    panel.grid = element_line(color = "grey80", size = 0.1),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    
+    # setting: text
+    plot.title = element_text(hjust=0.5,size=20),       
+    plot.caption = element_text(size=8),       
+    
+    # setting: axis
+    axis.text = element_text(color="black",size=8),    
+    axis.title = element_text(size=10),
+    axis.ticks.length = unit(0.25, "cm"),
+    axis.ticks.x = element_line(size = 0.1),
+    axis.ticks.y = element_line(size = 0.1),
+    axis.line = element_line(size = 0.1),
+    
+    # setting: legend
+    legend.title = element_text(size=8),               
+    legend.text = element_text(size=8),                
+    legend.key.size = unit(0.5,"cm"),
+    legend.background = element_rect(color = "white"), 
+    legend.position = "bottom"
+  )
+```
+
+Figure 1 shows the time-series of close price of the Nikkei225.
+We summarize some features of this data as follows:
+
+- After the COVID-19 occured in Japan and Chaina, the Nikkei225 has drastically decreased.
+- During the first declaration of a state of emergency in Japan, the Nikkei225's performance has been a V-shaped recovery.
+- The Nikkei225 has sharply increased immediaterly before and after the U.S. presidential election.
+
+Some may wonder if the negative shock of COVID-19 reflects the Nikkei225.
+To discuss it, we need to consider two potential concerns.
+
+1. unlisted companies (such as restaurant business) suffers heavily from the negative shock of COVID-19.
+2. the Nikkei225 does not represent a variation of price index of 225 brands. In principle, the Nikkei225 is a mathematical mean of stock price of 225 brands. The the stock prices of top five brands which contribute to the Nikkei225 have increased at 70\%. On the other hand, the stock price of other brands have decreased at 5\% [^cite]. 
+
+[^cite]: See <https://news.yahoo.co.jp/articles/f63a4627b298857a62ac329b1ed41a88c2721bd4>.
+
+Anyway, we estimate the time series model, using this dataset.
+
