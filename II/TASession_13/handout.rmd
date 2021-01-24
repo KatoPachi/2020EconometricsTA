@@ -175,3 +175,25 @@ To discuss it, we need to consider two potential concerns.
 
 Anyway, we estimate the time series model, using this dataset.
 
+## Autoregressive of Order 1: AR(1) model
+
+We want to know if the trend of Nikkei225 is a stationary process satisfying the AR(1) equation
+$$ X_t = \beta X_{t-1} + \epsilon_t $$
+where $X_t$ is the close price of Nikkei225 in day $t$,
+and $(\epsilon_t) \sim BB(0, \sigma^2)$.
+
+```{r AR1}
+ar1 <- ar(dt$close_price, method = "mle", order.max = 1)
+sprintf(
+  "The coeffcient is %1.4f (s.e. = %1.4f)", ar1$ar, sqrt(ar1$asy.var.coef)
+)
+```
+
+```{r DFtest}
+library(tseries)
+dftest <- adf.test(dt$close_price, k = 1)
+sprintf(
+  "The DF statistic is %1.4f (p-value = %1.4f)",
+  dftest$statistic, dftest$p.value
+)
+```

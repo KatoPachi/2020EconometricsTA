@@ -221,4 +221,41 @@ Nikkei225. To discuss it, we need to consider two potential concerns.
 
 Anyway, we estimate the time series model, using this dataset.
 
+\hypertarget{autoregressive-of-order-1-ar1-model}{%
+\subsection{Autoregressive of Order 1: AR(1)
+model}\label{autoregressive-of-order-1-ar1-model}}
+
+We want to know if the trend of Nikkei225 is a stationary process
+satisfying the AR(1) equation \[ X_t = \beta X_{t-1} + \epsilon_t \]
+where \(X_t\) is the close price of Nikkei225 in day \(t\), and
+\((\epsilon_t) \sim BB(0, \sigma^2)\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ar1 \textless{}{-}}\StringTok{ }\KeywordTok{ar}\NormalTok{(dt}\OperatorTok{$}\NormalTok{close\_price, }\DataTypeTok{method =} \StringTok{"mle"}\NormalTok{, }\DataTypeTok{order.max =} \DecValTok{1}\NormalTok{)}
+\KeywordTok{sprintf}\NormalTok{(}
+  \StringTok{"The coeffcient is \%1.4f (s.e. = \%1.4f)"}\NormalTok{, ar1}\OperatorTok{$}\NormalTok{ar, }\KeywordTok{sqrt}\NormalTok{(ar1}\OperatorTok{$}\NormalTok{asy.var.coef)}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The coeffcient is 0.9968 (s.e. = 0.0059)"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(tseries)}
+\NormalTok{dftest \textless{}{-}}\StringTok{ }\KeywordTok{adf.test}\NormalTok{(dt}\OperatorTok{$}\NormalTok{close\_price, }\DataTypeTok{k =} \DecValTok{1}\NormalTok{)}
+\KeywordTok{sprintf}\NormalTok{(}
+  \StringTok{"The DF statistic is \%1.4f (p{-}value = \%1.4f)"}\NormalTok{,}
+\NormalTok{  dftest}\OperatorTok{$}\NormalTok{statistic, dftest}\OperatorTok{$}\NormalTok{p.value}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The DF statistic is -2.7638 (p-value = 0.2550)"
+\end{verbatim}
+
 \end{document}
