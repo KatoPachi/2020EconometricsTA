@@ -219,43 +219,97 @@ Nikkei225. To discuss it, we need to consider two potential concerns.
     \url{https://news.yahoo.co.jp/articles/f63a4627b298857a62ac329b1ed41a88c2721bd4}.}.
 \end{enumerate}
 
-Anyway, we estimate the time series model, using this dataset.
+Anyway, we test the stationarity of this time series.
 
 \hypertarget{autoregressive-of-order-1-ar1-model}{%
 \subsection{Autoregressive of Order 1: AR(1)
 model}\label{autoregressive-of-order-1-ar1-model}}
 
-We want to know if the trend of Nikkei225 is a stationary process
-satisfying the AR(1) equation \[ X_t = \beta X_{t-1} + \epsilon_t \]
-where \(X_t\) is the close price of Nikkei225 in day \(t\), and
-\((\epsilon_t) \sim BB(0, \sigma^2)\).
+To check the stationarity of this time series, we consider the following
+AR(1) model: \[ X_t = \beta X_{t-1} + \epsilon_t, \] where \(X_t\) is
+the close price of Nikkei225 in day \(t\), and \((\epsilon_t)\) is a
+white noise process, that is, \(E(\epsilon_t) = 0\),
+\(E(\epsilon_t^2) = \sigma^2\), and
+\(Cov(\epsilon_t, \epsilon_{t+h}) = 0\) for \(h \not= 0\). We denote
+\((\epsilon_t) \sim WH(0, \sigma^2)\).
+
+To estimate the unkown parameters \(\theta = (\beta, \sigma^2)\), we use
+the maximum likelihood method. Suppose that
+\(\epsilon_t \sim N_{\mathbb{R}}N(0, \sigma^2)\). Then, the conditional
+log-likelihood is \[
+  M_T(X_1, \ldots, X_T; \theta) 
+  = \frac{1}{2T} \sum_{t=2}^T \left\{ \log(2\pi\sigma^2) + \frac{X_t - \beta X_{t-1}}{2\sigma^2} \right\}.
+\] The MLE \(\hat{\theta}\) can be obtained by solving
+\[ \hat{\theta} = \mathop{\rm arg~max}\limits_{\theta} M_T(X_1, \ldots, X_T; \theta). \]
+
+\texttt{R} provides a built-in function to estimate AR(p) model, named
+\texttt{ar()}. This function passes three augments, time-series data,
+method, and autoregressive of order (p). To estimate AR(1) model using
+the maximum likelihood method, we specify the number of order,
+\texttt{order.max\ =\ 1}, and the method, \texttt{method\ =\ mle}. The R
+snippet is as follows:
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \NormalTok{ar1 \textless{}{-}}\StringTok{ }\KeywordTok{ar}\NormalTok{(dt}\OperatorTok{$}\NormalTok{close\_price, }\DataTypeTok{method =} \StringTok{"mle"}\NormalTok{, }\DataTypeTok{order.max =} \DecValTok{1}\NormalTok{)}
-\KeywordTok{sprintf}\NormalTok{(}
-  \StringTok{"The coeffcient is \%1.4f (s.e. = \%1.4f)"}\NormalTok{, ar1}\OperatorTok{$}\NormalTok{ar, }\KeywordTok{sqrt}\NormalTok{(ar1}\OperatorTok{$}\NormalTok{asy.var.coef)}
-\NormalTok{)}
+\KeywordTok{sprintf}\NormalTok{(}\StringTok{"The estimated beta is \%1.4f (s.e. = \%1.4f)"}\NormalTok{, ar1}\OperatorTok{$}\NormalTok{ar, }\KeywordTok{sqrt}\NormalTok{(ar1}\OperatorTok{$}\NormalTok{asy.var.coef))}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## [1] "The coeffcient is 0.9968 (s.e. = 0.0059)"
+## [1] "The estimated beta is 0.9968 (s.e. = 0.0059)"
 \end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\KeywordTok{library}\NormalTok{(tseries)}
-\NormalTok{dftest \textless{}{-}}\StringTok{ }\KeywordTok{adf.test}\NormalTok{(dt}\OperatorTok{$}\NormalTok{close\_price, }\DataTypeTok{k =} \DecValTok{1}\NormalTok{)}
-\KeywordTok{sprintf}\NormalTok{(}
-  \StringTok{"The DF statistic is \%1.4f (p{-}value = \%1.4f)"}\NormalTok{,}
-\NormalTok{  dftest}\OperatorTok{$}\NormalTok{statistic, dftest}\OperatorTok{$}\NormalTok{p.value}
-\NormalTok{)}
+\KeywordTok{sprintf}\NormalTok{(}\StringTok{"The estimated squared sigma is \%1.2f"}\NormalTok{, ar1}\OperatorTok{$}\NormalTok{var.pred)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## [1] "The DF statistic is -2.7638 (p-value = 0.2550)"
+## [1] "The estimated squared sigma is 74014.82"
 \end{verbatim}
+
+\hypertarget{dickey-fuller-test}{%
+\subsection{Dickey-Fuller test}\label{dickey-fuller-test}}
+
+First, we derive the stationary condition in AR(1) model. The \(N\)-time
+iterated substition of \(X_{t-1}\) yields
+\[ X_t = \beta^N X_{t-N} + \sum_{k = 0}^N \beta^k \epsilon_{t-k}. \] If
+\(|\beta| < 1\), then the first term of right hand side coverges to zero
+as \(N \to \infty\). Thus, we have
+\(X_t = \sum_{k=0}^{\infty} \beta^k \epsilon_{t-k}\) with probability 1.
+As a result, if \(|\beta| < 1\), then \((X_t)\) is strictly
+stationarity. In other words, we obtain a causal stationary solution
+(\(X_t\) can be expressed by a function of \(\epsilon_t\)).
+
+Testing for stationarity is quivalent to test for \(\beta = 1\) in
+AR(1). The null hypothesis is that the process is \textbf{not}
+stationary. The alternative hypothesis is that the process is
+stationary, that is, \(\beta < 1\). The Dickey-Fuller test provides this
+\emph{one-sided} test.
+
+To implement this test with \texttt{R}, we ues the package called
+\texttt{tseries}. We use the function called \texttt{adf.test()} to
+carry out the Dickey-Fuller test. We need to pass two augments in this
+function. The first augment is time-series data. The second one, named
+\texttt{k}, is the number of order (\(p\)). In this example, we pass
+\texttt{k\ =\ 1}, that is, AR(1).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(tseries)}
+\NormalTok{df1 \textless{}{-}}\StringTok{ }\KeywordTok{adf.test}\NormalTok{(dt}\OperatorTok{$}\NormalTok{close\_price, }\DataTypeTok{k =} \DecValTok{1}\NormalTok{)}
+\KeywordTok{sprintf}\NormalTok{(}\StringTok{"The DF stats is \%1.4f (p{-}value = \%1.4f)"}\NormalTok{, df1}\OperatorTok{$}\NormalTok{statistic, df1}\OperatorTok{$}\NormalTok{p.value)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The DF stats is -2.7638 (p-value = 0.2550)"
+\end{verbatim}
+
+As a result, we cannot reject the null hypothesis. Thus, the time series
+of Nikkei225 is not stationary when we use data from January 4th 2020 to
+January 22 2021.
 
 \end{document}
