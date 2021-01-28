@@ -1,7 +1,7 @@
 
-# Suppemental Material of TA Session of Econometrics II
+# Supplemental Materials of TA Session of Econometrics 2 (Osaka University)
 
-This repostiroty publish R snippets using TA session of Econometrics II (2020 Oct - 2021 Feb).
+This repostiroty publish R snippets using TA session of Econometrics 2 (Oct 2020 - Jan 2021).
 
 ## About TA Session
 
@@ -16,29 +16,11 @@ This repostiroty publish R snippets using TA session of Econometrics II (2020 Oc
 
 ## How to Download
 
-![](https://user-images.githubusercontent.com/63113684/96456831-01b61980-125a-11eb-8375-c87151bdeea2.png)
+If you are familiar with the Git and Github, you can folk this repository.
+If not, you can download a zip folder containing all files.
+We show how to download zip folder.
 
-You can obtain all files through a zip folder.
+![](https://user-images.githubusercontent.com/63113684/96456831-01b61980-125a-11eb-8375-c87151bdeea2.png)
 
 1. In the top page, choose branch `main`.
 2. Push the button "Code" and select "Download ZIP".
-
-## How to Post Your Questions
-
-When you have questions and find some errors in the R file,
-there are two ways to contact with us.
-
-### 1. E-mail
-
-### 2. Create issue (You must create github free acount)
-
-![issue](https://user-images.githubusercontent.com/63113684/96458636-1abfca00-125c-11eb-8202-603dfc507376.png)
-
-In the github, issue is a public place for discussion about specific issue related with repository contents.
-When you make an issue, you can obtain suggestions and comments from all participants. 
-When thare are opened issue, you can join the discussion.
-When there are many issues, you may find similar issues that you want to discuss.
-
-1. In the "issues" page, push the button "New issue".
-2. Fill the title and contents.
-3. Please choose appropriate labels.
