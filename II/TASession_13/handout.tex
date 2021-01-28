@@ -133,8 +133,8 @@ Shimbun (hereafter, NIKKEI). NIKKEI calculates this price index based on
 Exchange. We use daily data of the Nikkei 225 index taken from the yahoo
 finance
 (\url{https://stocks.finance.yahoo.co.jp/stocks/detail/?code=998407.O}).
-The time length is from January 4th 2020 to January 22 2021. We have 498
-observations. We call a csv data which recodes the Nikkei 225 dairy
+The time length is from January 4th 2019 to January 22 2021. We have 498
+observations. We read a csv data which recodes the Nikkei 225 dairy
 index, using the \texttt{read.csv} function in \texttt{R}. Since
 \texttt{R} recognize a time variable (e.g., \texttt{2021/01/22}) as a
 character string, we need to define a time variable, using
@@ -171,7 +171,7 @@ There are five variables:
 \item
   \texttt{low\_price}: low price in day \(t\)
 \item
-  \texttt{close\_price}: close price in day \(t\)
+  \texttt{close\_price}: closed price in day \(t\)
 \end{itemize}
 
 Mainly, we use the \texttt{date} and \texttt{close\_price}.
@@ -185,13 +185,13 @@ Mainly, we use the \texttt{date} and \texttt{close\_price}.
 \caption{Time Series Data of Nikkei 225}\label{fig:TimeSeriesPlot}
 \end{figure}
 
-Figure 1 shows the time-series of close price of the Nikkei225. We
-summarize some features of this data as follows:
+Figure 1 shows the time series of closed price of the Nikkei225. We
+summarize some features as follows:
 
 \begin{itemize}
 \tightlist
 \item
-  After the COVID-19 occured in Japan and Chaina, the Nikkei225 has
+  After the COVID-19 occured in Japan and China, the Nikkei225 has
   drastically decreased.
 \item
   During the first declaration of a state of emergency in Japan, the
@@ -202,20 +202,22 @@ summarize some features of this data as follows:
 \end{itemize}
 
 Some may wonder if the negative shock of COVID-19 reflects the
-Nikkei225. To discuss it, we need to consider two potential concerns.
+Nikkei225. To discuss it, we need to consider following two potential
+concerns.
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  unlisted companies (such as restaurant business) suffers heavily from
-  the negative shock of COVID-19.
+  unlisted companies (such as small restaurant business) may suffer
+  heavily from the negative shock of COVID-19.
 \item
   the Nikkei225 does not represent a variation of price index of 225
   brands. In principle, the Nikkei225 is a mathematical mean of stock
-  price of 225 brands. The the stock prices of top five brands which
-  contribute to the Nikkei225 have increased at 70\%. On the other hand,
-  the stock price of other brands have decreased at 5\% \footnote{See
+  price of 225 brands. In fact, the the stock prices of top five brands
+  which contribute to the Nikkei225 have increased at 70\%. On the other
+  hand, the stock price of other brands have decreased at 5\% from the
+  begging of 2020 \footnote{See
     \url{https://news.yahoo.co.jp/articles/f63a4627b298857a62ac329b1ed41a88c2721bd4}.}.
 \end{enumerate}
 
@@ -227,27 +229,26 @@ model}\label{autoregressive-of-order-1-ar1-model}}
 
 To check the stationarity of this time series, we consider the following
 AR(1) model: \[ X_t = \beta X_{t-1} + \epsilon_t, \] where \(X_t\) is
-the close price of Nikkei225 in day \(t\), and \((\epsilon_t)\) is a
-white noise process, that is, \(E(\epsilon_t) = 0\),
-\(E(\epsilon_t^2) = \sigma^2\), and
-\(Cov(\epsilon_t, \epsilon_{t+h}) = 0\) for \(h \not= 0\). We denote
-\((\epsilon_t) \sim WH(0, \sigma^2)\).
+the closed price of Nikkei225 in day \(t\). We assume \((\epsilon_t)\)
+is a white noise process, \((\epsilon_t) \sim WN(0, \sigma^2)\). that
+is, \(E(\epsilon_t) = 0\), \(E(\epsilon_t^2) = \sigma^2\), and
+\(Cov(\epsilon_t, \epsilon_{t+h}) = 0\) for \(h \not= 0\).
 
 To estimate the unkown parameters \(\theta = (\beta, \sigma^2)\), we use
-the maximum likelihood method. Suppose that
-\(\epsilon_t \sim N_{\mathbb{R}}N(0, \sigma^2)\). Then, the conditional
-log-likelihood is \[
+the maximum likelihood method. We assume
+\(\epsilon_t \sim N_{\mathbb{R}}N(0, \sigma^2)\) for inference purposes.
+Then, the conditional log-likelihood is \[
   M_T(X_1, \ldots, X_T; \theta) 
-  = \frac{1}{2T} \sum_{t=2}^T \left\{ \log(2\pi\sigma^2) + \frac{X_t - \beta X_{t-1}}{2\sigma^2} \right\}.
+  = \frac{1}{T} \sum_{t=2}^T \left\{ -\log(2\pi\sigma^2) - \frac{X_t - \beta X_{t-1}}{2\sigma^2} \right\}.
 \] The MLE \(\hat{\theta}\) can be obtained by solving
 \[ \hat{\theta} = \mathop{\rm arg~max}\limits_{\theta} M_T(X_1, \ldots, X_T; \theta). \]
 
 \texttt{R} provides a built-in function to estimate AR(p) model, named
-\texttt{ar()}. This function passes three augments, time-series data,
-method, and autoregressive of order (p). To estimate AR(1) model using
-the maximum likelihood method, we specify the number of order,
-\texttt{order.max\ =\ 1}, and the method, \texttt{method\ =\ mle}. The R
-snippet is as follows:
+\texttt{ar()}. This function passes three augments, a time-series data,
+estimation method, and autoregressive of order (p). To estimate AR(1)
+model using the maximum likelihood method, we specify the number of
+order, \texttt{order.max\ =\ 1}, and the method,
+\texttt{method\ =\ "mle"}. The R snippet is as follows:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -277,11 +278,8 @@ First, we derive the stationary condition in AR(1) model. The \(N\)-time
 iterated substition of \(X_{t-1}\) yields
 \[ X_t = \beta^N X_{t-N} + \sum_{k = 0}^N \beta^k \epsilon_{t-k}. \] If
 \(|\beta| < 1\), then the first term of right hand side coverges to zero
-as \(N \to \infty\). Thus, we have
-\(X_t = \sum_{k=0}^{\infty} \beta^k \epsilon_{t-k}\) with probability 1.
-As a result, if \(|\beta| < 1\), then \((X_t)\) is strictly
-stationarity. In other words, we obtain a causal stationary solution
-(\(X_t\) can be expressed by a function of \(\epsilon_t\)).
+as \(N \to \infty\). Thus, under \(|\beta| < 1\), the causal stationary
+solution is \(X_t = \sum_{k=0}^{\infty} \beta^k \epsilon_{t-k}\).
 
 Testing for stationarity is quivalent to test for \(\beta = 1\) in
 AR(1). The null hypothesis is that the process is \textbf{not}
@@ -309,7 +307,7 @@ function. The first augment is time-series data. The second one, named
 \end{verbatim}
 
 As a result, we cannot reject the null hypothesis. Thus, the time series
-of Nikkei225 is not stationary when we use data from January 4th 2020 to
-January 22 2021.
+of closed price of Nikkei225 is not stationary when we use data from
+January 4th 2020 to January 22 2021.
 
 \end{document}
