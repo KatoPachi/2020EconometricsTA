@@ -781,4 +781,3 @@ According to @NWe, if $\mathbf{X}_i$ is the 1$\times$d row vector and $e_i$ is t
 where $w_l$ can be thought of as a "weight". Disturbances that are farther apart from each other are given lower weight, while those with equal subscripts are given a weight of 1.
 
 
-# Reference 

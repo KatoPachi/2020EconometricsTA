@@ -1,5 +1,5 @@
 ---
-title: TA Session of Econometrics 2 (2020-2021)
+title: TA Session of Econometrics 2 (Oct 2020 - Jan 2021)
 author: 
   - Hiroki Kato
   - Pang Kan
