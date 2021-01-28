@@ -1,0 +1,18 @@
+---
+title: TA Session of Econometrics 2 (Oct 2020 - Jan 2021)
+author: 
+  - Hiroki Kato
+  - Pang Kan
+fontsize: 12pt
+header-includes:
+  - \usepackage{ascmac}
+  - \usepackage{zxjatype}
+  - \setCJKmainfont[BoldFont = IPAゴシック]{IPA明朝}
+  - \setCJKsansfont{IPAゴシック}
+  - \setCJKmonofont{IPAゴシック}
+  - \parindent = 1em
+  - \newcommand{\argmax}{\mathop{\rm arg~max}\limits}
+  - \newcommand{\argmin}{\mathop{\rm arg~min}\limits}
+  - \DeclareMathOperator*{\plim}{plim}
+bibliography: allref.bib
+---
