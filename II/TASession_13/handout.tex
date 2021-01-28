@@ -142,6 +142,7 @@ character string, we need to define a time variable, using
 
 \begin{Shaded}
 \begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(tidyverse)}
 \NormalTok{dt \textless{}{-}}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"data/nikkei225.csv"}\NormalTok{, }\DataTypeTok{stringsAsFactor =} \OtherTok{FALSE}\NormalTok{)}
 \NormalTok{dt}\OperatorTok{$}\NormalTok{date \textless{}{-}}\StringTok{ }\KeywordTok{as.Date}\NormalTok{(dt}\OperatorTok{$}\NormalTok{date, }\DataTypeTok{format =} \StringTok{"\%Y/\%m/\%d"}\NormalTok{)}
 \KeywordTok{head}\NormalTok{(dt)}
@@ -182,7 +183,7 @@ Mainly, we use the \texttt{date} and \texttt{close\_price}.
 
 }
 
-\caption{Time Series Data of Nikkei 225}\label{fig:TimeSeriesPlot}
+\caption{Time Series Data of Nikkei 225 (Closed Price)}\label{fig:TimeSeriesPlot}
 \end{figure}
 
 Figure 1 shows the time series of closed price of the Nikkei225. We
@@ -309,5 +310,72 @@ function. The first augment is time-series data. The second one, named
 As a result, we cannot reject the null hypothesis. Thus, the time series
 of closed price of Nikkei225 is not stationary when we use data from
 January 4th 2020 to January 22 2021.
+
+\hypertarget{stationarity-of-log-return-of-nikkei225}{%
+\subsection{Stationarity of Log Return of
+Nikkei225}\label{stationarity-of-log-return-of-nikkei225}}
+
+We showed that the time series of closed price of Nikkei225 is not
+stationary. Then, is the log return of Nikkei225 stationary?
+
+To check it, we first construct the log return of Nikkei225, using the
+time series of closed price. To construct log return variable, we use
+the \texttt{dplyr} library. First, after reading dataset \texttt{dt}, we
+sort dataset by date using \texttt{arrange()} function. Second, we make
+the lagged closed price, using \texttt{lag()} function. This function
+picks up the variable contained in the previous \texttt{n}-the row.
+Finally, we make the log return, using \texttt{mutate()} function which
+makes a new variable. As a result, the data structure is as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dt \textless{}{-}}\StringTok{ }\NormalTok{dt }\OperatorTok{\%\textgreater{}\%}\StringTok{ }
+\StringTok{  }\KeywordTok{arrange}\NormalTok{(date) }\OperatorTok{\%\textgreater{}\%}\StringTok{ }
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{lag\_close\_price =} \KeywordTok{lag}\NormalTok{(close\_price, }\DataTypeTok{n =} \DecValTok{1}\NormalTok{)) }\OperatorTok{\%\textgreater{}\%}\StringTok{ }
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{log\_return =} \KeywordTok{log}\NormalTok{(close\_price) }\OperatorTok{{-}}\StringTok{ }\KeywordTok{log}\NormalTok{(lag\_close\_price))}
+\KeywordTok{head}\NormalTok{(dt[,}\KeywordTok{c}\NormalTok{(}\StringTok{"date"}\NormalTok{, }\StringTok{"close\_price"}\NormalTok{, }\StringTok{"lag\_close\_price"}\NormalTok{, }\StringTok{"log\_return"}\NormalTok{)])}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         date close_price lag_close_price   log_return
+## 1 2019-01-04    19561.96              NA           NA
+## 2 2019-01-07    20038.97        19561.96  0.024092014
+## 3 2019-01-08    20204.04        20038.97  0.008203707
+## 4 2019-01-09    20427.06        20204.04  0.010977908
+## 5 2019-01-10    20163.80        20427.06 -0.012971575
+## 6 2019-01-11    20359.70        20163.80  0.009668539
+\end{verbatim}
+
+Figure 2 plots the time series of the log return. After the COVID-19
+pandemic, the absolute value of log return is large. However, the
+overall time series of this index seems to be stationary.
+
+\begin{figure}[h]
+
+{\centering \includegraphics[width=0.9\linewidth]{C:/Users/katoo/Desktop/2020EconometricsTA/II/TAsession_13/handout_files/figure-latex/TimeSeriesPlot2-1} 
+
+}
+
+\caption{Time Series Data of Nikkei 225 (Log Return)}\label{fig:TimeSeriesPlot2}
+\end{figure}
+
+Using \texttt{adf.test()} function in the library \texttt{tseries}, we
+statistically test the stationarity of time series of log return.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{x \textless{}{-}}\StringTok{ }\NormalTok{dt[dt}\OperatorTok{$}\NormalTok{date }\OperatorTok{!=}\StringTok{ }\KeywordTok{as.Date}\NormalTok{(}\StringTok{"2019/01/04"}\NormalTok{), }\StringTok{"log\_return"}\NormalTok{]}
+\NormalTok{df2 \textless{}{-}}\StringTok{ }\KeywordTok{adf.test}\NormalTok{(x, }\DataTypeTok{k =} \DecValTok{1}\NormalTok{)}
+\KeywordTok{sprintf}\NormalTok{(}\StringTok{"The DF stats is \%1.4f (p{-}value = \%1.4f)"}\NormalTok{, df2}\OperatorTok{$}\NormalTok{statistic, df2}\OperatorTok{$}\NormalTok{p.value)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The DF stats is -13.8674 (p-value = 0.0100)"
+\end{verbatim}
+
+As a result, we can reject the null hypothesis. This implies that the
+time series of the log return of Nikkei225 is stationary.
 
 \end{document}
