@@ -1,0 +1,368 @@
+---
+title: "Econometrics II TA Session #13"
+author: "Hiroki Kato"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    md_extensions: +raw_attribute
+    number_sections: true
+    extra_dependencies: ["xcolor"]
+    keep_tex: yes
+fontsize: 12pt
+header-includes:
+  - \usepackage{zxjatype}
+  - \setCJKmainfont[BoldFont = IPAゴシック]{IPA明朝}
+  - \setCJKsansfont{IPAゴシック}
+  - \setCJKmonofont{IPAゴシック}
+  - \parindent = 1em
+  - \newcommand{\argmax}{\mathop{\rm arg~max}\limits}
+  - \newcommand{\argmin}{\mathop{\rm arg~min}\limits}
+  - \DeclareMathOperator*{\plim}{plim}
+---
+
+```{r setup, include = FALSE, echo = FALSE, purl = FALSE}
+# This is options to make pdf file. You should ignore
+library(here)
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  echo = TRUE, 
+  cache = FALSE,
+  fig.pos = "h")
+knitr::opts_knit$set(root.dir = paste(here(), "/R", sep = ""))
+```
+
+# Empirical Application of Time Series Model: Nikkei 225 
+
+## Background and Data
+
+The "Nikkei225" is a stock price index published by Nihon Keizai Shimbun (hereafter, NIKKEI).
+NIKKEI calculates this price index based on 225 high liquid brands listed with first section of the Tokyo Stock Exchange.
+We use daily data of the Nikkei 225 index taken from the yahoo finance 
+(<https://stocks.finance.yahoo.co.jp/stocks/detail/?code=998407.O>).
+The time length is from January 4th 2019 to January 22 2021.
+We have 498 observations.
+We read a csv data which recodes the Nikkei 225 dairy index, using the `read.csv` function in `R`.
+Since `R` recognize a time variable (e.g., `2021/01/22`) as a character string,
+we need to define a time variable, using `as.Date()` function.
+The data structure is as follows:
+
+```{r nikkeidata}
+library(tidyverse)
+dt <- read.csv("data/nikkei225.csv", stringsAsFactor = FALSE)
+dt$date <- as.Date(dt$date, format = "%Y/%m/%d")
+head(dt)
+```
+
+There are five variables:
+
+- `date`: date variable
+- `open_price`: open price in day $t$
+- `high_price`: high price in day $t$
+- `low_price`: low price in day $t$
+- `close_price`: closed price in day $t$
+
+Mainly, we use the `date` and `close_price`.
+
+```{r TimeSeriesPlot, echo = FALSE, fig.cap = "Time Series Data of Nikkei 225 (Closed Price)", out.width="90%", fig.align = 'center'}
+ggplot(dt, aes(x = date, y = close_price)) + 
+  geom_line(color = "blue") +
+  geom_vline(aes(xintercept = as.Date("2019/12/31")), linetype = 2) +
+  geom_vline(aes(xintercept = as.Date("2020/01/16")), linetype = 2) +
+  geom_vline(aes(xintercept = as.Date("2020/11/07")), linetype = 2) +
+  annotate(
+    geom = "rect",
+    xmin = as.Date("2020/04/07"), xmax = as.Date("2020/05/25"), 
+    ymin = -Inf, ymax = Inf,
+    fill = "grey80", alpha = 0.4
+  ) +
+  annotate(
+    geom = "text", 
+    x = as.Date("2020/05/20"), y = 27500, 
+    label = "First declaration of \n a state of emergency \n in Japan", 
+    hjust = "center"
+  ) +
+  annotate(
+    geom = "segment", 
+    x = as.Date("2019/11/30"), y = 27500, 
+    xend = as.Date("2019/12/31"), yend = 27500, 
+    arrow = arrow(length = unit(2, "mm"))
+  ) +
+  annotate(
+    geom = "text", 
+    x = as.Date("2019/11/29"), y = 27500, 
+    label = "First case of Covid-19 in China", 
+    hjust = "right"
+  ) +
+  annotate(
+    geom = "segment", 
+    x = as.Date("2019/11/30"), y = 26500, 
+    xend = as.Date("2020/01/16"), yend = 26500, 
+    arrow = arrow(length = unit(2, "mm"))
+  ) +
+  annotate(
+    geom = "text", 
+    x = as.Date("2019/11/29"), y = 26500, 
+    label = "First case of Covid-19 in Japan", 
+    hjust = "right"
+  ) +
+  annotate(
+    geom = "segment", 
+    x = as.Date("2020/10/07"), y = 25500, 
+    xend = as.Date("2020/11/07"), yend = 25500, 
+    arrow = arrow(length = unit(2, "mm"))
+  ) +
+  annotate(
+    geom = "text", 
+    x = as.Date("2020/10/06"), y = 25500, 
+    label = "U.S. Presidential Election", 
+    hjust = "right"
+  ) +
+  scale_x_date(date_breaks = "2 months", date_labels = "%y/%m") +
+  labs(x = "Date (Year/Month)", y = "Closed price") +
+  theme_minimal() +
+  theme(
+    # setting: background
+    plot.background = element_rect(
+      #fill="#87CEEB50", 
+      color = "transparent"
+    ),
+    
+    # setting: plot
+    panel.border = element_rect(color = "white", fill = NA),
+    panel.background = element_rect(fill = "white"),   
+    panel.grid = element_line(color = "grey80", size = 0.1),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    
+    # setting: text
+    plot.title = element_text(hjust=0.5,size=20),       
+    plot.caption = element_text(size=8),       
+    
+    # setting: axis
+    axis.text = element_text(color="black",size=8),    
+    axis.title = element_text(size=10),
+    axis.ticks.length = unit(0.25, "cm"),
+    axis.ticks.x = element_line(size = 0.1),
+    axis.ticks.y = element_line(size = 0.1),
+    axis.line = element_line(size = 0.1),
+    
+    # setting: legend
+    legend.title = element_text(size=8),               
+    legend.text = element_text(size=8),                
+    legend.key.size = unit(0.5,"cm"),
+    legend.background = element_rect(color = "white"), 
+    legend.position = "bottom"
+  )
+```
+
+Figure 1 shows the time series of closed price of the Nikkei225.
+We summarize some features as follows:
+
+- After the COVID-19 occured in Japan and China, the Nikkei225 has drastically decreased.
+- During the first declaration of a state of emergency in Japan, the Nikkei225's performance has been a V-shaped recovery.
+- The Nikkei225 has sharply increased immediaterly before and after the U.S. presidential election.
+
+Some may wonder if the negative shock of COVID-19 reflects the Nikkei225.
+To discuss it, we need to consider following two potential concerns.
+
+1. unlisted companies (such as small restaurant business) may suffer heavily from the negative shock of COVID-19.
+2. the Nikkei225 does not represent a variation of price index of 225 brands. In principle, the Nikkei225 is a mathematical mean of stock price of 225 brands. In fact, the the stock prices of top five brands which contribute to the Nikkei225 have increased at 70\%. On the other hand, the stock price of other brands have decreased at 5\% from the begging of 2020 [^cite]. 
+
+[^cite]: See <https://news.yahoo.co.jp/articles/f63a4627b298857a62ac329b1ed41a88c2721bd4>.
+
+Anyway, we test the stationarity of this time series.
+
+## Autoregressive of Order 1: AR(1) model
+
+To check the stationarity of this time series, we consider the following AR(1) model:
+$$ X_t = \beta X_{t-1} + \epsilon_t, $$
+where $X_t$ is the closed price of Nikkei225 in day $t$.
+We assume $(\epsilon_t)$ is a white noise process, $(\epsilon_t) \sim WN(0, \sigma^2)$. 
+that is, $E(\epsilon_t) = 0$, $E(\epsilon_t^2) = \sigma^2$, and $Cov(\epsilon_t, \epsilon_{t+h}) = 0$ for $h \not= 0$.
+
+To estimate the unkown parameters $\theta = (\beta, \sigma^2)$,
+we use the maximum likelihood method.
+We assume $\epsilon_t \sim N_{\mathbb{R}}N(0, \sigma^2)$ for inference purposes.
+Then, the conditional log-likelihood is 
+$$
+  M_T(X_1, \ldots, X_T; \theta) 
+  = \frac{1}{T} \sum_{t=2}^T \left\{ -\log(2\pi\sigma^2) - \frac{X_t - \beta X_{t-1}}{2\sigma^2} \right\}.
+$$
+The MLE $\hat{\theta}$ can be obtained by solving
+$$ \hat{\theta} = \argmax_{\theta} M_T(X_1, \ldots, X_T; \theta). $$ 
+
+`R` provides a built-in function to estimate AR(p) model, named `ar()`.
+This function passes three augments,
+a time-series data, estimation method, and autoregressive of order (p).
+To estimate AR(1) model using the maximum likelihood method,
+we specify the number of order, `order.max = 1`, and the method, `method = "mle"`.
+The R snippet is as follows:
+
+```{r AR1}
+ar1 <- ar(dt$close_price, method = "mle", order.max = 1)
+sprintf("The estimated beta is %1.4f (s.e. = %1.4f)", ar1$ar, sqrt(ar1$asy.var.coef))
+sprintf("The estimated squared sigma is %1.2f", ar1$var.pred)
+```
+
+## Dickey-Fuller test
+
+First, we derive the stationary condition in AR(1) model.
+The $N$-time iterated substition of $X_{t-1}$ yields
+$$ X_t = \beta^N X_{t-N} + \sum_{k = 0}^N \beta^k \epsilon_{t-k}. $$
+If $|\beta| < 1$, then the first term of right hand side coverges to zero as $N \to \infty$.
+Thus, under $|\beta| < 1$, the causal stationary solution is $X_t = \sum_{k=0}^{\infty} \beta^k \epsilon_{t-k}$.
+
+Testing for stationarity is quivalent to test for $\beta = 1$ in AR(1).
+The null hypothesis is that the process is **not** stationary.
+The alternative hypothesis is that the process is stationary, that is, $\beta < 1$.
+The Dickey-Fuller test provides this *one-sided* test.
+
+To implement this test with `R`, 
+we ues the package called `tseries`.
+We use the function called `adf.test()` to carry out the Dickey-Fuller test.
+We need to pass two augments in this function.
+The first augment is time-series data.
+The second one, named `k`, is the number of order ($p$).
+In this example, we pass `k = 1`, that is, AR(1).
+
+```{r DFtest}
+library(tseries)
+df1 <- adf.test(dt$close_price, k = 1)
+sprintf("The DF stats is %1.4f (p-value = %1.4f)", df1$statistic, df1$p.value)
+```
+
+As a result, we cannot reject the null hypothesis.
+Thus, the time series of closed price of Nikkei225 is not stationary
+when we use data from January 4th 2020 to January 22 2021.
+
+## Stationarity of Log Return of Nikkei225
+
+We showed that the time series of closed price of Nikkei225 is not stationary.
+Then, is the log return of Nikkei225 stationary?
+
+To check it, we first construct the log return of Nikkei225, using the time series of closed price.
+To construct log return variable, we use the `dplyr` library.
+First, after reading dataset `dt`, we sort dataset by date using `arrange()` function.
+Second, we make the lagged closed price, using `lag()` function.
+This function picks up the variable contained in the previous `n`-the row.
+Finally, we make the log return, using `mutate()` function which makes a new variable.
+As a result, the data structure is as follows:
+
+```{r ConstructLogReturn}
+dt <- dt %>% 
+  arrange(date) %>% 
+  mutate(lag_close_price = lag(close_price, n = 1)) %>% 
+  mutate(log_return = log(close_price) - log(lag_close_price))
+head(dt[,c("date", "close_price", "lag_close_price", "log_return")])
+```
+
+Figure 2 plots the time series of the log return.
+After the COVID-19 pandemic, the absolute value of log return is large.
+However, the overall time series of this index seems to be stationary.
+
+```{r TimeSeriesPlot2, echo = FALSE, fig.cap = "Time Series Data of Nikkei 225 (Log Return)", out.width="90%", fig.align = 'center'}
+ggplot(dt, aes(x = date, y = log_return)) + 
+  geom_line(color = "blue") +
+  geom_vline(aes(xintercept = as.Date("2019/12/31")), linetype = 2) +
+  geom_vline(aes(xintercept = as.Date("2020/01/16")), linetype = 2) +
+  geom_vline(aes(xintercept = as.Date("2020/11/07")), linetype = 2) +
+  annotate(
+    geom = "rect",
+    xmin = as.Date("2020/04/07"), xmax = as.Date("2020/05/25"), 
+    ymin = -Inf, ymax = Inf,
+    fill = "grey80", alpha = 0.4
+  ) +
+  annotate(
+    geom = "text", 
+    x = as.Date("2020/05/20"), y = 0.08, 
+    label = "First declaration of \n a state of emergency \n in Japan", 
+    hjust = "center"
+  ) +
+  annotate(
+    geom = "segment", 
+    x = as.Date("2019/11/30"), y = 0.07, 
+    xend = as.Date("2019/12/31"), yend = 0.07, 
+    arrow = arrow(length = unit(2, "mm"))
+  ) +
+  annotate(
+    geom = "text", 
+    x = as.Date("2019/11/29"), y = 0.07, 
+    label = "First case of Covid-19 in China", 
+    hjust = "right"
+  ) +
+  annotate(
+    geom = "segment", 
+    x = as.Date("2019/11/30"), y = 0.06, 
+    xend = as.Date("2020/01/16"), yend = 0.06, 
+    arrow = arrow(length = unit(2, "mm"))
+  ) +
+  annotate(
+    geom = "text", 
+    x = as.Date("2019/11/29"), y = 0.06, 
+    label = "First case of Covid-19 in Japan", 
+    hjust = "right"
+  ) +
+  annotate(
+    geom = "segment", 
+    x = as.Date("2020/10/07"), y = 0.1, 
+    xend = as.Date("2020/11/07"), yend = 0.1, 
+    arrow = arrow(length = unit(2, "mm"))
+  ) +
+  annotate(
+    geom = "text", 
+    x = as.Date("2020/10/06"), y = 0.1, 
+    label = "U.S. Presidential Election", 
+    hjust = "right"
+  ) +
+  scale_x_date(date_breaks = "2 months", date_labels = "%y/%m") +
+  labs(x = "Date (Year/Month)", y = "Log Return") +
+  theme_minimal() +
+  theme(
+    # setting: background
+    plot.background = element_rect(
+      #fill="#87CEEB50", 
+      color = "transparent"
+    ),
+    
+    # setting: plot
+    panel.border = element_rect(color = "white", fill = NA),
+    panel.background = element_rect(fill = "white"),   
+    panel.grid = element_line(color = "grey80", size = 0.1),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    
+    # setting: text
+    plot.title = element_text(hjust=0.5,size=20),       
+    plot.caption = element_text(size=8),       
+    
+    # setting: axis
+    axis.text = element_text(color="black",size=8),    
+    axis.title = element_text(size=10),
+    axis.ticks.length = unit(0.25, "cm"),
+    axis.ticks.x = element_line(size = 0.1),
+    axis.ticks.y = element_line(size = 0.1),
+    axis.line = element_line(size = 0.1),
+    
+    # setting: legend
+    legend.title = element_text(size=8),               
+    legend.text = element_text(size=8),                
+    legend.key.size = unit(0.5,"cm"),
+    legend.background = element_rect(color = "white"), 
+    legend.position = "bottom"
+  )
+```
+
+Using `adf.test()` function in the library `tseries`,
+we statistically test the stationarity of time series of log return.
+
+```{r DFtest2}
+x <- dt[dt$date != as.Date("2019/01/04"), "log_return"]
+df2 <- adf.test(x, k = 1)
+sprintf("The DF stats is %1.4f (p-value = %1.4f)", df2$statistic, df2$p.value)
+```
+
+As a result, we can reject the null hypothesis.
+This implies that the time series of the log return of Nikkei225 is stationary.
