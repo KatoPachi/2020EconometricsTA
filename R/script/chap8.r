@@ -98,10 +98,18 @@ ggplot(dt, aes(x = date, y = close_price)) +
   )
 
 
-## ----AR1----------------------------------------------------------------------
-ar1 <- ar(dt$close_price, method = "mle", order.max = 1)
-sprintf("The estimated beta is %1.4f (s.e. = %1.4f)", ar1$ar, sqrt(ar1$asy.var.coef))
-sprintf("The estimated squared sigma is %1.2f", ar1$var.pred)
+## ----AR1, eval = FALSE--------------------------------------------------------
+## ar1 <- sarima(dt$close_price, p = 1, q = 0, d = 0, no.constant = TRUE)
+
+
+
+
+## ----result_AR1---------------------------------------------------------------
+sprintf(
+  "The estimated beta is %1.5f (s.e. = %1.5f)", 
+  ar1$fit$coef, sqrt(ar1$fit$var.coef)
+)
+sprintf("The estimated squared sigma is %1.2f", ar1$fit$sigma2)
 
 
 ## ----DFtest-------------------------------------------------------------------
@@ -114,7 +122,8 @@ sprintf("The DF stats is %1.4f (p-value = %1.4f)", df1$statistic, df1$p.value)
 dt <- dt %>% 
   arrange(date) %>% 
   mutate(lag_close_price = lag(close_price, n = 1)) %>% 
-  mutate(log_return = log(close_price) - log(lag_close_price))
+  mutate(log_return = log(close_price) - log(lag_close_price)) %>% 
+  filter(!is.na(log_return))
 head(dt[,c("date", "close_price", "lag_close_price", "log_return")])
 
 
@@ -209,6 +218,20 @@ ggplot(dt, aes(x = date, y = log_return)) +
     legend.background = element_rect(color = "white"), 
     legend.position = "bottom"
   )
+
+
+## ----AR2, eval = FALSE--------------------------------------------------------
+## ar2 <- sarima(dt$log_return, p = 1, q = 0, d = 0, no.constant = TRUE)
+
+
+
+
+## ----result_AR2---------------------------------------------------------------
+sprintf(
+  "The estimated beta is %1.5f (s.e. = %1.5f)", 
+  ar2$fit$coef, sqrt(ar2$fit$var.coef)
+)
+sprintf("The estimated squared sigma is %1.4f", ar2$fit$sigma2)
 
 
 ## ----DFtest2------------------------------------------------------------------

@@ -5734,32 +5734,46 @@ Then, the conditional log-likelihood is
 The MLE \(\hat{\theta}\) can be obtained by solving
 \[ \hat{\theta} = \mathop{\rm arg~max}\limits_{\theta} M_T(X_1, \ldots, X_T; \theta). \]
 
-\texttt{R} provides a built-in function to estimate AR(p) model, named \texttt{ar()}.
-This function passes three augments,
-a time-series data, estimation method, and autoregressive of order (p).
-To estimate AR(1) model using the maximum likelihood method,
-we specify the number of order, \texttt{order.max\ =\ 1}, and the method, \texttt{method\ =\ "mle"}.
+In \texttt{R}, the library calles \texttt{astsa} provides a function to estimate AR(p) model, named \texttt{sarima()}.
+Originally, this function estimates the (seasonal) ARIMA model, using the maximum likelihood method.
+Note that the ARIMA\((p, q, d)\) model is
+\[ X_t - X_{t-d} = c + \sum_{i=1}^{p} \beta_i X_{t-i} + \sum_{i=1}^Q \theta_i \epsilon_{t-i}. \]
+The second term corresponds to AR(\(p\)), and
+the third term corresponds to MA(\(q\)).
+This function passes five augments,
+a time-series data, autoregressive of order (\(p\)), moving average of order (\(q\)),
+\(d\)-the difference series, and whether to include constatnt term \(c\).
+To estimate AR(1) model as described above,
+we specify \texttt{p\ =\ 1}, \texttt{q\ =\ 0}, \texttt{d\ =\ 0}, and \texttt{no.constant\ =\ TRUE}.
 The R snippet is as follows:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{ar1 \textless{}{-}}\StringTok{ }\KeywordTok{ar}\NormalTok{(dt}\OperatorTok{$}\NormalTok{close\_price, }\DataTypeTok{method =} \StringTok{"mle"}\NormalTok{, }\DataTypeTok{order.max =} \DecValTok{1}\NormalTok{)}
-\KeywordTok{sprintf}\NormalTok{(}\StringTok{"The estimated beta is \%1.4f (s.e. = \%1.4f)"}\NormalTok{, ar1}\OperatorTok{$}\NormalTok{ar, }\KeywordTok{sqrt}\NormalTok{(ar1}\OperatorTok{$}\NormalTok{asy.var.coef))}
+\NormalTok{ar1 \textless{}{-}}\StringTok{ }\KeywordTok{sarima}\NormalTok{(dt}\OperatorTok{$}\NormalTok{close\_price, }\DataTypeTok{p =} \DecValTok{1}\NormalTok{, }\DataTypeTok{q =} \DecValTok{0}\NormalTok{, }\DataTypeTok{d =} \DecValTok{0}\NormalTok{, }\DataTypeTok{no.constant =} \OtherTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{sprintf}\NormalTok{(}
+  \StringTok{"The estimated beta is \%1.5f (s.e. = \%1.5f)"}\NormalTok{, }
+\NormalTok{  ar1}\OperatorTok{$}\NormalTok{fit}\OperatorTok{$}\NormalTok{coef, }\KeywordTok{sqrt}\NormalTok{(ar1}\OperatorTok{$}\NormalTok{fit}\OperatorTok{$}\NormalTok{var.coef)}
+\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## [1] "The estimated beta is 0.9968 (s.e. = 0.0059)"
+## [1] "The estimated beta is 0.99994 (s.e. = 0.00009)"
 \end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\KeywordTok{sprintf}\NormalTok{(}\StringTok{"The estimated squared sigma is \%1.2f"}\NormalTok{, ar1}\OperatorTok{$}\NormalTok{var.pred)}
+\KeywordTok{sprintf}\NormalTok{(}\StringTok{"The estimated squared sigma is \%1.2f"}\NormalTok{, ar1}\OperatorTok{$}\NormalTok{fit}\OperatorTok{$}\NormalTok{sigma2)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## [1] "The estimated squared sigma is 74014.82"
+## [1] "The estimated squared sigma is 74056.79"
 \end{verbatim}
 
 \hypertarget{dickey-fuller-test}{%
@@ -5846,6 +5860,37 @@ However, the overall time series of this index seems to be stationary.
 
 \caption{Time Series Data of Nikkei 225 (Log Return)}\label{fig:TimeSeriesPlot2}
 \end{figure}
+
+We estimate AR(1) model, using this time series data.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ar2 \textless{}{-}}\StringTok{ }\KeywordTok{sarima}\NormalTok{(dt}\OperatorTok{$}\NormalTok{log\_return, }\DataTypeTok{p =} \DecValTok{1}\NormalTok{, }\DataTypeTok{q =} \DecValTok{0}\NormalTok{, }\DataTypeTok{d =} \DecValTok{0}\NormalTok{, }\DataTypeTok{no.constant =} \OtherTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{sprintf}\NormalTok{(}
+  \StringTok{"The estimated beta is \%1.5f (s.e. = \%1.5f)"}\NormalTok{, }
+\NormalTok{  ar2}\OperatorTok{$}\NormalTok{fit}\OperatorTok{$}\NormalTok{coef, }\KeywordTok{sqrt}\NormalTok{(ar2}\OperatorTok{$}\NormalTok{fit}\OperatorTok{$}\NormalTok{var.coef)}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The estimated beta is 0.06062 (s.e. = 0.04489)"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{sprintf}\NormalTok{(}\StringTok{"The estimated squared sigma is \%1.4f"}\NormalTok{, ar2}\OperatorTok{$}\NormalTok{fit}\OperatorTok{$}\NormalTok{sigma2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The estimated squared sigma is 0.0002"
+\end{verbatim}
 
 Using \texttt{adf.test()} function in the library \texttt{tseries},
 we statistically test the stationarity of time series of log return.
