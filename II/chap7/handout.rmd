@@ -193,17 +193,33 @@ $$
 The MLE $\hat{\theta}$ can be obtained by solving
 $$ \hat{\theta} = \argmax_{\theta} M_T(X_1, \ldots, X_T; \theta). $$ 
 
-`R` provides a built-in function to estimate AR(p) model, named `ar()`.
-This function passes three augments,
-a time-series data, estimation method, and autoregressive of order (p).
-To estimate AR(1) model using the maximum likelihood method,
-we specify the number of order, `order.max = 1`, and the method, `method = "mle"`.
+In `R`, the library calles `astsa` provides a function to estimate AR(p) model, named `sarima()`.
+Originally, this function estimates the (seasonal) ARIMA model, using the maximum likelihood method.
+Note that the ARIMA$(p, q, d)$ model is 
+$$ X_t - X_{t-d} = c + \sum_{i=1}^{p} \beta_i X_{t-i} + \sum_{i=1}^Q \theta_i \epsilon_{t-i}. $$
+The second term corresponds to AR($p$), and 
+the third term corresponds to MA($q$).
+This function passes five augments,
+a time-series data, autoregressive of order ($p$), moving average of order ($q$),
+$d$-the difference series, and whether to include constatnt term $c$.
+To estimate AR(1) model as described above,
+we specify `p = 1`, `q = 0`, `d = 0`, and `no.constant = TRUE`.
 The R snippet is as follows:
 
-```{r AR1}
-ar1 <- ar(dt$close_price, method = "mle", order.max = 1)
-sprintf("The estimated beta is %1.4f (s.e. = %1.4f)", ar1$ar, sqrt(ar1$asy.var.coef))
-sprintf("The estimated squared sigma is %1.2f", ar1$var.pred)
+```{r AR1, eval = FALSE}
+ar1 <- sarima(dt$close_price, p = 1, q = 0, d = 0, no.constant = TRUE)
+```
+
+```{r AR1 echo, include = FALSE, purl = FALSE}
+ar1 <- sarima(dt$close_price, p = 1, q = 0, d = 0, no.constant = TRUE)
+```
+
+```{r result_AR1}
+sprintf(
+  "The estimated beta is %1.5f (s.e. = %1.5f)", 
+  ar1$fit$coef, sqrt(ar1$fit$var.coef)
+)
+sprintf("The estimated squared sigma is %1.2f", ar1$fit$sigma2)
 ```
 
 ## Dickey-Fuller test
@@ -254,7 +270,8 @@ As a result, the data structure is as follows:
 dt <- dt %>% 
   arrange(date) %>% 
   mutate(lag_close_price = lag(close_price, n = 1)) %>% 
-  mutate(log_return = log(close_price) - log(lag_close_price))
+  mutate(log_return = log(close_price) - log(lag_close_price)) %>% 
+  filter(!is.na(log_return))
 head(dt[,c("date", "close_price", "lag_close_price", "log_return")])
 ```
 
@@ -353,6 +370,24 @@ ggplot(dt, aes(x = date, y = log_return)) +
     legend.background = element_rect(color = "white"), 
     legend.position = "bottom"
   )
+```
+
+We estimate AR(1) model, using this time series data.
+
+```{r AR2, eval = FALSE}
+ar2 <- sarima(dt$log_return, p = 1, q = 0, d = 0, no.constant = TRUE)
+```
+
+```{r AR2 echo, include = FALSE, purl = FALSE}
+ar2 <- sarima(dt$log_return, p = 1, q = 0, d = 0, no.constant = TRUE)
+```
+
+```{r result_AR2}
+sprintf(
+  "The estimated beta is %1.5f (s.e. = %1.5f)", 
+  ar2$fit$coef, sqrt(ar2$fit$var.coef)
+)
+sprintf("The estimated squared sigma is %1.4f", ar2$fit$sigma2)
 ```
 
 Using `adf.test()` function in the library `tseries`,
